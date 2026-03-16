@@ -1,7 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+
+import { taskManager } from './services/TaskManager'
+import { organizeFilesTask, OrganizeOptions } from './services/organizeFiles'
 
 function createWindow(): void {
   // Create the browser window.
@@ -74,6 +77,49 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('ping', () => console.log('pong'))
+
+  // Open a folder or file in the system explorer
+  ipcMain.handle('open-path', async (_, targetPath: string) => {
+    return shell.openPath(targetPath)
+  })
+
+  // --- NEW FILE ORGANIZER APIs ---
+  ipcMain.handle('select-folder', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: ['openDirectory']
+    })
+    if (canceled || filePaths.length === 0) return null
+    return filePaths[0]
+  })
+
+  // Task forwarding
+  taskManager.on('task-updated', (task) => {
+    // Broadcast task update to all windows
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('task-progress', task)
+    })
+  })
+
+  ipcMain.handle('task:start-organize', async (_, folderPath: string, fileTypes: string[], isDryRun: boolean) => {
+    const task = taskManager.createTask('organize-files')
+    const options: OrganizeOptions = { folderPath, fileTypes, isDryRun }
+    
+    // Fire and forget, TaskManager handles background progress output
+    organizeFilesTask(task.id, options).catch((err) => {
+      taskManager.updateTaskStatus(task.id, 'error', err instanceof Error ? err.message : String(err))
+    })
+
+    return task.id
+  })
+
+  ipcMain.handle('task:get-active', async () => {
+    return taskManager.getActiveTasks()
+  })
+
+  ipcMain.handle('task:cancel', async (_, taskId: string) => {
+    taskManager.cancelTask(taskId)
+    return true
+  })
 
   createWindow()
 

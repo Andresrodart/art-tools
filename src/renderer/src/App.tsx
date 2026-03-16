@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { TaskSidebar } from './components/layout/TaskSidebar'
+import { FileOrganizer } from './components/tools/FileOrganizer'
 
 interface ToolCardProps {
   title: string
@@ -27,6 +29,7 @@ function ToolCard({ title, description, actionText, onAction, isDanger }: ToolCa
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [activeTool, setActiveTool] = useState<string | null>(null)
 
   useEffect(() => {
     // Basic system theme detection
@@ -99,26 +102,43 @@ function App(): React.JSX.Element {
         </div>
       </header>
 
-      <main className="gallery-grid">
-        <ToolCard 
-          title="File I/O Test" 
-          description="Test reading and writing simple files to disk securely." 
-          actionText={t('execute_btn')}
-          onAction={handleFileTest}
-        />
-        <ToolCard 
-          title="Command Runner Test" 
-          description="Test running a shell command locally." 
-          actionText={t('execute_btn')}
-          onAction={handleCommandTest}
-        />
-        <ToolCard 
-          title="IPC Ping Test" 
-          description="Send a simple ping message to the Main process." 
-          actionText={t('send_ipc')}
-          onAction={handlePing}
-        />
+      <main className="main-content">
+        {activeTool ? (
+          <div className="active-tool-view">
+            {activeTool === 'FileOrganizer' && <FileOrganizer onBack={() => setActiveTool(null)} />}
+          </div>
+        ) : (
+          <div className="gallery-grid">
+            <ToolCard 
+              title="File Organizer" 
+              description="Sort messy directories into Year/Month/Day sub-folders instantly. Supports dry runs and specific file extensions." 
+              actionText="Open Tool"
+              onAction={() => setActiveTool('FileOrganizer')}
+            />
+            <ToolCard 
+              title="File I/O Test" 
+              description="Test reading and writing simple files to disk securely." 
+              actionText={t('execute_btn')}
+              onAction={handleFileTest}
+            />
+            <ToolCard 
+              title="Command Runner Test" 
+              description="Test running a shell command locally." 
+              actionText={t('execute_btn')}
+              onAction={handleCommandTest}
+            />
+            <ToolCard 
+              title="IPC Ping Test" 
+              description="Send a simple ping message to the Main process." 
+              actionText={t('send_ipc')}
+              onAction={handlePing}
+            />
+          </div>
+        )}
       </main>
+
+      {/* Global Sidebar for persisting Tasks */}
+      <TaskSidebar />
     </div>
   )
 }

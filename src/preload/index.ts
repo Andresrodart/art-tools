@@ -6,7 +6,18 @@ const api = {
   readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
   writeFile: (filePath: string, content: string) =>
     ipcRenderer.invoke('write-file', filePath, content),
-  execCommand: (command: string) => ipcRenderer.invoke('exec-command', command)
+  execCommand: (command: string) => ipcRenderer.invoke('exec-command', command),
+  
+  // File Organizer & Tasks
+  selectFolder: () => ipcRenderer.invoke('select-folder'),
+  startOrganizeTask: (folderPath: string, fileTypes: string[], isDryRun: boolean) => 
+    ipcRenderer.invoke('task:start-organize', folderPath, fileTypes, isDryRun),
+  getActiveTasks: () => ipcRenderer.invoke('task:get-active'),
+  cancelTask: (taskId: string) => ipcRenderer.invoke('task:cancel', taskId),
+  onTaskProgress: (callback: (event: any, task: any) => void) => 
+    ipcRenderer.on('task-progress', callback),
+  removeTaskProgress: () => ipcRenderer.removeAllListeners('task-progress'),
+  openPath: (targetPath: string) => ipcRenderer.invoke('open-path', targetPath)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
