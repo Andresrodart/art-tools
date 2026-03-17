@@ -82,9 +82,9 @@ async function performMerge(
       for (const folder of folders) {
         await fs.rmdir(folder.path)
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       success = false
-      errorMsg = e.message
+      errorMsg = e instanceof Error ? e.message : String(e)
       console.error(`Merge failed for ${newPath}: ${errorMsg}`)
     }
   }
@@ -123,7 +123,7 @@ export async function mergeSiblingsRecursive(
 
   // 2. Evaluate all children of currentDir for merging
   const mergableCandidates: MergableFolder[] = []
-  
+
   for (const dirPath of currentSubDirs) {
     const elementCount = await getImmediateElementCount(dirPath)
     if (elementCount < options.thresholdX) {
@@ -136,7 +136,7 @@ export async function mergeSiblingsRecursive(
   }
 
   // 3. Group and merge
-  // We process candidates sequentially. 
+  // We process candidates sequentially.
   // If we have less than 2 candidates, there is nothing to merge
   let i = 0
   while (i < mergableCandidates.length) {
@@ -146,16 +146,19 @@ export async function mergeSiblingsRecursive(
     // Build the group
     while (i < mergableCandidates.length) {
       const candidate = mergableCandidates[i]
-      
+
       // If adding this would exceed Y, and we already have at least 1 item, stop this group
-      if (currentGroup.length > 0 && currentGroupCount + candidate.elementCount > options.maxCapacityY) {
+      if (
+        currentGroup.length > 0 &&
+        currentGroupCount + candidate.elementCount > options.maxCapacityY
+      ) {
         break
       }
 
       currentGroup.push(candidate)
       currentGroupCount += candidate.elementCount
       i++
-      
+
       // If we reached exact capacity, stop this group
       if (currentGroupCount >= options.maxCapacityY) {
         break
@@ -203,11 +206,11 @@ export async function thresholdMergerTask(
       message: 'Processing complete.'
     })
 
-    taskManager.updateTaskStatus(taskId, 'completed')
     taskManager.completeTask(taskId, results)
     return results
-  } catch (error: any) {
-    taskManager.updateTaskStatus(taskId, 'error', error.message)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    taskManager.updateTaskStatus(taskId, 'error', msg)
     throw error
   }
 }

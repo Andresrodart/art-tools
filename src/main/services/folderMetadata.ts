@@ -147,10 +147,10 @@ export async function folderMetadataTask(
         if (!options.isDryRun) {
           try {
             await fs.rename(dir, newPath)
-          } catch (e: any) {
+          } catch (e: unknown) {
             success = false
-            errorMsg = e.message
-            console.error(`Failed to rename ${dir} to ${newPath}`, e.message)
+            errorMsg = e instanceof Error ? e.message : String(e)
+            console.error(`Failed to rename ${dir} to ${newPath}`, errorMsg)
           }
         }
 
@@ -175,8 +175,9 @@ export async function folderMetadataTask(
     taskManager.updateTaskStatus(taskId, 'completed')
     taskManager.completeTask(taskId, results)
     return results
-  } catch (error: any) {
-    taskManager.updateTaskStatus(taskId, 'error', error.message)
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
+    taskManager.updateTaskStatus(taskId, 'error', msg)
     throw error
   }
 }

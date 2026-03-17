@@ -13,7 +13,7 @@ export interface Task {
   type: string
   status: TaskStatus
   progress: TaskProgress
-  result?: any
+  result?: unknown
   error?: string
   createdAt: number
   updatedAt: number
@@ -60,7 +60,7 @@ class TaskManager extends EventEmitter {
     }
   }
 
-  completeTask(id: string, result?: any): void {
+  completeTask(id: string, result?: unknown): void {
     const task = this.tasks.get(id)
     if (task) {
       task.status = 'completed'

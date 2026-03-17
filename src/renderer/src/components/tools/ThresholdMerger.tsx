@@ -38,9 +38,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   const [taskId, setTaskId] = useState<string | null>(null)
   const [taskData, setTaskData] = useState<Task | null>(null)
   const [logEntries, setLogEntries] = useState<string[]>([])
-  
+
   const logRef = useRef<HTMLDivElement>(null)
-  
+
   const setTitle = useHeaderStore((state) => state.setTitle)
   const setNavigation = useHeaderStore((state) => state.setNavigation)
   const setActions = useHeaderStore((state) => state.setActions)
@@ -59,20 +59,21 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     return () => {
       reset()
     }
-  }, [onBack, setTitle, setNavigation, setActions, reset])
+  }, [onBack, setTitle, setNavigation, setActions, reset, t])
 
   // Subscribe to task progress
   useEffect(() => {
-    const handleProgress = (_event: any, updatedTask: any) => {
-      if (taskId && updatedTask.id === taskId) {
-        setTaskData(updatedTask)
+    const handleProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
+      const task = updatedTask as Task
+      if (taskId && task.id === taskId) {
+        setTaskData(task)
 
         // Append log entries from progress messages
-        if (updatedTask.progress?.message) {
+        if (task.progress?.message) {
           setLogEntries((prev) => {
             const last = prev[prev.length - 1]
-            if (last !== updatedTask.progress.message) {
-              return [...prev, updatedTask.progress.message!]
+            if (last !== task.progress.message) {
+              return [...prev, task.progress.message!]
             }
             return prev
           })
@@ -80,13 +81,13 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
       }
     }
 
-    // @ts-ignore
+    // @ts-ignore: electron api
     if (window.api?.onTaskProgress) {
       window.api.onTaskProgress(handleProgress)
     }
 
     return () => {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (window.api?.removeTaskProgress) {
         window.api.removeTaskProgress()
       }
@@ -100,21 +101,21 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     }
   }, [logEntries])
 
-  const handleSelectFolder = async () => {
+  const handleSelectFolder = async (): Promise<void> => {
     try {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore
+      // @ts-ignore: electron api
       const folderPaths = await window.api.selectFolder()
       if (folderPaths) {
         setTargetFolder(folderPaths)
       }
-    } catch (e: any) {
-      alert(`Error selecting folder: ${e.message}`)
+    } catch (e: unknown) {
+      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  const handleStartTask = async () => {
+  const handleStartTask = async (): Promise<void> => {
     if (!targetFolder) {
       alert('Please select a folder first.')
       return
@@ -124,9 +125,11 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
       alert('Thresholds must be at least 1')
       return
     }
-    
+
     if (thresholdX >= maxCapacityY) {
-      alert('X (Threshold) must be smaller than Y (Max Capacity). Otherwise groups will exceed your limit on the first merge!')
+      alert(
+        'X (Threshold) must be smaller than Y (Max Capacity). Otherwise groups will exceed your limit on the first merge!'
+      )
       return
     }
 
@@ -135,26 +138,31 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     setTaskData(null)
 
     try {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (!window.api?.startThresholdMergerTask) throw new Error('API not available')
 
-      // @ts-ignore
-      const id = await window.api.startThresholdMergerTask(targetFolder, thresholdX, maxCapacityY, isDryRun)
+      // @ts-ignore: electron api
+      const id = await window.api.startThresholdMergerTask(
+        targetFolder,
+        thresholdX,
+        maxCapacityY,
+        isDryRun
+      )
       setTaskId(id)
-    } catch (e: any) {
-      alert(`Error starting threshold merger task: ${e.message}`)
+    } catch (e: unknown) {
+      alert(`Error starting threshold merger task: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  const handleOpenFolder = async () => {
+  const handleOpenFolder = async (): Promise<void> => {
     if (targetFolder) {
       try {
-        // @ts-ignore
+        // @ts-ignore: electron api
         if (window.api?.openPath) {
-          // @ts-ignore
+          // @ts-ignore: electron api
           await window.api.openPath(targetFolder)
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('Failed to open folder', e)
       }
     }
@@ -174,9 +182,12 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
 
   // ── Result summary ──
   const results = taskData?.result ?? []
-  const mergedGroupsCount = results.filter(r => r.success || isDryRun).length
-  const failCount = results.filter(r => !r.success && !isDryRun).length
-  const totalFoldersMerged = results.reduce((acc, current) => acc + (current.success || isDryRun ? current.originalPaths.length : 0), 0)
+  const mergedGroupsCount = results.filter((r) => r.success || isDryRun).length
+  const failCount = results.filter((r) => !r.success && !isDryRun).length
+  const totalFoldersMerged = results.reduce(
+    (acc, current) => acc + (current.success || isDryRun ? current.originalPaths.length : 0),
+    0
+  )
 
   // ==================== SECTIONS ====================
 
@@ -208,7 +219,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
             className="brutalist-input"
           />
           <small className="help-text">
-            {t('merge_under_x_help_1')}<b>{thresholdX}</b>{t('merge_under_x_help_2')}
+            {t('merge_under_x_help_1')}
+            <b>{thresholdX}</b>
+            {t('merge_under_x_help_2')}
           </small>
         </div>
 
@@ -222,7 +235,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
             className="brutalist-input"
           />
           <small className="help-text">
-            {t('max_elements_y_help_1')}<b>{maxCapacityY}</b>{t('max_elements_y_help_2')}
+            {t('max_elements_y_help_1')}
+            <b>{maxCapacityY}</b>
+            {t('max_elements_y_help_2')}
           </small>
         </div>
       </div>
@@ -236,9 +251,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
           />
           <span className="checkbox-label">{t('dry_run')}</span>
         </label>
-        <small className="help-text">
-          {t('dry_run_help_merge')}
-        </small>
+        <small className="help-text">{t('dry_run_help_merge')}</small>
       </div>
 
       <div className="action-row">
@@ -256,11 +269,19 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   const progressSection = taskData ? (
     <>
       <div className="tool-progress-bar-container">
-        <div className="tool-progress-bar-fill" style={{ width: `${pct === 100 ? 100 : 100}%` /* Usually unknown total during recursive pass so fake it visually */ }} />
+        <div
+          className="tool-progress-bar-fill"
+          style={{
+            width: `${pct === 100 ? 100 : 100}%` /* Usually unknown total during recursive pass so fake it visually */
+          }}
+        />
       </div>
       <div className="tool-progress-stats">
         <span>
-          Processed {taskData.progress.current} {taskData.status === 'completed' || taskData.status === 'dry-run' ? 'groups' : 'operations'}
+          Processed {taskData.progress.current}{' '}
+          {taskData.status === 'completed' || taskData.status === 'dry-run'
+            ? 'groups'
+            : 'operations'}
         </span>
         <span style={{ textTransform: 'uppercase', fontSize: '0.8rem' }}>{taskData.status}</span>
       </div>
@@ -277,7 +298,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     </>
   ) : null
 
-  const getSlashedPath = (path: string) => path.split(/[/\\]/).pop() || path;
+  const getSlashedPath = (path: string): string => path.split(/[/\\]/).pop() || path
 
   const outputSection = isFinished ? (
     <div className="tool-output-summary">
@@ -304,20 +325,53 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
 
           {/* Show a preview of the changes */}
           {results.length > 0 && (
-            <div style={{ marginTop: '20px', borderTop: '2px solid var(--border-color)', paddingTop: '10px' }}>
+            <div
+              style={{
+                marginTop: '20px',
+                borderTop: '2px solid var(--border-color)',
+                paddingTop: '10px'
+              }}
+            >
               <h4>{isDryRun ? 'Projected Merges:' : 'Actions Performed:'}</h4>
-              <ul style={{ listStyle: 'none', padding: 0, marginTop: '10px', fontSize: '0.9rem', maxHeight: '200px', overflowY: 'auto' }}>
+              <ul
+                style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  marginTop: '10px',
+                  fontSize: '0.9rem',
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}
+              >
                 {results.map((res, i) => (
-                  <li key={i} style={{ marginBottom: '8px', fontFamily: 'monospace', paddingBottom: '8px', borderBottom: '1px dashed #ccc' }}>
+                  <li
+                    key={i}
+                    style={{
+                      marginBottom: '8px',
+                      fontFamily: 'monospace',
+                      paddingBottom: '8px',
+                      borderBottom: '1px dashed #ccc'
+                    }}
+                  >
                     <div style={{ wordBreak: 'break-all' }}>
-                      <span style={{ color: '#ff6b6b' }}>From ({res.originalPaths.length} folders):</span>{' '}
+                      <span style={{ color: '#ff6b6b' }}>
+                        From ({res.originalPaths.length} folders):
+                      </span>{' '}
                       {res.originalPaths.map(getSlashedPath).join(', ')}
                     </div>
                     <div style={{ wordBreak: 'break-all', marginTop: '4px' }}>
-                      <span style={{ color: '#51cf66' }}>To:</span> <b>{getSlashedPath(res.newPath)}</b>
+                      <span style={{ color: '#51cf66' }}>To:</span>{' '}
+                      <b>{getSlashedPath(res.newPath)}</b>
                     </div>
                     {!res.success && res.error && !isDryRun && (
-                      <div style={{ wordBreak: 'break-all', color: '#ff6b6b', marginTop: '4px', fontSize: '0.8rem' }}>
+                      <div
+                        style={{
+                          wordBreak: 'break-all',
+                          color: '#ff6b6b',
+                          marginTop: '4px',
+                          fontSize: '0.8rem'
+                        }}
+                      >
                         Error: {res.error}
                       </div>
                     )}

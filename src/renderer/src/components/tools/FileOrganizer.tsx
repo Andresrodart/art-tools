@@ -77,7 +77,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
 
-  const addExtension = (ext: string) => {
+  const addExtension = (ext: string): void => {
     let newExt = ext.trim().toLowerCase()
     if (!newExt.startsWith('.') && newExt !== '*') {
       newExt = `.${newExt}`
@@ -98,7 +98,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     setShowExtDropdown(false)
   }
 
-  const removeExtension = (ext: string) => {
+  const removeExtension = (ext: string): void => {
     setSelectedExtensions((prev) => {
       const newExts = prev.filter((e) => e !== ext)
       return newExts.length > 0 ? newExts : ['*']
@@ -121,16 +121,17 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
   // Subscribe to task progress
   useEffect(() => {
-    const handleProgress = (_event: any, updatedTask: any) => {
-      if (taskId && updatedTask.id === taskId) {
-        setTaskData(updatedTask)
+    const handleProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
+      const task = updatedTask as Task
+      if (taskId && task.id === taskId) {
+        setTaskData(task)
 
         // Append log entries from progress messages
-        if (updatedTask.progress?.message) {
+        if (task.progress?.message) {
           setLogEntries((prev) => {
             const last = prev[prev.length - 1]
-            if (last !== updatedTask.progress.message) {
-              return [...prev, updatedTask.progress.message!]
+            if (last !== task.progress.message) {
+              return [...prev, task.progress.message!]
             }
             return prev
           })
@@ -138,13 +139,13 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
       }
     }
 
-    // @ts-ignore
+    // @ts-ignore: electron api
     if (window.api?.onTaskProgress) {
       window.api.onTaskProgress(handleProgress)
     }
 
     return () => {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (window.api?.removeTaskProgress) {
         window.api.removeTaskProgress()
       }
@@ -158,21 +159,21 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     }
   }, [logEntries])
 
-  const handleSelectFolder = async () => {
+  const handleSelectFolder = async (): Promise<void> => {
     try {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore
+      // @ts-ignore: electron api
       const folderPaths = await window.api.selectFolder()
       if (folderPaths) {
         setTargetFolder(folderPaths)
       }
-    } catch (e: any) {
-      alert(`Error selecting folder: ${e.message}`)
+    } catch (e: unknown) {
+      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  const handleStartOrganize = async () => {
+  const handleStartOrganize = async (): Promise<void> => {
     if (!targetFolder) {
       alert('Please select a folder first.')
       return
@@ -185,26 +186,26 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     try {
       const typesArray = selectedExtensions.length > 0 ? selectedExtensions : ['*']
 
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (!window.api?.startOrganizeTask) throw new Error('API not available')
 
-      // @ts-ignore
+      // @ts-ignore: electron api
       const id = await window.api.startOrganizeTask(targetFolder, typesArray, isDryRun)
       setTaskId(id)
-    } catch (e: any) {
-      alert(`Error starting organize task: ${e.message}`)
+    } catch (e: unknown) {
+      alert(`Error starting organize task: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  const handleOpenFolder = async () => {
+  const handleOpenFolder = async (): Promise<void> => {
     if (targetFolder) {
       try {
-        // @ts-ignore
+        // @ts-ignore: electron api
         if (window.api?.openPath) {
-          // @ts-ignore
+          // @ts-ignore: electron api
           await window.api.openPath(targetFolder)
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('Failed to open folder', e)
       }
     }
@@ -414,9 +415,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
           />
           <span className="checkbox-label">{t('dry_run')}</span>
         </label>
-        <small className="help-text">
-          {t('dry_run_help_org')}
-        </small>
+        <small className="help-text">{t('dry_run_help_org')}</small>
       </div>
 
       <div className="action-row">

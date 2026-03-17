@@ -61,20 +61,21 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
     return () => {
       reset()
     }
-  }, [onBack, setTitle, setNavigation, setActions, reset])
+  }, [onBack, setTitle, setNavigation, setActions, reset, t])
 
   // Subscribe to task progress
   useEffect(() => {
-    const handleProgress = (_event: any, updatedTask: any) => {
-      if (taskId && updatedTask.id === taskId) {
-        setTaskData(updatedTask)
+    const handleProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
+      const task = updatedTask as Task
+      if (taskId && task.id === taskId) {
+        setTaskData(task)
 
         // Append log entries from progress messages
-        if (updatedTask.progress?.message) {
+        if (task.progress?.message) {
           setLogEntries((prev) => {
             const last = prev[prev.length - 1]
-            if (last !== updatedTask.progress.message) {
-              return [...prev, updatedTask.progress.message!]
+            if (last !== task.progress.message) {
+              return [...prev, task.progress.message!]
             }
             return prev
           })
@@ -82,13 +83,13 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
       }
     }
 
-    // @ts-ignore
+    // @ts-ignore: electron api
     if (window.api?.onTaskProgress) {
       window.api.onTaskProgress(handleProgress)
     }
 
     return () => {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (window.api?.removeTaskProgress) {
         window.api.removeTaskProgress()
       }
@@ -102,21 +103,21 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
     }
   }, [logEntries])
 
-  const handleSelectFolder = async () => {
+  const handleSelectFolder = async (): Promise<void> => {
     try {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore
+      // @ts-ignore: electron api
       const folderPaths = await window.api.selectFolder()
       if (folderPaths) {
         setTargetFolder(folderPaths)
       }
-    } catch (e: any) {
-      alert(`Error selecting folder: ${e.message}`)
+    } catch (e: unknown) {
+      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  const handleStartTask = async () => {
+  const handleStartTask = async (): Promise<void> => {
     if (!targetFolder) {
       alert('Please select a folder first.')
       return
@@ -127,10 +128,10 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
     setTaskData(null)
 
     try {
-      // @ts-ignore
+      // @ts-ignore: electron api
       if (!window.api?.startFolderMetadataTask) throw new Error('API not available')
 
-      // @ts-ignore
+      // @ts-ignore: electron api
       const id = await window.api.startFolderMetadataTask(
         targetFolder,
         includeSize,
@@ -138,20 +139,20 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
         isDryRun
       )
       setTaskId(id)
-    } catch (e: any) {
-      alert(`Error starting folder metadata task: ${e.message}`)
+    } catch (e: unknown) {
+      alert(`Error starting folder metadata task: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
-  const handleOpenFolder = async () => {
+  const handleOpenFolder = async (): Promise<void> => {
     if (targetFolder) {
       try {
-        // @ts-ignore
+        // @ts-ignore: electron api
         if (window.api?.openPath) {
-          // @ts-ignore
+          // @ts-ignore: electron api
           await window.api.openPath(targetFolder)
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error('Failed to open folder', e)
       }
     }
@@ -202,9 +203,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
           />
           <span className="checkbox-label">{t('append_size')}</span>
         </label>
-        <small className="help-text">
-          {t('append_size_help')}
-        </small>
+        <small className="help-text">{t('append_size_help')}</small>
       </div>
 
       <div className="control-group check-group">
@@ -216,9 +215,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
           />
           <span className="checkbox-label">{t('append_elements')}</span>
         </label>
-        <small className="help-text">
-          {t('append_elements_help')}
-        </small>
+        <small className="help-text">{t('append_elements_help')}</small>
       </div>
 
       <div className="control-group check-group">
@@ -230,9 +227,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
           />
           <span className="checkbox-label">{t('dry_run')}</span>
         </label>
-        <small className="help-text">
-          {t('dry_run_help_meta')}
-        </small>
+        <small className="help-text">{t('dry_run_help_meta')}</small>
       </div>
 
       <div className="action-row">
@@ -331,7 +326,14 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
                       <span style={{ color: '#51cf66' }}>New:</span> <b>{res.newName}</b>
                     </div>
                     {!res.success && res.error && !isDryRun && (
-                      <div style={{ wordBreak: 'break-all', color: '#ff6b6b', marginTop: '4px', fontSize: '0.8rem' }}>
+                      <div
+                        style={{
+                          wordBreak: 'break-all',
+                          color: '#ff6b6b',
+                          marginTop: '4px',
+                          fontSize: '0.8rem'
+                        }}
+                      >
                         Error: {res.error}
                       </div>
                     )}

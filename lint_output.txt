@@ -1,0 +1,121 @@
+﻿
+> my-app@1.0.0 lint
+> eslint --cache .
+
+
+D:\Github\art-tools\TODO\organize_photos.js
+    1:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+    2:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+    6:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
+   98:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
+  132:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
+  136:12  error  '_' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  143:12  error  '_' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  150:1   error  Missing return type on function          @typescript-eslint/explicit-function-return-type
+
+D:\Github\art-tools\TODO\test_organize.js
+   1:16  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+   2:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+   3:50  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  16:26  error  Missing return type on function          @typescript-eslint/explicit-function-return-type
+  24:50  error  'p' is defined but never used            @typescript-eslint/no-unused-vars
+
+D:\Github\art-tools\jest.config.js
+  1:33  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+D:\Github\art-tools\src\main\index.ts
+   59:16  error  A `require()` style import is forbidden   @typescript-eslint/no-require-imports
+   64:16  error  A `require()` style import is forbidden   @typescript-eslint/no-require-imports
+   70:22  error  A `require()` style import is forbidden   @typescript-eslint/no-require-imports
+   71:18  error  A `require()` style import is forbidden   @typescript-eslint/no-require-imports
+   76:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Github\art-tools\src\main\services\TaskManager.ts
+  16:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  63:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Github\art-tools\src\main\services\folderMetadata.ts
+  150:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Github\art-tools\src\main\services\thresholdMerger.ts
+   85:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Github\art-tools\src\preload\index.ts
+  43:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Github\art-tools\src\renderer\src\App.tsx
+  89:6  warning  React Hook useEffect has missing dependencies: 'setActions', 'setTitle', and 'toggleLanguage'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Github\art-tools\src\renderer\src\components\layout\TaskSidebar.tsx
+  15:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:90  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
+  59:47  error  Missing return type on function           @typescript-eslint/explicit-function-return-type
+
+D:\Github\art-tools\src\renderer\src\components\tools\FileOrganizer.tsx
+   80:38  error  Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  101:41  error  Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  124:37  error  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  124:55  error  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  124:60  error  Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  141:5   error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  147:7   error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  161:39  error  Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  163:7   error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  165:7   error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  170:17  error  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  175:40  error  Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  188:7   error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  191:7   error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  194:17  error  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  199:37  error  Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  202:9   error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  204:11  error  Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  207:19  error  Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+
+D:\Github\art-tools\src\renderer\src\components\tools\FolderMetadata.tsx
+   64:6   warning  React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array                                               react-hooks/exhaustive-deps
+   68:37  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   68:55  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   68:60  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+   85:5   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+   91:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  105:39  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  107:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  109:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  114:17  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  119:36  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  130:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  133:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  141:17  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  146:37  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  149:9   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  151:11  error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  154:19  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+
+D:\Github\art-tools\src\renderer\src\components\tools\ThresholdMerger.tsx
+   62:6   warning  React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array                                               react-hooks/exhaustive-deps
+   66:37  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   66:55  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+   66:60  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+   83:5   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+   89:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  103:39  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  105:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  107:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  112:17  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  117:36  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  140:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  143:7   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  151:17  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  156:37  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+  159:9   error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  161:11  error    Include a description after the "@ts-ignore" directive to explain why the @ts-ignore is necessary. The description must be 3 characters or longer  @typescript-eslint/ban-ts-comment
+  164:19  error    Unexpected any. Specify a different type                                                                                                           @typescript-eslint/no-explicit-any
+  300:41  error    Missing return type on function                                                                                                                    @typescript-eslint/explicit-function-return-type
+
+Γ£û 88 problems (85 errors, 3 warnings)
+

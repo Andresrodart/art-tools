@@ -1,5 +1,8 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
+import { readFileSync, writeFileSync } from 'fs'
+import { exec } from 'child_process'
+import { promisify } from 'util'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
@@ -56,25 +59,21 @@ app.whenReady().then(() => {
 
   // IPC API endpoints for System Interactions
   ipcMain.handle('read-file', async (_, filePath) => {
-    const fs = require('fs')
-    return fs.readFileSync(filePath, 'utf-8')
+    return readFileSync(filePath, 'utf-8')
   })
 
   ipcMain.handle('write-file', async (_, filePath, content) => {
-    const fs = require('fs')
-    fs.writeFileSync(filePath, content, 'utf-8')
+    writeFileSync(filePath, content, 'utf-8')
     return true
   })
 
   ipcMain.handle('exec-command', async (_, command) => {
-    const { exec } = require('child_process')
-    const util = require('util')
-    const execPromise = util.promisify(exec)
+    const execPromise = promisify(exec)
     try {
       const { stdout, stderr } = await execPromise(command)
       return { success: true, stdout, stderr }
-    } catch (e: any) {
-      return { success: false, error: e.message }
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : String(e) }
     }
   })
 
@@ -137,7 +136,7 @@ app.whenReady().then(() => {
         includeSize,
         includeElements,
         isDryRun
-      }).catch((err: any) => {
+      }).catch((err: unknown) => {
         taskManager.updateTaskStatus(
           task.id,
           'error',
@@ -169,7 +168,7 @@ app.whenReady().then(() => {
       isDryRun: boolean
     ) => {
       const task = taskManager.createTask('thresholdMerger')
-      
+
       thresholdMergerTask(task.id, {
         rootPath,
         thresholdX,

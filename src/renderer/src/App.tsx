@@ -69,14 +69,14 @@ function App(): React.JSX.Element {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
-  const toggleTheme = (): void => {
+  const toggleTheme = useCallback((): void => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
-  }
+  }, [])
 
-  const toggleLanguage = (): void => {
+  const toggleLanguage = useCallback((): void => {
     const newLang = i18n.language === 'en' ? 'es' : 'en'
     i18n.changeLanguage(newLang)
-  }
+  }, [i18n])
 
   useEffect(() => {
     if (!activeTool) {
@@ -86,7 +86,7 @@ function App(): React.JSX.Element {
         { label: t('theme_toggle'), onClick: toggleTheme }
       ])
     }
-  }, [activeTool, t, i18n.language, theme])
+  }, [activeTool, t, setTitle, setActions, toggleLanguage, toggleTheme])
 
   return (
     <div className="brutalist-container">

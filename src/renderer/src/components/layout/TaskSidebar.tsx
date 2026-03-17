@@ -12,7 +12,7 @@ export interface Task {
   type: string
   status: 'pending' | 'running' | 'completed' | 'error' | 'dry-run'
   progress: TaskProgress
-  result?: any
+  result?: unknown
   error?: string
   createdAt: number
   updatedAt: number
@@ -31,7 +31,7 @@ export function TaskSidebar(): React.JSX.Element {
         .catch((err: unknown) => console.error('Failed to fetch tasks', err))
     }
 
-    const handleTaskProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown) => {
+    const handleTaskProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
       const task = updatedTask as Task
       setTasks((prevTasks) => {
         const existingInd = prevTasks.findIndex((t) => t.id === task.id)
@@ -56,7 +56,7 @@ export function TaskSidebar(): React.JSX.Element {
     }
   }, [])
 
-  const handleCancel = async (taskId: string) => {
+  const handleCancel = async (taskId: string): Promise<void> => {
     try {
       if (window.api?.cancelTask) {
         await window.api.cancelTask(taskId)
@@ -133,7 +133,9 @@ export function TaskSidebar(): React.JSX.Element {
                 )}
 
                 {task.status === 'error' && (
-                  <div className="task-stats danger-text">{t('failed_status')}: {task.error}</div>
+                  <div className="task-stats danger-text">
+                    {t('failed_status')}: {task.error}
+                  </div>
                 )}
               </div>
             )

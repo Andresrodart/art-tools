@@ -14,27 +14,34 @@ const resources = {
       send_ipc: 'Send IPC',
       docs: 'Documentation',
       tool_file_organizer_title: 'File Organizer by Date Tree',
-      tool_file_organizer_desc: 'Sort messy directories into Year/Month/Day sub-folders instantly. Supports dry runs and specific file extensions.',
+      tool_file_organizer_desc:
+        'Sort messy directories into Year/Month/Day sub-folders instantly. Supports dry runs and specific file extensions.',
       tool_folder_metadata_title: 'Folder Metadata Appender',
-      tool_folder_metadata_desc: 'Recursively append total folder size and element counts to folder names. Easy clean up for huge directories.',
+      tool_folder_metadata_desc:
+        'Recursively append total folder size and element counts to folder names. Easy clean up for huge directories.',
       tool_threshold_merger_title: 'Threshold Merger',
-      tool_threshold_merger_desc: 'Recursively group and merge sparse folders until they reach a target item capacity.',
+      tool_threshold_merger_desc:
+        'Recursively group and merge sparse folders until they reach a target item capacity.',
       open_tool: 'Open Tool',
-      
+
       target_folder: 'Target Folder:',
       target_root_folder: 'Target Root Folder:',
       no_folder_selected: 'No folder selected...',
       browse: 'Browse...',
       dry_run: 'Dry Run (Simulate Changes)',
-      
+
       append_size: 'Append Dynamic Size Log',
-      append_size_help: 'Adds the total recursive size in dynamic units (e.g. "_1.45GB", "_500MB", "_12KB").',
+      append_size_help:
+        'Adds the total recursive size in dynamic units (e.g. "_1.45GB", "_500MB", "_12KB").',
       append_elements: 'Append Element Count',
-      append_elements_help: 'Adds the total recursive number of elements (files and subfolders) to the folder name (e.g. "_50").',
-      dry_run_help_meta: 'Preview the projected name changes below before actually renaming anything on your hard drive.',
+      append_elements_help:
+        'Adds the total recursive number of elements (files and subfolders) to the folder name (e.g. "_50").',
+      dry_run_help_meta:
+        'Preview the projected name changes below before actually renaming anything on your hard drive.',
       btn_sim_meta: 'Simulate Metadata Append',
       btn_exec_meta: 'Execute Rename Operations',
-      desc_meta: 'Recursively calculate the dynamic total size (GB, MB, KB) and element count of all folders inside a target directory, and append these metrics directly to the folder names.',
+      desc_meta:
+        'Recursively calculate the dynamic total size (GB, MB, KB) and element count of all folders inside a target directory, and append these metrics directly to the folder names.',
       open_target_folder: 'Open Target Folder',
 
       merge_under_x: 'Merge Elements Under (X):',
@@ -43,19 +50,23 @@ const resources = {
       max_elements_y: 'Max Elements in Merged Group (Y):',
       max_elements_y_help_1: 'Stop grouping when the combined folder reaches ',
       max_elements_y_help_2: ' items.',
-      dry_run_help_merge: 'Preview the projected merges below before actually moving any files on your hard drive.',
+      dry_run_help_merge:
+        'Preview the projected merges below before actually moving any files on your hard drive.',
       btn_sim_merge: 'Simulate Output',
       btn_exec_merge: 'Merge Folders Destructively',
-      desc_merge: 'Recursively merge small sibling folders into combined parent folders. Great for cleaning up directories fragmented by tons of tiny subfolders.',
+      desc_merge:
+        'Recursively merge small sibling folders into combined parent folders. Great for cleaning up directories fragmented by tons of tiny subfolders.',
 
       file_extensions: 'File Extensions:',
       all_files: 'All Files (*)',
       type_ext_placeholder: 'Type extension (e.g. .jpg) or select...',
       btn_add: 'Add',
-      dry_run_help_org: 'We strongly recommend running a dry run first to preview where files will be moved.',
+      dry_run_help_org:
+        'We strongly recommend running a dry run first to preview where files will be moved.',
       btn_sim_org: 'Simulate Organization',
       btn_exec_org: 'Execute Move Command',
-      desc_org: 'Organize files in a directory into Year/Month/Day folder structure based on their creation dates. Supports EXIF metadata, filename patterns, and file-system timestamps.',
+      desc_org:
+        'Organize files in a directory into Year/Month/Day folder structure based on their creation dates. Supports EXIF metadata, filename patterns, and file-system timestamps.',
       open_folder: 'Open Folder',
 
       input: 'Input',
@@ -84,11 +95,14 @@ const resources = {
       send_ipc: 'Enviar IPC',
       docs: 'Documentación',
       tool_file_organizer_title: 'Organizador de Archivos por Fecha',
-      tool_file_organizer_desc: 'Ordena directorios desordenados en subcarpetas de Año/Mes/Día al instante. Soporta simulaciones y extensiones de archivos específicas.',
+      tool_file_organizer_desc:
+        'Ordena directorios desordenados en subcarpetas de Año/Mes/Día al instante. Soporta simulaciones y extensiones de archivos específicas.',
       tool_folder_metadata_title: 'Anexador de Metadatos de Carpetas',
-      tool_folder_metadata_desc: 'Anexa recursivamente el tamaño total de la carpeta y el número de elementos a los nombres de las carpetas. Fácil limpieza para directorios enormes.',
+      tool_folder_metadata_desc:
+        'Anexa recursivamente el tamaño total de la carpeta y el número de elementos a los nombres de las carpetas. Fácil limpieza para directorios enormes.',
       tool_threshold_merger_title: 'Fusionador por Umbral',
-      tool_threshold_merger_desc: 'Agrupa y fusiona recursivamente carpetas escasas hasta que alcanzan una capacidad objetivo.',
+      tool_threshold_merger_desc:
+        'Agrupa y fusiona recursivamente carpetas escasas hasta que alcanzan una capacidad objetivo.',
       open_tool: 'Abrir Herramienta',
 
       target_folder: 'Carpeta de Destino:',
@@ -96,15 +110,19 @@ const resources = {
       no_folder_selected: 'Sin carpeta seleccionada...',
       browse: 'Explorar...',
       dry_run: 'Simulacro (Simular Cambios)',
-      
+
       append_size: 'Agregar Registro de Tamaño Dinámico',
-      append_size_help: 'Agrega el tamaño total recursivo en unidades dinámicas (ej. "_1.45GB", "_500MB", "_12KB").',
+      append_size_help:
+        'Agrega el tamaño total recursivo en unidades dinámicas (ej. "_1.45GB", "_500MB", "_12KB").',
       append_elements: 'Agregar Conteo de Elementos',
-      append_elements_help: 'Agrega el número total recursivo de elementos (archivos y subcarpetas) al nombre de la carpeta (ej. "_50").',
-      dry_run_help_meta: 'Previsualice los cambios de nombre proyectados antes de renombrar cualquier cosa en su disco duro.',
+      append_elements_help:
+        'Agrega el número total recursivo de elementos (archivos y subcarpetas) al nombre de la carpeta (ej. "_50").',
+      dry_run_help_meta:
+        'Previsualice los cambios de nombre proyectados antes de renombrar cualquier cosa en su disco duro.',
       btn_sim_meta: 'Simular Agregado de Metadatos',
       btn_exec_meta: 'Ejecutar Operaciones de Renombrado',
-      desc_meta: 'Calcula de forma recursiva el tamaño dinámico total (GB, MB, KB) y el número de elementos de todas las carpetas dentro de un directorio de destino, y anexa estas métricas directamente a los nombres de las carpetas.',
+      desc_meta:
+        'Calcula de forma recursiva el tamaño dinámico total (GB, MB, KB) y el número de elementos de todas las carpetas dentro de un directorio de destino, y anexa estas métricas directamente a los nombres de las carpetas.',
       open_target_folder: 'Abrir Carpeta de Destino',
 
       merge_under_x: 'Fusionar Elementos Menores a (X):',
@@ -113,19 +131,23 @@ const resources = {
       max_elements_y: 'Máximo de Elementos en Grupo Fusionado (Y):',
       max_elements_y_help_1: 'Detener la agrupación cuando la carpeta combinada alcance ',
       max_elements_y_help_2: ' elementos.',
-      dry_run_help_merge: 'Previsualice las fusiones proyectadas a continuación antes de mover cualquier archivo.',
+      dry_run_help_merge:
+        'Previsualice las fusiones proyectadas a continuación antes de mover cualquier archivo.',
       btn_sim_merge: 'Simular Salida',
       btn_exec_merge: 'Fusionar Carpetas Destructivamente',
-      desc_merge: 'Fusiona recursivamente pequeñas carpetas hermanas en carpetas principales combinadas. Ideal para limpiar directorios fragmentados por toneladas de pequeñas subcarpetas.',
+      desc_merge:
+        'Fusiona recursivamente pequeñas carpetas hermanas en carpetas principales combinadas. Ideal para limpiar directorios fragmentados por toneladas de pequeñas subcarpetas.',
 
       file_extensions: 'Extensiones de Archivo:',
       all_files: 'Todos los Archivos (*)',
       type_ext_placeholder: 'Escriba la extensión (ej. .jpg) o seleccione...',
       btn_add: 'Agregar',
-      dry_run_help_org: 'Recomendamos encarecidamente realizar un simulacro primero para previsualizar dónde se moverán los archivos.',
+      dry_run_help_org:
+        'Recomendamos encarecidamente realizar un simulacro primero para previsualizar dónde se moverán los archivos.',
       btn_sim_org: 'Simular Organización',
       btn_exec_org: 'Ejecutar Comando de Movimiento',
-      desc_org: 'Organice los archivos de un directorio en una estructura de carpetas de Año/Mes/Día según sus fechas de creación. Soporta metadatos EXIF, patrones de nombre de archivo y marcas de tiempo del sistema de archivos.',
+      desc_org:
+        'Organice los archivos de un directorio en una estructura de carpetas de Año/Mes/Día según sus fechas de creación. Soporta metadatos EXIF, patrones de nombre de archivo y marcas de tiempo del sistema de archivos.',
       open_folder: 'Abrir Carpeta',
 
       input: 'Entrada',

@@ -25,7 +25,7 @@ describe('Threshold Merger Service', () => {
     it('should return correct number of direct children', async () => {
       await fs.mkdir(path.join(tmpDir, 'folder1'))
       await fs.writeFile(path.join(tmpDir, 'file1.txt'), 'data')
-      
+
       const count = await getImmediateElementCount(tmpDir)
       expect(count).toBe(2)
     })
@@ -40,18 +40,29 @@ describe('Threshold Merger Service', () => {
       //  -> C (4 elements) -> C1.txt, C2.txt, C3.txt, C4.txt
       //  -> D (1 element)  -> D1.txt
       //  -> E (10 elements) -> Too big, should not be merged if X=5
-      
+
       const dirA = path.join(tmpDir, 'A')
       const dirB = path.join(tmpDir, 'B')
       const dirC = path.join(tmpDir, 'C')
       const dirD = path.join(tmpDir, 'D')
       const dirE = path.join(tmpDir, 'E')
 
-      await fs.mkdir(dirA); await fs.writeFile(path.join(dirA, 'A1.txt'), '') ; await fs.writeFile(path.join(dirA, 'A2.txt'), '')
-      await fs.mkdir(dirB); await fs.writeFile(path.join(dirB, 'B1.txt'), '') ; await fs.writeFile(path.join(dirB, 'B2.txt'), '') ; await fs.writeFile(path.join(dirB, 'B3.txt'), '')
-      await fs.mkdir(dirC); await fs.writeFile(path.join(dirC, 'C1.txt'), '') ; await fs.writeFile(path.join(dirC, 'C2.txt'), '') ; await fs.writeFile(path.join(dirC, 'C3.txt'), '') ; await fs.writeFile(path.join(dirC, 'C4.txt'), '')
-      await fs.mkdir(dirD); await fs.writeFile(path.join(dirD, 'D1.txt'), '')
-      await fs.mkdir(dirE); for(let i=0; i<10; i++) await fs.writeFile(path.join(dirE, `E${i}.txt`), '')
+      await fs.mkdir(dirA)
+      await fs.writeFile(path.join(dirA, 'A1.txt'), '')
+      await fs.writeFile(path.join(dirA, 'A2.txt'), '')
+      await fs.mkdir(dirB)
+      await fs.writeFile(path.join(dirB, 'B1.txt'), '')
+      await fs.writeFile(path.join(dirB, 'B2.txt'), '')
+      await fs.writeFile(path.join(dirB, 'B3.txt'), '')
+      await fs.mkdir(dirC)
+      await fs.writeFile(path.join(dirC, 'C1.txt'), '')
+      await fs.writeFile(path.join(dirC, 'C2.txt'), '')
+      await fs.writeFile(path.join(dirC, 'C3.txt'), '')
+      await fs.writeFile(path.join(dirC, 'C4.txt'), '')
+      await fs.mkdir(dirD)
+      await fs.writeFile(path.join(dirD, 'D1.txt'), '')
+      await fs.mkdir(dirE)
+      for (let i = 0; i < 10; i++) await fs.writeFile(path.join(dirE, `E${i}.txt`), '')
 
       const task = taskManager.createTask('thresholdMetadata')
 
@@ -69,8 +80,8 @@ describe('Threshold Merger Service', () => {
       // E (10) is >= X, so not merged at all.
 
       expect(results.length).toBe(2)
-      
-      const merges = results.map(r => path.basename(r.newPath)).sort()
+
+      const merges = results.map((r) => path.basename(r.newPath)).sort()
       expect(merges).toEqual(['A___B', 'C___D'])
 
       // Verify files were moved
@@ -92,8 +103,10 @@ describe('Threshold Merger Service', () => {
     it('should do nothing in a dry run', async () => {
       const dirA = path.join(tmpDir, 'A')
       const dirB = path.join(tmpDir, 'B')
-      await fs.mkdir(dirA); await fs.writeFile(path.join(dirA, 'A1.txt'), '')
-      await fs.mkdir(dirB); await fs.writeFile(path.join(dirB, 'B1.txt'), '')
+      await fs.mkdir(dirA)
+      await fs.writeFile(path.join(dirA, 'A1.txt'), '')
+      await fs.mkdir(dirB)
+      await fs.writeFile(path.join(dirB, 'B1.txt'), '')
 
       const task = taskManager.createTask('thresholdMetadata')
 
