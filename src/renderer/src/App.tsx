@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { TaskSidebar } from './components/layout/TaskSidebar'
 import { FileOrganizer } from './components/tools/FileOrganizer'
+import { Header } from './components/layout/Header'
+import { useHeaderStore } from './store/headerStore'
 
 interface ToolCardProps {
   title: string
@@ -30,6 +32,7 @@ function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [activeTool, setActiveTool] = useState<string | null>(null)
+  const { setTitle, setActions } = useHeaderStore()
 
   useEffect(() => {
     // Basic system theme detection
@@ -50,13 +53,23 @@ function App(): React.JSX.Element {
   }, [theme])
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
   }
 
   const toggleLanguage = () => {
     const newLang = i18n.language === 'en' ? 'es' : 'en'
     i18n.changeLanguage(newLang)
   }
+
+  useEffect(() => {
+    if (!activeTool) {
+      setTitle(t('app_title'))
+      setActions([
+        { label: t('lang_toggle'), onClick: toggleLanguage },
+        { label: t('theme_toggle'), onClick: toggleTheme }
+      ])
+    }
+  }, [activeTool, t, i18n.language, theme])
 
   const handlePing = () => {
     window.electron.ipcRenderer.send('ping')
@@ -90,17 +103,7 @@ function App(): React.JSX.Element {
 
   return (
     <div className="brutalist-container">
-      <header className="brutalist-header">
-        <h1>{t('app_title')}</h1>
-        <div className="controls-group">
-          <button className="brutalist-button" onClick={toggleLanguage}>
-            {t('lang_toggle')}
-          </button>
-          <button className="brutalist-button" onClick={toggleTheme}>
-            {t('theme_toggle')}
-          </button>
-        </div>
-      </header>
+      <Header />
 
       <main className="main-content">
         {activeTool ? (
