@@ -102,21 +102,21 @@ function App(): React.JSX.Element {
         ) : (
           <div className="gallery-grid">
             <ToolCard
-              title="File Organizer by Date Tree"
-              description="Sort messy directories into Year/Month/Day sub-folders instantly. Supports dry runs and specific file extensions."
-              actionText="Open Tool"
+              title={t('tool_file_organizer_title')}
+              description={t('tool_file_organizer_desc')}
+              actionText={t('open_tool')}
               onAction={() => setActiveTool('FileOrganizer')}
             />
             <ToolCard
-              title="Folder Metadata Appender"
-              description="Recursively append total folder size and element counts to folder names. Easy clean up for huge directories."
-              actionText="Open Tool"
+              title={t('tool_folder_metadata_title')}
+              description={t('tool_folder_metadata_desc')}
+              actionText={t('open_tool')}
               onAction={() => setActiveTool('FolderMetadata')}
             />
             <ToolCard
-              title="Threshold Merger"
-              description="Recursively group and merge sparse folders until they reach a target item capacity."
-              actionText="Open Tool"
+              title={t('tool_threshold_merger_title')}
+              description={t('tool_threshold_merger_desc')}
+              actionText={t('open_tool')}
               onAction={() => setActiveTool('ThresholdMerger')}
             />
           </div>

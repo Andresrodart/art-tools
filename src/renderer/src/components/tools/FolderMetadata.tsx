@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 
@@ -46,9 +47,10 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
   const setNavigation = useHeaderStore((state) => state.setNavigation)
   const setActions = useHeaderStore((state) => state.setActions)
   const reset = useHeaderStore((state) => state.reset)
+  const { t } = useTranslation()
 
   useEffect(() => {
-    setTitle('Folder Metadata Appender')
+    setTitle(t('tool_folder_metadata_title'))
     setNavigation(
       <button className="brutalist-button small" onClick={onBack}>
         &larr; Back
@@ -177,16 +179,16 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
   const inputSection = (
     <>
       <div className="control-group">
-        <label>Target Root Folder:</label>
+        <label>{t('target_root_folder')}</label>
         <div style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
             readOnly
-            value={targetFolder || 'No folder selected...'}
+            value={targetFolder || t('no_folder_selected')}
             className="brutalist-input flex-grow"
           />
           <button className="brutalist-button info" onClick={handleSelectFolder}>
-            Browse...
+            {t('browse')}
           </button>
         </div>
       </div>
@@ -198,10 +200,10 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
             checked={includeSize}
             onChange={(e) => setIncludeSize(e.target.checked)}
           />
-          <span className="checkbox-label">Append Dynamic Size Log</span>
+          <span className="checkbox-label">{t('append_size')}</span>
         </label>
         <small className="help-text">
-          Adds the total recursive size in dynamic units (e.g. "_1.45GB", "_500MB", "_12KB").
+          {t('append_size_help')}
         </small>
       </div>
 
@@ -212,11 +214,10 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
             checked={includeElements}
             onChange={(e) => setIncludeElements(e.target.checked)}
           />
-          <span className="checkbox-label">Append Element Count</span>
+          <span className="checkbox-label">{t('append_elements')}</span>
         </label>
         <small className="help-text">
-          Adds the total recursive number of elements (files and subfolders) to the folder name
-          (e.g. "_50").
+          {t('append_elements_help')}
         </small>
       </div>
 
@@ -227,11 +228,10 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
             checked={isDryRun}
             onChange={(e) => setIsDryRun(e.target.checked)}
           />
-          <span className="checkbox-label">Dry Run (Simulate Changes)</span>
+          <span className="checkbox-label">{t('dry_run')}</span>
         </label>
         <small className="help-text">
-          Preview the projected name changes below before actually renaming anything on your hard
-          drive.
+          {t('dry_run_help_meta')}
         </small>
       </div>
 
@@ -241,7 +241,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
           onClick={handleStartTask}
           disabled={!targetFolder || (!includeSize && !includeElements)}
         >
-          {isDryRun ? 'Simulate Metadata Append' : 'Execute Rename Operations'}
+          {isDryRun ? t('btn_sim_meta') : t('btn_exec_meta')}
         </button>
       </div>
     </>
@@ -350,7 +350,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
 
       <div className="tool-output-actions" style={{ marginTop: '20px' }}>
         <button className="brutalist-button success" onClick={handleOpenFolder}>
-          Open Target Folder
+          {t('open_target_folder')}
         </button>
       </div>
     </div>
@@ -358,7 +358,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
 
   return (
     <ToolView
-      description="Recursively calculate the dynamic total size (GB, MB, KB) and element count of all folders inside a target directory, and append these metrics directly to the folder names."
+      description={t('desc_meta')}
       inputSection={inputSection}
       progressSection={progressSection}
       outputSection={outputSection}

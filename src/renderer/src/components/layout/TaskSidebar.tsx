@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export interface TaskProgress {
   current: number
@@ -20,6 +21,7 @@ export interface Task {
 export function TaskSidebar(): React.JSX.Element {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (window.api?.getActiveTasks) {
@@ -61,8 +63,8 @@ export function TaskSidebar(): React.JSX.Element {
       }
       // Optimistic update
       setTasks((prev) =>
-        prev.map((t) =>
-          t.id === taskId ? { ...t, status: 'error', error: 'Cancelled by user' } : t
+        prev.map((tItem) =>
+          tItem.id === taskId ? { ...tItem, status: 'error', error: t('cancelled_by_user') } : tItem
         )
       )
     } catch (err) {
@@ -75,18 +77,18 @@ export function TaskSidebar(): React.JSX.Element {
   return (
     <>
       <div className="task-sidebar-toggle" onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? 'Close Tasks' : `Tasks (${activeCount})`}
+        {isOpen ? t('close_tasks') : `${t('tasks')} (${activeCount})`}
       </div>
 
       <div className={`task-sidebar ${isOpen ? 'open' : ''}`}>
         <div className="task-sidebar-header">
-          <h3>Background Tasks</h3>
+          <h3>{t('background_tasks')}</h3>
           <button className="brutalist-button" onClick={() => setIsOpen(false)}>
             X
           </button>
         </div>
         <div className="task-list">
-          {tasks.length === 0 && <p className="empty-state">No active tasks</p>}
+          {tasks.length === 0 && <p className="empty-state">{t('no_active_tasks')}</p>}
 
           {tasks.map((task) => {
             const pct =
@@ -115,23 +117,23 @@ export function TaskSidebar(): React.JSX.Element {
                       className="brutalist-button danger small"
                       onClick={() => handleCancel(task.id)}
                     >
-                      Cancel
+                      {t('cancel')}
                     </button>
                   </>
                 )}
 
                 {task.status === 'dry-run' && (
                   <div className="task-stats">
-                    <span className="warning-text">Dry Run Completed. Pending UI review.</span>
+                    <span className="warning-text">{t('dry_run_completed')}</span>
                   </div>
                 )}
 
                 {task.status === 'completed' && (
-                  <div className="task-stats success-text">Completed successfully.</div>
+                  <div className="task-stats success-text">{t('completed_success')}</div>
                 )}
 
                 {task.status === 'error' && (
-                  <div className="task-stats danger-text">Failed: {task.error}</div>
+                  <div className="task-stats danger-text">{t('failed_status')}: {task.error}</div>
                 )}
               </div>
             )

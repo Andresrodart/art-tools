@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 
@@ -44,9 +45,10 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   const setNavigation = useHeaderStore((state) => state.setNavigation)
   const setActions = useHeaderStore((state) => state.setActions)
   const reset = useHeaderStore((state) => state.reset)
+  const { t } = useTranslation()
 
   useEffect(() => {
-    setTitle('Threshold Merger')
+    setTitle(t('tool_threshold_merger_title'))
     setNavigation(
       <button className="brutalist-button small" onClick={onBack}>
         &larr; Back
@@ -181,23 +183,23 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   const inputSection = (
     <>
       <div className="control-group">
-        <label>Target Root Folder:</label>
+        <label>{t('target_root_folder')}</label>
         <div style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
             readOnly
-            value={targetFolder || 'No folder selected...'}
+            value={targetFolder || t('no_folder_selected')}
             className="brutalist-input flex-grow"
           />
           <button className="brutalist-button info" onClick={handleSelectFolder}>
-            Browse...
+            {t('browse')}
           </button>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
         <div className="control-group" style={{ flex: 1, minWidth: '200px' }}>
-          <label>Merge Elements Under (X):</label>
+          <label>{t('merge_under_x')}</label>
           <input
             type="number"
             min={1}
@@ -206,12 +208,12 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
             className="brutalist-input"
           />
           <small className="help-text">
-            Folders with fewer than <b>{thresholdX}</b> elements will be merged with their siblings.
+            {t('merge_under_x_help_1')}<b>{thresholdX}</b>{t('merge_under_x_help_2')}
           </small>
         </div>
 
         <div className="control-group" style={{ flex: 1, minWidth: '200px' }}>
-          <label>Max Elements in Merged Group (Y):</label>
+          <label>{t('max_elements_y')}</label>
           <input
             type="number"
             min={2}
@@ -220,7 +222,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
             className="brutalist-input"
           />
           <small className="help-text">
-            Stop grouping when the combined folder reaches <b>{maxCapacityY}</b> items.
+            {t('max_elements_y_help_1')}<b>{maxCapacityY}</b>{t('max_elements_y_help_2')}
           </small>
         </div>
       </div>
@@ -232,10 +234,10 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
             checked={isDryRun}
             onChange={(e) => setIsDryRun(e.target.checked)}
           />
-          <span className="checkbox-label">Dry Run (Simulate Changes)</span>
+          <span className="checkbox-label">{t('dry_run')}</span>
         </label>
         <small className="help-text">
-          Preview the projected merges below before actually moving any files on your hard drive.
+          {t('dry_run_help_merge')}
         </small>
       </div>
 
@@ -245,7 +247,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
           onClick={handleStartTask}
           disabled={!targetFolder}
         >
-          {isDryRun ? 'Simulate Output' : 'Merge Folders Destructively'}
+          {isDryRun ? t('btn_sim_merge') : t('btn_exec_merge')}
         </button>
       </div>
     </>
@@ -334,7 +336,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
 
       <div className="tool-output-actions" style={{ marginTop: '20px' }}>
         <button className="brutalist-button success" onClick={handleOpenFolder}>
-          Open Target Folder
+          {t('open_target_folder')}
         </button>
       </div>
     </div>
@@ -342,7 +344,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
 
   return (
     <ToolView
-      description="Recursively merge small sibling folders into combined parent folders. Great for cleaning up directories fragmented by tons of tiny subfolders."
+      description={t('desc_merge')}
       inputSection={inputSection}
       progressSection={progressSection}
       outputSection={outputSection}

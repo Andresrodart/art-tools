@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 
@@ -74,6 +75,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const setNavigation = useHeaderStore((state) => state.setNavigation)
   const setActions = useHeaderStore((state) => state.setActions)
   const reset = useHeaderStore((state) => state.reset)
+  const { t } = useTranslation()
 
   const addExtension = (ext: string) => {
     let newExt = ext.trim().toLowerCase()
@@ -104,7 +106,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   }
 
   useEffect(() => {
-    setTitle('File Organizer by Date Tree')
+    setTitle(t('tool_file_organizer_title'))
     setNavigation(
       <button className="brutalist-button small" onClick={onBack}>
         &larr; Back
@@ -115,7 +117,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     return () => {
       reset()
     }
-  }, [onBack])
+  }, [onBack, setTitle, setNavigation, setActions, reset, t])
 
   // Subscribe to task progress
   useEffect(() => {
@@ -230,22 +232,22 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const inputSection = (
     <>
       <div className="control-group">
-        <label>Target Folder:</label>
+        <label>{t('target_folder')}</label>
         <div style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
             readOnly
-            value={targetFolder || 'No folder selected...'}
+            value={targetFolder || t('no_folder_selected')}
             className="brutalist-input flex-grow"
           />
           <button className="brutalist-button info" onClick={handleSelectFolder}>
-            Browse...
+            {t('browse')}
           </button>
         </div>
       </div>
 
       <div className="control-group">
-        <label>File Extensions:</label>
+        <label>{t('file_extensions')}</label>
 
         {/* Selected Extension Chips */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
@@ -265,7 +267,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
                 boxShadow: '2px 2px 0 var(--border-color, #000)'
               }}
             >
-              {ext === '*' ? 'All Files (*)' : ext}
+              {ext === '*' ? t('all_files') : ext}
               <button
                 onClick={(e) => {
                   e.preventDefault()
@@ -301,7 +303,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
               }}
               onFocus={() => setShowExtDropdown(true)}
               onBlur={() => setTimeout(() => setShowExtDropdown(false), 200)}
-              placeholder="Type extension (e.g. .jpg) or select..."
+              placeholder={t('type_ext_placeholder')}
               className="brutalist-input flex-grow"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && extensionInput) {
@@ -322,7 +324,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
               }}
               type="button"
             >
-              {extensionInput ? 'Add' : showExtDropdown ? '▴' : '▾'}
+              {extensionInput ? t('btn_add') : showExtDropdown ? '▴' : '▾'}
             </button>
           </div>
 
@@ -376,7 +378,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
                   }}
                   type="button"
                 >
-                  {ext === '*' ? 'All (*)' : ext}
+                  {ext === '*' ? t('all_files') : ext}
                 </button>
               ))}
               {extensionInput &&
@@ -410,10 +412,10 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
             checked={isDryRun}
             onChange={(e) => setIsDryRun(e.target.checked)}
           />
-          <span className="checkbox-label">Dry Run (Simulate Changes)</span>
+          <span className="checkbox-label">{t('dry_run')}</span>
         </label>
         <small className="help-text">
-          We strongly recommend running a dry run first to preview where files will be moved.
+          {t('dry_run_help_org')}
         </small>
       </div>
 
@@ -423,7 +425,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
           onClick={handleStartOrganize}
           disabled={!targetFolder}
         >
-          {isDryRun ? 'Simulate Organization' : 'Execute Move Command'}
+          {isDryRun ? t('btn_sim_org') : t('btn_exec_org')}
         </button>
       </div>
     </>
@@ -485,7 +487,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
       <div className="tool-output-actions">
         <button className="brutalist-button success" onClick={handleOpenFolder}>
-          Open Folder
+          {t('open_folder')}
         </button>
       </div>
     </div>
@@ -493,7 +495,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
   return (
     <ToolView
-      description="Organize files in a directory into Year/Month/Day folder structure based on their creation dates. Supports EXIF metadata, filename patterns, and file-system timestamps."
+      description={t('desc_org')}
       inputSection={inputSection}
       progressSection={progressSection}
       outputSection={outputSection}

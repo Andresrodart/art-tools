@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface ToolViewProps {
   description: string
@@ -14,6 +15,8 @@ export function ToolView({
   progressSection,
   outputSection
 }: ToolViewProps): React.JSX.Element {
+  const { t } = useTranslation()
+
   return (
     <div className="tool-view">
       {/* ── Description ── */}
@@ -24,7 +27,7 @@ export function ToolView({
       {/* ── Input ── */}
       {inputSection && (
         <div className="tool-view-section">
-          <h3 className="tool-view-section-title">Input</h3>
+          <h3 className="tool-view-section-title">{t('input')}</h3>
           <div className="tool-view-section-body">{inputSection}</div>
         </div>
       )}
@@ -32,7 +35,7 @@ export function ToolView({
       {/* ── Progress ── */}
       {progressSection && (
         <div className="tool-view-section">
-          <h3 className="tool-view-section-title">Progress</h3>
+          <h3 className="tool-view-section-title">{t('progress')}</h3>
           <div className="tool-view-section-body">{progressSection}</div>
         </div>
       )}
@@ -40,7 +43,7 @@ export function ToolView({
       {/* ── Output ── */}
       {outputSection && (
         <div className="tool-view-section">
-          <h3 className="tool-view-section-title">Output</h3>
+          <h3 className="tool-view-section-title">{t('output')}</h3>
           <div className="tool-view-section-body">{outputSection}</div>
         </div>
       )}
