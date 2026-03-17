@@ -25,13 +25,25 @@ interface OrganizeResult {
   error?: string
 }
 
+const COMMON_EXTENSIONS = [
+  '*',
+  '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp',
+  '.mp4', '.mov', '.avi', '.mkv',
+  '.mp3', '.wav', '.flac',
+  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+  '.txt', '.md', '.csv',
+  '.zip', '.rar', '.7z', '.tar.gz'
+]
+
 interface FileOrganizerProps {
   onBack: () => void
 }
 
 export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
-  const [fileTypes, setFileTypes] = useState<string>('*')
+  const [selectedExtensions, setSelectedExtensions] = useState<string[]>(['*'])
+  const [extensionInput, setExtensionInput] = useState<string>('')
+  const [showExtDropdown, setShowExtDropdown] = useState<boolean>(false)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
   const [taskId, setTaskId] = useState<string | null>(null)
   const [taskData, setTaskData] = useState<Task | null>(null)
@@ -41,6 +53,34 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const setNavigation = useHeaderStore((state) => state.setNavigation)
   const setActions = useHeaderStore((state) => state.setActions)
   const reset = useHeaderStore((state) => state.reset)
+
+  const addExtension = (ext: string) => {
+    let newExt = ext.trim().toLowerCase()
+    if (!newExt.startsWith('.') && newExt !== '*') {
+      newExt = `.${newExt}`
+    }
+    
+    if (newExt === '*') {
+      setSelectedExtensions(['*'])
+    } else {
+      setSelectedExtensions(prev => {
+        const filtered = prev.filter(e => e !== '*')
+        if (!filtered.includes(newExt)) {
+          return [...filtered, newExt]
+        }
+        return prev
+      })
+    }
+    setExtensionInput('')
+    setShowExtDropdown(false)
+  }
+
+  const removeExtension = (ext: string) => {
+    setSelectedExtensions(prev => {
+      const newExts = prev.filter(e => e !== ext)
+      return newExts.length > 0 ? newExts : ['*']
+    })
+  }
 
   useEffect(() => {
     setTitle('File Organizer')
@@ -58,7 +98,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
   // Subscribe to task progress
   useEffect(() => {
-    const handleProgress = (_event: any, updatedTask: Task) => {
+    const handleProgress = (_event: any, updatedTask: any) => {
       if (taskId && updatedTask.id === taskId) {
         setTaskData(updatedTask)
 
@@ -120,7 +160,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     setTaskData(null)
 
     try {
-      const typesArray = fileTypes.split(',').map((s) => s.trim()).filter(Boolean)
+      const typesArray = selectedExtensions.length > 0 ? selectedExtensions : ['*']
 
       // @ts-ignore
       if (!window.api?.startOrganizeTask) throw new Error('API not available')
@@ -182,14 +222,152 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
       </div>
 
       <div className="control-group">
-        <label>File Extensions (comma separated, or * for all):</label>
-        <input
-          type="text"
-          value={fileTypes}
-          onChange={(e) => setFileTypes(e.target.value)}
-          placeholder=".jpg, .png, .mp4"
-          className="brutalist-input"
-        />
+        <label>File Extensions:</label>
+        
+        {/* Selected Extension Chips */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+          {selectedExtensions.map(ext => (
+            <div 
+              key={ext} 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                background: 'var(--bg-tertiary, #e0e0e0)', 
+                padding: '4px 8px', 
+                border: '2px solid var(--border-color, #000)', 
+                fontWeight: 'bold',
+                fontFamily: 'var(--font-mono, monospace)',
+                boxShadow: '2px 2px 0 var(--border-color, #000)'
+              }}
+            >
+              {ext === '*' ? 'All Files (*)' : ext}
+              <button 
+                onClick={(e) => {
+                  e.preventDefault()
+                  removeExtension(ext)
+                }} 
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  cursor: 'pointer', 
+                  padding: '0 4px', 
+                  fontWeight: 'bold',
+                  fontSize: '1.2rem',
+                  lineHeight: '1',
+                  color: 'inherit'
+                }}
+                title="Remove"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Dropdown Input */}
+        <div style={{ position: 'relative' }} className="brutalist-dropdown-container">
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              type="text"
+              value={extensionInput}
+              onChange={(e) => {
+                setExtensionInput(e.target.value)
+                setShowExtDropdown(true)
+              }}
+              onFocus={() => setShowExtDropdown(true)}
+              onBlur={() => setTimeout(() => setShowExtDropdown(false), 200)}
+              placeholder="Type extension (e.g. .jpg) or select..."
+              className="brutalist-input flex-grow"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && extensionInput) {
+                  e.preventDefault()
+                  addExtension(extensionInput)
+                }
+              }}
+            />
+            <button 
+              className="brutalist-button" 
+              onClick={(e) => {
+                e.preventDefault()
+                if (extensionInput) {
+                   addExtension(extensionInput)
+                } else {
+                   setShowExtDropdown(!showExtDropdown)
+                }
+              }}
+              type="button"
+            >
+              {extensionInput ? 'Add' : (showExtDropdown ? '▴' : '▾')}
+            </button>
+          </div>
+          
+          {showExtDropdown && (
+            <div 
+              className="dropdown-menu" 
+              style={{ 
+                position: 'absolute', 
+                top: 'calc(100% + 4px)', 
+                left: 0, 
+                right: 0, 
+                zIndex: 10, 
+                background: 'var(--bg-primary, #fff)', 
+                border: '2px solid var(--border-color, #000)', 
+                maxHeight: '200px', 
+                overflowY: 'auto', 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', 
+                padding: '8px', 
+                gap: '8px',
+                boxShadow: '4px 4px 0 var(--border-color, #000)'
+              }}
+            >
+              <style>{`
+                .ext-option-btn:hover {
+                  background: var(--bg-secondary, #f0f0f0);
+                }
+                .ext-option-btn {
+                  font-family: var(--font-mono, monospace);
+                  text-align: center;
+                  padding: 8px 4px;
+                  border: 2px solid var(--border-color, #000);
+                  background: var(--bg-tertiary, #e0e0e0);
+                  cursor: pointer;
+                  font-weight: bold;
+                  transition: all 0.2s;
+                }
+              `}</style>
+              {COMMON_EXTENSIONS
+                .filter(ext => !selectedExtensions.includes(ext) && (extensionInput ? ext.includes(extensionInput.toLowerCase()) : true))
+                .map(ext => (
+                  <button
+                    key={ext}
+                    className="ext-option-btn"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      addExtension(ext)
+                    }}
+                    type="button"
+                  >
+                    {ext === '*' ? 'All (*)' : ext}
+                  </button>
+              ))}
+              {extensionInput && !COMMON_EXTENSIONS.includes(extensionInput.toLowerCase()) && !COMMON_EXTENSIONS.includes(`.${extensionInput.toLowerCase()}`) && (
+                <button
+                  className="ext-option-btn"
+                  style={{ gridColumn: '1 / -1', background: 'var(--accent-primary, #ffd166)' }}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    addExtension(extensionInput)
+                  }}
+                  type="button"
+                >
+                  Add custom: "{extensionInput.startsWith('.') || extensionInput === '*' ? extensionInput : `.${extensionInput}`}"
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="control-group check-group">
