@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { TaskSidebar } from './components/layout/TaskSidebar'
 import { FileOrganizer } from './components/tools/FileOrganizer'
 import { FolderMetadata } from './components/tools/FolderMetadata'
+import { ThresholdMerger } from './components/tools/ThresholdMerger'
 import { Header } from './components/layout/Header'
 import { useHeaderStore } from './store/headerStore'
 
@@ -96,6 +97,7 @@ function App(): React.JSX.Element {
           <div className="active-tool-view">
             {activeTool === 'FileOrganizer' && <FileOrganizer onBack={handleCloseTool} />}
             {activeTool === 'FolderMetadata' && <FolderMetadata onBack={handleCloseTool} />}
+            {activeTool === 'ThresholdMerger' && <ThresholdMerger onBack={handleCloseTool} />}
           </div>
         ) : (
           <div className="gallery-grid">
@@ -110,6 +112,12 @@ function App(): React.JSX.Element {
               description="Recursively append total folder size and element counts to folder names. Easy clean up for huge directories."
               actionText="Open Tool"
               onAction={() => setActiveTool('FolderMetadata')}
+            />
+            <ToolCard
+              title="Threshold Merger"
+              description="Recursively group and merge sparse folders until they reach a target item capacity."
+              actionText="Open Tool"
+              onAction={() => setActiveTool('ThresholdMerger')}
             />
           </div>
         )}

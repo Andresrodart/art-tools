@@ -25,6 +25,12 @@ const api = {
       includeElements,
       isDryRun
     ),
+  startThresholdMergerTask: (
+    folderPath: string,
+    thresholdX: number,
+    maxCapacityY: number,
+    isDryRun: boolean
+  ) => ipcRenderer.invoke('task:start-threshold-merger', folderPath, thresholdX, maxCapacityY, isDryRun),
   getActiveTasks: () => ipcRenderer.invoke('task:get-active'),
   cancelTask: (taskId: string) => ipcRenderer.invoke('task:cancel', taskId),
   onTaskProgress: (callback: (event: any, task: any) => void) =>

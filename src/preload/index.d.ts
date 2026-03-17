@@ -21,6 +21,12 @@ declare global {
         includeElements: boolean,
         isDryRun: boolean
       ) => Promise<string>
+      startThresholdMergerTask: (
+        folderPath: string,
+        thresholdX: number,
+        maxCapacityY: number,
+        isDryRun: boolean
+      ) => Promise<string>
       getActiveTasks: () => Promise<unknown[]>
       cancelTask: (taskId: string) => Promise<boolean>
       onTaskProgress: (

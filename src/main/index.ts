@@ -6,6 +6,7 @@ import icon from '../../resources/icon.png?asset'
 import { taskManager } from './services/TaskManager'
 import { organizeFilesTask, OrganizeOptions } from './services/organizeFiles'
 import { folderMetadataTask } from './services/folderMetadata'
+import { thresholdMergerTask } from './services/thresholdMerger'
 
 function createWindow(): void {
   // Create the browser window.
@@ -156,6 +157,31 @@ app.whenReady().then(() => {
     taskManager.cancelTask(taskId)
     return true
   })
+
+  // --------------- Threshold Merger ----------------
+  ipcMain.handle(
+    'task:start-threshold-merger',
+    async (
+      _event,
+      rootPath: string,
+      thresholdX: number,
+      maxCapacityY: number,
+      isDryRun: boolean
+    ) => {
+      const task = taskManager.createTask('thresholdMerger')
+      
+      thresholdMergerTask(task.id, {
+        rootPath,
+        thresholdX,
+        maxCapacityY,
+        isDryRun
+      }).catch((err) => {
+        console.error('Threshold Merger background error:', err)
+      })
+
+      return task.id
+    }
+  )
 
   createWindow()
 
