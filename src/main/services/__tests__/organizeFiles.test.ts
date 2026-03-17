@@ -47,7 +47,10 @@ describe('File Organizer Utility Functions', () => {
 
     it('should append _1 on first collision', () => {
       let calls = 0
-      const mock = jest.fn(() => { calls++; return calls === 1 })
+      const mock = jest.fn(() => {
+        calls++
+        return calls === 1
+      })
       const dest = path.join('folder', 'file.jpg')
       expect(getUniquePath(dest, mock)).toBe(path.join('folder', 'file_1.jpg'))
       expect(mock).toHaveBeenCalledTimes(2)
@@ -55,7 +58,10 @@ describe('File Organizer Utility Functions', () => {
 
     it('should keep incrementing until a free slot', () => {
       let calls = 0
-      const mock = jest.fn(() => { calls++; return calls <= 3 })
+      const mock = jest.fn(() => {
+        calls++
+        return calls <= 3
+      })
       const dest = path.join('folder', 'file.jpg')
       expect(getUniquePath(dest, mock)).toBe(path.join('folder', 'file_3.jpg'))
       expect(mock).toHaveBeenCalledTimes(4)

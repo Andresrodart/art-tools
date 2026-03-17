@@ -27,12 +27,33 @@ interface OrganizeResult {
 
 const COMMON_EXTENSIONS = [
   '*',
-  '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp',
-  '.mp4', '.mov', '.avi', '.mkv',
-  '.mp3', '.wav', '.flac',
-  '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-  '.txt', '.md', '.csv',
-  '.zip', '.rar', '.7z', '.tar.gz'
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.gif',
+  '.svg',
+  '.webp',
+  '.mp4',
+  '.mov',
+  '.avi',
+  '.mkv',
+  '.mp3',
+  '.wav',
+  '.flac',
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.ppt',
+  '.pptx',
+  '.txt',
+  '.md',
+  '.csv',
+  '.zip',
+  '.rar',
+  '.7z',
+  '.tar.gz'
 ]
 
 interface FileOrganizerProps {
@@ -59,12 +80,12 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     if (!newExt.startsWith('.') && newExt !== '*') {
       newExt = `.${newExt}`
     }
-    
+
     if (newExt === '*') {
       setSelectedExtensions(['*'])
     } else {
-      setSelectedExtensions(prev => {
-        const filtered = prev.filter(e => e !== '*')
+      setSelectedExtensions((prev) => {
+        const filtered = prev.filter((e) => e !== '*')
         if (!filtered.includes(newExt)) {
           return [...filtered, newExt]
         }
@@ -76,8 +97,8 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   }
 
   const removeExtension = (ext: string) => {
-    setSelectedExtensions(prev => {
-      const newExts = prev.filter(e => e !== ext)
+    setSelectedExtensions((prev) => {
+      const newExts = prev.filter((e) => e !== ext)
       return newExts.length > 0 ? newExts : ['*']
     })
   }
@@ -195,7 +216,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
   const isFinished =
     taskData &&
-    (taskData.status === 'completed' || taskData.status === 'error' || taskData.status === 'dry-run')
+    (taskData.status === 'completed' ||
+      taskData.status === 'error' ||
+      taskData.status === 'dry-run')
 
   // ── Result summary ──
   const results = taskData?.result ?? []
@@ -223,35 +246,36 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
       <div className="control-group">
         <label>File Extensions:</label>
-        
+
         {/* Selected Extension Chips */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-          {selectedExtensions.map(ext => (
-            <div 
-              key={ext} 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                background: 'var(--bg-tertiary, #e0e0e0)', 
-                padding: '4px 8px', 
-                border: '2px solid var(--border-color, #000)', 
+          {selectedExtensions.map((ext) => (
+            <div
+              key={ext}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'var(--bg-tertiary, #555)',
+                color: 'var(--text-tertiary, #fff)',
+                padding: '4px 8px',
+                border: '2px solid var(--border-color, #000)',
                 fontWeight: 'bold',
                 fontFamily: 'var(--font-mono, monospace)',
                 boxShadow: '2px 2px 0 var(--border-color, #000)'
               }}
             >
               {ext === '*' ? 'All Files (*)' : ext}
-              <button 
+              <button
                 onClick={(e) => {
                   e.preventDefault()
                   removeExtension(ext)
-                }} 
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  cursor: 'pointer', 
-                  padding: '0 4px', 
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0 4px',
                   fontWeight: 'bold',
                   fontSize: '1.2rem',
                   lineHeight: '1',
@@ -286,38 +310,38 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
                 }
               }}
             />
-            <button 
-              className="brutalist-button" 
+            <button
+              className="brutalist-button"
               onClick={(e) => {
                 e.preventDefault()
                 if (extensionInput) {
-                   addExtension(extensionInput)
+                  addExtension(extensionInput)
                 } else {
-                   setShowExtDropdown(!showExtDropdown)
+                  setShowExtDropdown(!showExtDropdown)
                 }
               }}
               type="button"
             >
-              {extensionInput ? 'Add' : (showExtDropdown ? '▴' : '▾')}
+              {extensionInput ? 'Add' : showExtDropdown ? '▴' : '▾'}
             </button>
           </div>
-          
+
           {showExtDropdown && (
-            <div 
-              className="dropdown-menu" 
-              style={{ 
-                position: 'absolute', 
-                top: 'calc(100% + 4px)', 
-                left: 0, 
-                right: 0, 
-                zIndex: 10, 
-                background: 'var(--bg-primary, #fff)', 
-                border: '2px solid var(--border-color, #000)', 
-                maxHeight: '200px', 
-                overflowY: 'auto', 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', 
-                padding: '8px', 
+            <div
+              className="dropdown-menu"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0,
+                right: 0,
+                zIndex: 10,
+                background: 'var(--bg-primary, #fff)',
+                border: '2px solid var(--border-color, #000)',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                padding: '8px',
                 gap: '8px',
                 boxShadow: '4px 4px 0 var(--border-color, #000)'
               }}
@@ -331,40 +355,49 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
                   text-align: center;
                   padding: 8px 4px;
                   border: 2px solid var(--border-color, #000);
-                  background: var(--bg-tertiary, #e0e0e0);
+                  background: var(--bg-tertiary, #555);
+                  color: var(--text-tertiary, #fff);
                   cursor: pointer;
                   font-weight: bold;
                   transition: all 0.2s;
                 }
               `}</style>
-              {COMMON_EXTENSIONS
-                .filter(ext => !selectedExtensions.includes(ext) && (extensionInput ? ext.includes(extensionInput.toLowerCase()) : true))
-                .map(ext => (
-                  <button
-                    key={ext}
-                    className="ext-option-btn"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      addExtension(ext)
-                    }}
-                    type="button"
-                  >
-                    {ext === '*' ? 'All (*)' : ext}
-                  </button>
-              ))}
-              {extensionInput && !COMMON_EXTENSIONS.includes(extensionInput.toLowerCase()) && !COMMON_EXTENSIONS.includes(`.${extensionInput.toLowerCase()}`) && (
+              {COMMON_EXTENSIONS.filter(
+                (ext) =>
+                  !selectedExtensions.includes(ext) &&
+                  (extensionInput ? ext.includes(extensionInput.toLowerCase()) : true)
+              ).map((ext) => (
                 <button
+                  key={ext}
                   className="ext-option-btn"
-                  style={{ gridColumn: '1 / -1', background: 'var(--accent-primary, #ffd166)' }}
                   onClick={(e) => {
                     e.preventDefault()
-                    addExtension(extensionInput)
+                    addExtension(ext)
                   }}
                   type="button"
                 >
-                  Add custom: "{extensionInput.startsWith('.') || extensionInput === '*' ? extensionInput : `.${extensionInput}`}"
+                  {ext === '*' ? 'All (*)' : ext}
                 </button>
-              )}
+              ))}
+              {extensionInput &&
+                !COMMON_EXTENSIONS.includes(extensionInput.toLowerCase()) &&
+                !COMMON_EXTENSIONS.includes(`.${extensionInput.toLowerCase()}`) && (
+                  <button
+                    className="ext-option-btn"
+                    style={{ gridColumn: '1 / -1', background: 'var(--accent-primary, #ffd166)' }}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      addExtension(extensionInput)
+                    }}
+                    type="button"
+                  >
+                    Add custom: &quot;
+                    {extensionInput.startsWith('.') || extensionInput === '*'
+                      ? extensionInput
+                      : `.${extensionInput}`}
+                    &quot;
+                  </button>
+                )}
             </div>
           )}
         </div>
@@ -396,32 +429,29 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     </>
   )
 
-  const progressSection =
-    taskData ? (
-      <>
-        <div className="tool-progress-bar-container">
-          <div className="tool-progress-bar-fill" style={{ width: `${pct}%` }} />
-        </div>
-        <div className="tool-progress-stats">
-          <span>
-            {pct}% — {taskData.progress.current} / {taskData.progress.total} files
-          </span>
-          <span style={{ textTransform: 'uppercase', fontSize: '0.8rem' }}>
-            {taskData.status}
-          </span>
-        </div>
+  const progressSection = taskData ? (
+    <>
+      <div className="tool-progress-bar-container">
+        <div className="tool-progress-bar-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="tool-progress-stats">
+        <span>
+          {pct}% — {taskData.progress.current} / {taskData.progress.total} files
+        </span>
+        <span style={{ textTransform: 'uppercase', fontSize: '0.8rem' }}>{taskData.status}</span>
+      </div>
 
-        {logEntries.length > 0 && (
-          <div className="tool-log-area" ref={logRef}>
-            {logEntries.map((entry, i) => (
-              <div key={i} className="log-entry">
-                {entry}
-              </div>
-            ))}
-          </div>
-        )}
-      </>
-    ) : null
+      {logEntries.length > 0 && (
+        <div className="tool-log-area" ref={logRef}>
+          {logEntries.map((entry, i) => (
+            <div key={i} className="log-entry">
+              {entry}
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  ) : null
 
   const outputSection = isFinished ? (
     <div className="tool-output-summary">
@@ -429,7 +459,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
         <>
           <div className="result-stat">
             <span className="stat-icon">✅</span>
-            <span>{successCount} file(s) {isDryRun ? 'would be moved' : 'moved'} successfully</span>
+            <span>
+              {successCount} file(s) {isDryRun ? 'would be moved' : 'moved'} successfully
+            </span>
           </div>
           {failCount > 0 && (
             <div className="result-stat">

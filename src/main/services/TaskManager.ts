@@ -41,7 +41,7 @@ class TaskManager extends EventEmitter {
     return task
   }
 
-  updateTaskStatus(id: string, status: TaskStatus, error?: string) {
+  updateTaskStatus(id: string, status: TaskStatus, error?: string): void {
     const task = this.tasks.get(id)
     if (task) {
       task.status = status
@@ -51,7 +51,7 @@ class TaskManager extends EventEmitter {
     }
   }
 
-  updateTaskProgress(id: string, progress: Partial<TaskProgress>) {
+  updateTaskProgress(id: string, progress: Partial<TaskProgress>): void {
     const task = this.tasks.get(id)
     if (task) {
       task.progress = { ...task.progress, ...progress }
@@ -60,7 +60,7 @@ class TaskManager extends EventEmitter {
     }
   }
 
-  completeTask(id: string, result?: any) {
+  completeTask(id: string, result?: any): void {
     const task = this.tasks.get(id)
     if (task) {
       task.status = 'completed'
@@ -80,9 +80,12 @@ class TaskManager extends EventEmitter {
     return Array.from(this.tasks.values()).sort((a, b) => b.createdAt - a.createdAt)
   }
 
-  cancelTask(id: string) {
+  cancelTask(id: string): void {
     const task = this.tasks.get(id)
-    if (task && (task.status === 'running' || task.status === 'pending' || task.status === 'dry-run')) {
+    if (
+      task &&
+      (task.status === 'running' || task.status === 'pending' || task.status === 'dry-run')
+    ) {
       task.status = 'error'
       task.error = 'Task cancelled by user'
       task.updatedAt = Date.now()

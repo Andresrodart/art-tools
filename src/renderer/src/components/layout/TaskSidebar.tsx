@@ -23,7 +23,8 @@ export function TaskSidebar(): React.JSX.Element {
 
   useEffect(() => {
     if (window.api?.getActiveTasks) {
-      window.api.getActiveTasks()
+      window.api
+        .getActiveTasks()
         .then((activeTasks: unknown) => setTasks((activeTasks as Task[]) || []))
         .catch((err: unknown) => console.error('Failed to fetch tasks', err))
     }

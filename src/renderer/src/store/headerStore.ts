@@ -23,7 +23,7 @@ const initialState = {
   title: 'Tool Gallery',
   navigation: null,
   snippets: null,
-  actions: [],
+  actions: []
 }
 
 export const useHeaderStore = create<HeaderState>((set) => ({
@@ -32,5 +32,5 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   setNavigation: (navigation) => set({ navigation }),
   setSnippets: (snippets) => set({ snippets }),
   setActions: (actions) => set({ actions }),
-  reset: () => set(initialState),
+  reset: () => set(initialState)
 }))
