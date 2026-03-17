@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { ToolView } from '../layout/ToolView'
+import { useHeaderStore } from '../../store/headerStore'
 
 interface TaskProgress {
   current: number
@@ -36,6 +37,24 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const [taskData, setTaskData] = useState<Task | null>(null)
   const [logEntries, setLogEntries] = useState<string[]>([])
   const logRef = useRef<HTMLDivElement>(null)
+  const setTitle = useHeaderStore((state) => state.setTitle)
+  const setNavigation = useHeaderStore((state) => state.setNavigation)
+  const setActions = useHeaderStore((state) => state.setActions)
+  const reset = useHeaderStore((state) => state.reset)
+
+  useEffect(() => {
+    setTitle('File Organizer')
+    setNavigation(
+      <button className="brutalist-button small" onClick={onBack}>
+        &larr; Back
+      </button>
+    )
+    setActions([])
+
+    return () => {
+      reset()
+    }
+  }, [onBack])
 
   // Subscribe to task progress
   useEffect(() => {
@@ -57,11 +76,15 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     }
 
     // @ts-ignore
-    window.api.onTaskProgress(handleProgress)
+    if (window.api?.onTaskProgress) {
+      window.api.onTaskProgress(handleProgress)
+    }
 
     return () => {
       // @ts-ignore
-      window.api.removeTaskProgress()
+      if (window.api?.removeTaskProgress) {
+        window.api.removeTaskProgress()
+      }
     }
   }, [taskId])
 
@@ -74,6 +97,8 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
   const handleSelectFolder = async () => {
     try {
+      // @ts-ignore
+      if (!window.api?.selectFolder) throw new Error('API not available')
       // @ts-ignore
       const folderPaths = await window.api.selectFolder()
       if (folderPaths) {
@@ -98,6 +123,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
       const typesArray = fileTypes.split(',').map((s) => s.trim()).filter(Boolean)
 
       // @ts-ignore
+      if (!window.api?.startOrganizeTask) throw new Error('API not available')
+
+      // @ts-ignore
       const id = await window.api.startOrganizeTask(targetFolder, typesArray, isDryRun)
       setTaskId(id)
     } catch (e: any) {
@@ -109,7 +137,10 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     if (targetFolder) {
       try {
         // @ts-ignore
-        await window.api.openPath(targetFolder)
+        if (window.api?.openPath) {
+          // @ts-ignore
+          await window.api.openPath(targetFolder)
+        }
       } catch (e: any) {
         console.error('Failed to open folder', e)
       }
@@ -252,9 +283,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
   return (
     <ToolView
-      toolName="File Organizer"
       description="Organize files in a directory into Year/Month/Day folder structure based on their creation dates. Supports EXIF metadata, filename patterns, and file-system timestamps."
-      onBack={onBack}
       inputSection={inputSection}
       progressSection={progressSection}
       outputSection={outputSection}

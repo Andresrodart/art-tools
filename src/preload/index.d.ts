@@ -9,6 +9,19 @@ declare global {
       execCommand: (
         command: string
       ) => Promise<{ success: boolean; stdout?: string; stderr?: string; error?: string }>
+      selectFolder: () => Promise<string | null>
+      startOrganizeTask: (
+        folderPath: string,
+        fileTypes: string[],
+        isDryRun: boolean
+      ) => Promise<string>
+      getActiveTasks: () => Promise<unknown[]>
+      cancelTask: (taskId: string) => Promise<boolean>
+      onTaskProgress: (
+        callback: (event: Electron.IpcRendererEvent, task: unknown) => void
+      ) => Electron.IpcRenderer
+      removeTaskProgress: () => Electron.IpcRenderer
+      openPath: (targetPath: string) => Promise<string>
     }
   }
 }
