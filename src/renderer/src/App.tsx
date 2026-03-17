@@ -4,6 +4,7 @@ import { TaskSidebar } from './components/layout/TaskSidebar'
 import { FileOrganizer } from './components/tools/FileOrganizer'
 import { FolderMetadata } from './components/tools/FolderMetadata'
 import { ThresholdMerger } from './components/tools/ThresholdMerger'
+import { FileScraper } from './components/tools/FileScraper'
 import { Header } from './components/layout/Header'
 import { useHeaderStore } from './store/headerStore'
 
@@ -98,6 +99,7 @@ function App(): React.JSX.Element {
             {activeTool === 'FileOrganizer' && <FileOrganizer onBack={handleCloseTool} />}
             {activeTool === 'FolderMetadata' && <FolderMetadata onBack={handleCloseTool} />}
             {activeTool === 'ThresholdMerger' && <ThresholdMerger onBack={handleCloseTool} />}
+            {activeTool === 'FileScraper' && <FileScraper onBack={handleCloseTool} />}
           </div>
         ) : (
           <div className="gallery-grid">

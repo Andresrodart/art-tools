@@ -42,8 +42,26 @@ const resources = {
       btn_exec_meta: 'Execute Rename Operations',
       desc_meta:
         'Recursively calculate the dynamic total size (GB, MB, KB) and element count of all folders inside a target directory, and append these metrics directly to the folder names.',
-      open_target_folder: 'Open Target Folder',
-
+      merge_elements: 'Merge elements under (X)',
+      merge_elements_help: 'Find folders with fewer items than this number to merge.',
+      max_elements: 'Max items in merged group (Y)',
+      max_elements_help: 'Stop merging folders when the combined count reaches this capacity.',
+      btn_sim_merger: 'Simulate Output',
+      btn_exec_merger: 'Merge Folders Destructively',
+      tool_file_scraper: 'File Scraper Appender',
+      tool_file_scraper_title: 'File Scraper',
+      desc_file_scraper:
+        'Extract specific files recursively from a targeted directory and flatten them entirely into a destination.',
+      source_folder: 'Source Directory',
+      source_folder_help: 'Select the main root folder to scan internally for files.',
+      destination_folder: 'Destination Directory',
+      destination_folder_help:
+        'Select the empty output folder where all matched files will be transferred.',
+      file_types: 'File Domains',
+      btn_sim_scraper: 'Simulate File Scrape',
+      btn_exec_scraper: 'Extract & Flatten Files',
+      dry_run_help_scraper:
+        'Review matches and naming collisions in the log before physically relocating files.',
       merge_under_x: 'Merge Elements Under (X):',
       merge_under_x_help_1: 'Folders with fewer than ',
       merge_under_x_help_2: ' elements will be merged with their siblings.',
@@ -123,8 +141,27 @@ const resources = {
       btn_exec_meta: 'Ejecutar Operaciones de Renombrado',
       desc_meta:
         'Calcula de forma recursiva el tamaño dinámico total (GB, MB, KB) y el número de elementos de todas las carpetas dentro de un directorio de destino, y anexa estas métricas directamente a los nombres de las carpetas.',
-      open_target_folder: 'Abrir Carpeta de Destino',
-
+      merge_elements: 'Fusionar elementos debajo de (X)',
+      merge_elements_help:
+        'Encuentra carpetas con menos elementos que este número para fusionarlas.',
+      max_elements: 'Máximo en grupo fusionado (Y)',
+      max_elements_help: 'Detiene la fusión al alcanzar esta capacidad.',
+      btn_sim_merger: 'Simular Fusión',
+      btn_exec_merger: 'Fusionar y Eliminar Carpetas Originales',
+      tool_file_scraper: 'Extractor de Archivos',
+      tool_file_scraper_title: 'Extractor y Aplanador',
+      desc_file_scraper:
+        'Extrae archivos específicos recursivamente desde un directorio y muévelos aplanados a un destino.',
+      source_folder: 'Directorio Origen',
+      source_folder_help: 'Seleccione la carpeta raíz para escanear internamente los archivos.',
+      destination_folder: 'Directorio Destino',
+      destination_folder_help:
+        'Seleccione la carpeta donde se transferirán los archivos encontrados.',
+      file_types: 'Dominios de Archivo',
+      btn_sim_scraper: 'Simular Extracción',
+      btn_exec_scraper: 'Extraer y Aplanar Archivos',
+      dry_run_help_scraper:
+        'Revisa coincidencias y conflictos de nombre en el registro antes de alterar el disco.',
       merge_under_x: 'Fusionar Elementos Menores a (X):',
       merge_under_x_help_1: 'Las carpetas con menos de ',
       merge_under_x_help_2: ' elementos se fusionarán con sus hermanos.',

@@ -38,6 +38,19 @@ const api = {
       maxCapacityY,
       isDryRun
     ),
+  startFileScraperTask: (
+    sourcePath: string,
+    destinationPath: string,
+    extensions: string[],
+    isDryRun: boolean
+  ) =>
+    ipcRenderer.invoke(
+      'task:start-file-scraper',
+      sourcePath,
+      destinationPath,
+      extensions,
+      isDryRun
+    ),
   getActiveTasks: () => ipcRenderer.invoke('task:get-active'),
   cancelTask: (taskId: string) => ipcRenderer.invoke('task:cancel', taskId),
   onTaskProgress: (callback: (event: Electron.IpcRendererEvent, task: unknown) => void) =>

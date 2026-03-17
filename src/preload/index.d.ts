@@ -27,6 +27,12 @@ declare global {
         maxCapacityY: number,
         isDryRun: boolean
       ) => Promise<string>
+      startFileScraperTask: (
+        sourcePath: string,
+        destinationPath: string,
+        extensions: string[],
+        isDryRun: boolean
+      ) => Promise<string>
       getActiveTasks: () => Promise<unknown[]>
       cancelTask: (taskId: string) => Promise<boolean>
       onTaskProgress: (

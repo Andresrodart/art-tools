@@ -10,6 +10,7 @@ import { taskManager } from './services/TaskManager'
 import { organizeFilesTask, OrganizeOptions } from './services/organizeFiles'
 import { folderMetadataTask } from './services/folderMetadata'
 import { thresholdMergerTask } from './services/thresholdMerger'
+import { fileScraperTask } from './services/fileScraper'
 
 function createWindow(): void {
   // Create the browser window.
@@ -176,6 +177,31 @@ app.whenReady().then(() => {
         isDryRun
       }).catch((err) => {
         console.error('Threshold Merger background error:', err)
+      })
+
+      return task.id
+    }
+  )
+
+  // --------------- File Scraper ----------------
+  ipcMain.handle(
+    'task:start-file-scraper',
+    async (
+      _event,
+      sourcePath: string,
+      destinationPath: string,
+      extensions: string[],
+      isDryRun: boolean
+    ) => {
+      const task = taskManager.createTask('fileScraper')
+
+      fileScraperTask(task.id, {
+        sourcePath,
+        destinationPath,
+        extensions,
+        isDryRun
+      }).catch((err) => {
+        console.error('File Scraper background error:', err)
       })
 
       return task.id
