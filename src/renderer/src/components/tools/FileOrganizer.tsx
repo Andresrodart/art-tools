@@ -104,7 +104,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   }
 
   useEffect(() => {
-    setTitle('File Organizer')
+    setTitle('File Organizer by Date Tree')
     setNavigation(
       <button className="brutalist-button small" onClick={onBack}>
         &larr; Back

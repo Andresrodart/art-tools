@@ -15,6 +15,12 @@ declare global {
         fileTypes: string[],
         isDryRun: boolean
       ) => Promise<string>
+      startFolderMetadataTask: (
+        folderPath: string,
+        includeSize: boolean,
+        includeElements: boolean,
+        isDryRun: boolean
+      ) => Promise<string>
       getActiveTasks: () => Promise<unknown[]>
       cancelTask: (taskId: string) => Promise<boolean>
       onTaskProgress: (

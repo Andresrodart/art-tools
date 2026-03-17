@@ -59,7 +59,8 @@ body {
   flex-wrap: wrap;
 }
 
-.header-left, .header-right {
+.header-left,
+.header-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;

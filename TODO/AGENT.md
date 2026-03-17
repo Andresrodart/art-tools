@@ -1,9 +1,11 @@
 # Agent Instructions for TODO Folder
 
 ## Context
+
 The `TODO` folder is designed to contain files, subfolders, and source code of tools or features that we plan to introduce into the main application. It acts as a staging or drafting area for work-in-progress components, feature requests, and planned architectural updates.
 
 ## How to Deal with the TODO Folder
+
 When AI assistants or agents are acting upon user requests involving new tools or features, please adhere to the following guidelines:
 
 1. **Check for Existing Work**: Before scaffolding a completely new tool or component, check the `TODO` folder for any existing files or subfolders related to the request. The user might have already drafted or partially implemented the tool here.

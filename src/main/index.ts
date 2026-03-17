@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 
 import { taskManager } from './services/TaskManager'
 import { organizeFilesTask, OrganizeOptions } from './services/organizeFiles'
+import { folderMetadataTask } from './services/folderMetadata'
 
 function createWindow(): void {
   // Create the browser window.
@@ -108,6 +109,34 @@ app.whenReady().then(() => {
 
       // Fire and forget, TaskManager handles background progress output
       organizeFilesTask(task.id, options).catch((err) => {
+        taskManager.updateTaskStatus(
+          task.id,
+          'error',
+          err instanceof Error ? err.message : String(err)
+        )
+      })
+
+      return task.id
+    }
+  )
+
+  ipcMain.handle(
+    'task:start-folder-metadata',
+    async (
+      _,
+      folderPath: string,
+      includeSize: boolean,
+      includeElements: boolean,
+      isDryRun: boolean
+    ) => {
+      const task = taskManager.createTask('folder-metadata')
+
+      folderMetadataTask(task.id, {
+        rootPath: folderPath,
+        includeSize,
+        includeElements,
+        isDryRun
+      }).catch((err: any) => {
         taskManager.updateTaskStatus(
           task.id,
           'error',

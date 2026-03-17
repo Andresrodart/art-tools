@@ -12,6 +12,19 @@ const api = {
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   startOrganizeTask: (folderPath: string, fileTypes: string[], isDryRun: boolean) =>
     ipcRenderer.invoke('task:start-organize', folderPath, fileTypes, isDryRun),
+  startFolderMetadataTask: (
+    folderPath: string,
+    includeSize: boolean,
+    includeElements: boolean,
+    isDryRun: boolean
+  ) =>
+    ipcRenderer.invoke(
+      'task:start-folder-metadata',
+      folderPath,
+      includeSize,
+      includeElements,
+      isDryRun
+    ),
   getActiveTasks: () => ipcRenderer.invoke('task:get-active'),
   cancelTask: (taskId: string) => ipcRenderer.invoke('task:cancel', taskId),
   onTaskProgress: (callback: (event: any, task: any) => void) =>
