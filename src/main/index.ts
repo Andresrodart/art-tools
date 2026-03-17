@@ -100,17 +100,24 @@ app.whenReady().then(() => {
     })
   })
 
-  ipcMain.handle('task:start-organize', async (_, folderPath: string, fileTypes: string[], isDryRun: boolean) => {
-    const task = taskManager.createTask('organize-files')
-    const options: OrganizeOptions = { folderPath, fileTypes, isDryRun }
-    
-    // Fire and forget, TaskManager handles background progress output
-    organizeFilesTask(task.id, options).catch((err) => {
-      taskManager.updateTaskStatus(task.id, 'error', err instanceof Error ? err.message : String(err))
-    })
+  ipcMain.handle(
+    'task:start-organize',
+    async (_, folderPath: string, fileTypes: string[], isDryRun: boolean) => {
+      const task = taskManager.createTask('organize-files')
+      const options: OrganizeOptions = { folderPath, fileTypes, isDryRun }
 
-    return task.id
-  })
+      // Fire and forget, TaskManager handles background progress output
+      organizeFilesTask(task.id, options).catch((err) => {
+        taskManager.updateTaskStatus(
+          task.id,
+          'error',
+          err instanceof Error ? err.message : String(err)
+        )
+      })
+
+      return task.id
+    }
+  )
 
   ipcMain.handle('task:get-active', async () => {
     return taskManager.getActiveTasks()
