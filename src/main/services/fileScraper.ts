@@ -80,6 +80,7 @@ export async function fileScraperTask(
 
     // 2. Build flat list of all files recursively (DFS)
     const allFiles: string[] = []
+    let scannedItemsCount = 0
 
     async function walk(dir: string): Promise<void> {
       // Check cancellation
@@ -89,6 +90,17 @@ export async function fileScraperTask(
       try {
         const entries = await fs.readdir(dir, { withFileTypes: true })
         for (const entry of entries) {
+          scannedItemsCount++
+
+          // Report progress roughly every 100 items to avoid IPC bottleneck
+          if (scannedItemsCount % 100 === 0) {
+            taskManager.updateTaskProgress(taskId, {
+              current: allFiles.length,
+              total: 0, // 0 indicating 'unknown total' still scanning
+              message: `Scanning... Found ${allFiles.length} matches. Looking at: ${entry.name}`
+            })
+          }
+
           const fullPath = join(dir, entry.name)
           if (entry.isDirectory()) {
             await walk(fullPath)
@@ -99,14 +111,20 @@ export async function fileScraperTask(
           }
         }
       } catch (e: unknown) {
-        console.warn(`Could not read directory ${dir}`, e)
+        const err = e as NodeJS.ErrnoException
+        if (err.code && ['EPERM', 'EACCES', 'EBUSY'].includes(err.code)) {
+          // Log graciously without spamming stack trace
+          console.warn(`Skipped inaccessible directory (${err.code}): ${dir}`)
+        } else {
+          console.warn(`Could not read directory ${dir}`, e)
+        }
       }
     }
 
     taskManager.updateTaskProgress(taskId, {
       current: 0,
       total: 0,
-      message: 'Scanning directories for matching files...'
+      message: 'Starting initial directory scan...'
     })
 
     await walk(options.sourcePath)

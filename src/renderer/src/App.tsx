@@ -121,6 +121,12 @@ function App(): React.JSX.Element {
               actionText={t('open_tool')}
               onAction={() => setActiveTool('ThresholdMerger')}
             />
+            <ToolCard
+              title={t('tool_file_scraper_title')}
+              description={t('desc_file_scraper')}
+              actionText={t('open_tool')}
+              onAction={() => setActiveTool('FileScraper')}
+            />
           </div>
         )}
       </main>

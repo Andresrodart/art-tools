@@ -26,7 +26,23 @@ interface FileScraperResult {
 }
 
 const PRESETS = {
-  Images: ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp'],
+  Images: [
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.gif',
+    '.svg',
+    '.webp',
+    '.raw',
+    '.cr2',
+    '.cr3',
+    '.nef',
+    '.arw',
+    '.dng',
+    '.orf',
+    '.rw2',
+    '.raf'
+  ],
   Videos: ['.mp4', '.mov', '.avi', '.mkv', '.webm'],
   Audio: ['.mp3', '.wav', '.flac', '.aac', '.ogg'],
   Documents: ['.pdf', '.doc', '.docx', '.txt', '.md', '.csv', '.xlsx']
@@ -183,6 +199,25 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
     }
   }
 
+  // ── Extensions Chips Logic ──
+  const getActiveExtensions = (): string[] => {
+    if (preset === 'All') return ['*']
+    if (preset === 'Custom') {
+      return customExtensions
+        .split(',')
+        .map((e) => e.trim())
+        .filter(Boolean)
+    }
+    return PRESETS[preset]
+  }
+
+  const handleRemoveExtension = (extToRemove: string): void => {
+    const currentList = getActiveExtensions()
+    const newList = currentList.filter((ext) => ext !== extToRemove)
+    setCustomExtensions(newList.join(', '))
+    setPreset('Custom')
+  }
+
   // ── Progress percentage ──
   const pct =
     taskData && taskData.progress.total > 0
@@ -253,6 +288,49 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
               />
               {p}
             </label>
+          ))}
+        </div>
+
+        {/* Interactive Extension Chips */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px' }}>
+          {getActiveExtensions().map((ext, idx) => (
+            <span
+              key={`${ext}-${idx}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                background: 'var(--bg-tertiary, #2c2e33)',
+                color: 'var(--text-tertiary, #ffffff)',
+                borderRadius: '16px',
+                fontSize: '0.85rem',
+                border: '1px solid var(--border-color, #444)'
+              }}
+            >
+              <span style={{ fontWeight: 500 }}>{ext}</span>
+              <button
+                type="button"
+                onClick={() => handleRemoveExtension(ext)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  padding: 0,
+                  fontSize: '1rem',
+                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  opacity: 0.7
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseOut={(e) => (e.currentTarget.style.opacity = '0.7')}
+                title="Remove extension"
+              >
+                &times;
+              </button>
+            </span>
           ))}
         </div>
 
