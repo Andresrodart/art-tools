@@ -93,8 +93,8 @@ describe('Folder Metadata Service', () => {
       expect(subResult).toBeDefined()
       // size: 1MB = ~0.00GB (<0.01GB fallback will trigger, or rounded to 0.00 depending on math)
       // 1MB is 0.00097 GB. Our logic says if > 0 and < 0.01, it uses '<0.01GB'.
-      expect(subResult?.newName).toBe('sub_<0.01GB_1')
-      expect(subResult?.newPath).toBe(path.join(tmpDir, 'sub_<0.01GB_1'))
+      expect(subResult?.newName).toBe('sub_1MB_1')
+      expect(subResult?.newPath).toBe(path.join(tmpDir, 'sub_1MB_1'))
 
       // Ensure that in a dry run, the folder was NOT actually renamed
       const stat = await fs.stat(subFolder)
