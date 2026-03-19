@@ -191,7 +191,8 @@ app.whenReady().then(() => {
       sourcePath: string,
       destinationPath: string,
       extensions: string[],
-      isDryRun: boolean
+      isDryRun: boolean,
+      ignorePaths?: string[]
     ) => {
       const task = taskManager.createTask('fileScraper')
 
@@ -199,7 +200,8 @@ app.whenReady().then(() => {
         sourcePath,
         destinationPath,
         extensions,
-        isDryRun
+        isDryRun,
+        ignorePaths
       }).catch((err) => {
         console.error('File Scraper background error:', err)
       })

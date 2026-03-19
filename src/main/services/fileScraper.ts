@@ -1,4 +1,4 @@
-import { join, parse } from 'path'
+import { join, parse, sep } from 'path'
 import { promises as fs } from 'fs'
 import { taskManager } from './TaskManager'
 
@@ -7,6 +7,7 @@ export interface FileScraperOptions {
   destinationPath: string
   extensions: string[] // e.g. ['.jpg', '.png'] or ['*']
   isDryRun: boolean
+  ignorePaths?: string[]
 }
 
 export interface FileScraperResult {
@@ -14,6 +15,7 @@ export interface FileScraperResult {
   newPath: string
   success: boolean
   error?: string
+  isDirectoryError?: boolean
 }
 
 /**
@@ -80,9 +82,20 @@ export async function fileScraperTask(
 
     // 2. Build flat list of all files recursively (DFS)
     const allFiles: string[] = []
-    let scannedItemsCount = 0
+    let lastProgressTime = Date.now()
 
     async function walk(dir: string): Promise<void> {
+      // Skip if exactly matches or starts with an ignored path + sep
+      if (options.ignorePaths && options.ignorePaths.length > 0) {
+        const isIgnored = options.ignorePaths.some(
+          (ignored) => dir === ignored || dir.startsWith(ignored + sep)
+        )
+        if (isIgnored) {
+          console.log(`Skipping ignored directory: ${dir}`)
+          return
+        }
+      }
+
       // Check cancellation
       const task = taskManager.getActiveTasks().find((t) => t.id === taskId)
       if (task?.status === 'error') throw new Error('Task cancelled by user')
@@ -90,10 +103,14 @@ export async function fileScraperTask(
       try {
         const entries = await fs.readdir(dir, { withFileTypes: true })
         for (const entry of entries) {
-          scannedItemsCount++
+          // Report progress roughly every 150ms to avoid IPC bottleneck
+          const now = Date.now()
+          if (now - lastProgressTime > 150) {
+            lastProgressTime = now
+            
+            // Allow event loop to breathe during massive scans
+            await new Promise(resolve => setTimeout(resolve, 0))
 
-          // Report progress roughly every 100 items to avoid IPC bottleneck
-          if (scannedItemsCount % 100 === 0) {
             taskManager.updateTaskProgress(taskId, {
               current: allFiles.length,
               total: 0, // 0 indicating 'unknown total' still scanning
@@ -115,6 +132,13 @@ export async function fileScraperTask(
         if (err.code && ['EPERM', 'EACCES', 'EBUSY'].includes(err.code)) {
           // Log graciously without spamming stack trace
           console.warn(`Skipped inaccessible directory (${err.code}): ${dir}`)
+          results.push({
+            originalPath: dir,
+            newPath: '',
+            success: false,
+            error: err.code,
+            isDirectoryError: true
+          })
         } else {
           console.warn(`Could not read directory ${dir}`, e)
         }

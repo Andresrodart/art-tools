@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
@@ -23,6 +23,7 @@ interface FileScraperResult {
   newPath: string
   success: boolean
   error?: string
+  isDirectoryError?: boolean
 }
 
 const PRESETS = {
@@ -50,6 +51,228 @@ const PRESETS = {
 
 type PresetKey = keyof typeof PRESETS | 'Custom' | 'All'
 
+interface TreeNode {
+  name: string
+  fullPath: string
+  filesCount: number
+  isError: boolean
+  errorMsg?: string
+  children: Record<string, TreeNode>
+}
+
+function normalizePath(p: string): string {
+  return p.replace(/\\/g, '/')
+}
+
+const buildTree = (results: FileScraperResult[], sourcePath: string | null): TreeNode => {
+  const root: TreeNode = {
+    name: sourcePath ? sourcePath.split(/[/\\]/).pop() || 'Root' : 'Root',
+    fullPath: sourcePath || '',
+    filesCount: 0,
+    isError: false,
+    children: {}
+  }
+
+  const base = sourcePath ? normalizePath(sourcePath) : ''
+
+  results.forEach((res) => {
+    const isDirError = !!res.isDirectoryError
+    const fullNormalized = normalizePath(res.originalPath)
+
+    let rel = fullNormalized
+    if (base && fullNormalized.startsWith(base)) {
+      rel = fullNormalized.substring(base.length)
+      if (rel.startsWith('/')) rel = rel.substring(1)
+    }
+
+    if (!rel) return
+
+    const parts = rel.split('/')
+    // If it's a dirError, path leads exactly to the error folder, else we strip filename
+    const folderParts = isDirError ? parts : parts.slice(0, -1)
+
+    let current = root
+    let builtPath = base
+
+    folderParts.forEach((part) => {
+      builtPath = builtPath ? `${builtPath}/${part}` : part
+      if (!current.children[part]) {
+        current.children[part] = {
+          name: part,
+          fullPath: builtPath.replace(/\//g, '\\'), // Revert to Windows path formatting natively
+          filesCount: 0,
+          isError: false,
+          children: {}
+        }
+      }
+      current = current.children[part]
+    })
+
+    if (isDirError) {
+      current.isError = true
+      current.errorMsg = res.error
+    } else {
+      current.filesCount += 1
+    }
+  })
+
+  // compute recursive counts
+  const computeCounts = (node: TreeNode): number => {
+    let sum = node.filesCount
+    Object.values(node.children).forEach((child) => {
+      sum += computeCounts(child)
+    })
+    node.filesCount = sum
+    return sum
+  }
+  computeCounts(root)
+
+  return root
+}
+
+const FolderTree = ({
+  node,
+  ignorePaths,
+  toggleIgnore,
+  depth = 0,
+  isParentIgnored = false
+}: {
+  node: TreeNode
+  ignorePaths: string[]
+  toggleIgnore: (path: string) => void
+  depth?: number
+  isParentIgnored?: boolean
+}): React.JSX.Element | null => {
+  const [expanded, setExpanded] = useState(depth < 2)
+  const hasChildren = Object.keys(node.children).length > 0
+
+  if (node.filesCount === 0 && !node.isError && depth > 0 && !hasChildren) return null
+
+  const isDirectlyIgnored = ignorePaths.includes(node.fullPath)
+  const isEffectivelyIgnored = isDirectlyIgnored || isParentIgnored
+
+  return (
+    <div style={{ paddingLeft: depth === 0 ? 0 : '16px', marginTop: '2px', width: '100%', boxSizing: 'border-box' }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: isParentIgnored ? 'rgba(255, 255, 255, 0.05)' : node.isError ? 'rgba(255, 107, 107, 0.15)' : 'transparent',
+          border: node.isError && !isParentIgnored ? '1px dashed rgba(255, 107, 107, 0.3)' : '1px solid transparent',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          width: '100%',
+          boxSizing: 'border-box',
+          opacity: isParentIgnored ? 0.4 : 1
+        }}
+      >
+        {hasChildren ? (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ccc',
+              cursor: 'pointer',
+              width: '20px',
+              fontSize: '0.8rem'
+            }}
+          >
+            {expanded ? '▼' : '▶'}
+          </button>
+        ) : (
+          <span style={{ width: '20px' }}></span>
+        )}
+
+        <span
+          style={{
+            color: node.isError && !isParentIgnored ? '#ff8787' : 'inherit',
+            fontWeight: node.isError && !isParentIgnored ? 'bold' : 'normal',
+            textDecoration: isParentIgnored ? 'line-through' : 'none'
+          }}
+        >
+          {node.isError ? '⚠️ ' : '📁 '}
+          {node.name}
+        </span>
+
+        {!node.isError && (
+          <span style={{ color: '#888', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+            ({node.filesCount} files)
+          </span>
+        )}
+        {node.isError && (
+          <span style={{ color: '#ff8787', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+            [{node.errorMsg}]
+          </span>
+        )}
+
+        {/* Dotted Leader Line */}
+        {depth > 0 && <div style={{ flexGrow: 1, borderBottom: '1px dotted #555', margin: '0 8px', position: 'relative', top: '-4px' }} />}
+
+        {depth > 0 && (() => {
+          if (isParentIgnored) {
+            return (
+              <span style={{
+                fontSize: '0.7rem',
+                color: '#666',
+                textTransform: 'uppercase',
+                fontWeight: 'bold',
+                minWidth: '85px',
+                textAlign: 'center'
+              }}>
+                Skipped
+              </span>
+            )
+          }
+
+          return (
+            <button
+              onClick={() => toggleIgnore(node.fullPath)}
+              title={isDirectlyIgnored ? "Remove from Skip List" : "Add to Skip List"}
+              onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(1.5)')}
+              onMouseOut={(e) => (e.currentTarget.style.filter = 'none')}
+              style={{
+                background: isDirectlyIgnored ? '#495057' : 'var(--bg-tertiary, #e03131)',
+                border: isDirectlyIgnored ? '1px solid #777' : 'none',
+                borderRadius: '6px',
+                color: isDirectlyIgnored ? '#aaa' : 'white',
+                fontSize: '0.7rem',
+                padding: '4px 10px',
+                cursor: 'pointer',
+                marginLeft: 'auto',
+                textTransform: 'uppercase',
+                fontWeight: 'bold',
+                minWidth: '85px',
+                textAlign: 'center',
+                transition: 'all 0.2s',
+                opacity: isDirectlyIgnored ? 0.7 : 1
+              }}
+            >
+              {isDirectlyIgnored ? '✔ Ignored' : '🚫 Ignore'}
+            </button>
+          )
+        })()}
+      </div>
+
+      {expanded && hasChildren && (
+        <div style={{ width: '100%', boxSizing: 'border-box' }}>
+          {Object.values(node.children).map((child) => (
+            <FolderTree 
+              key={child.fullPath} 
+              node={child} 
+              ignorePaths={ignorePaths} 
+              toggleIgnore={toggleIgnore} 
+              depth={depth + 1} 
+              isParentIgnored={isEffectivelyIgnored} 
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 interface FileScraperProps {
   onBack: () => void
 }
@@ -60,6 +283,7 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
   const [preset, setPreset] = useState<PresetKey>('Images')
   const [customExtensions, setCustomExtensions] = useState<string>('')
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
+  const [ignorePaths, setIgnorePaths] = useState<string[]>([])
 
   const [taskId, setTaskId] = useState<string | null>(null)
   const [taskData, setTaskData] = useState<Task | null>(null)
@@ -142,6 +366,24 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
     }
   }
 
+  const handleAddIgnorePath = async (): Promise<void> => {
+    try {
+      // @ts-ignore: electron api
+      if (!window.api?.selectFolder) throw new Error('API not available')
+      // @ts-ignore: electron api
+      const folderPath = await window.api.selectFolder()
+      if (folderPath && !ignorePaths.includes(folderPath)) {
+        setIgnorePaths((prev) => [...prev, folderPath])
+      }
+    } catch (e: unknown) {
+      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  const handleRemoveIgnorePath = (pathToRemove: string): void => {
+    setIgnorePaths((prev) => prev.filter((p) => p !== pathToRemove))
+  }
+
   const handleStartTask = async (): Promise<void> => {
     if (!sourcePath || !destinationPath) {
       alert('Please select both a source and destination folder.')
@@ -177,7 +419,8 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
         sourcePath,
         destinationPath,
         extensions,
-        isDryRun
+        isDryRun,
+        ignorePaths
       )
       setTaskId(id)
     } catch (e: unknown) {
@@ -272,6 +515,67 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
       </div>
 
       <div className="control-group">
+        <label>Ignore/Skip Directories</label>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="brutalist-button info" onClick={handleAddIgnorePath}>
+            + Add Folder to Ignore
+          </button>
+        </div>
+        <small className="help-text">Select sub-folders that you want to avoid scanning entirely.</small>
+
+        {ignorePaths.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px' }}>
+            {ignorePaths.map((ignoredPath, idx) => (
+              <span
+                key={`${ignoredPath}-${idx}`}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '4px 10px',
+                  background: 'var(--bg-tertiary, #e03131)',
+                  color: '#ffffff',
+                  borderRadius: '16px',
+                  fontSize: '0.85rem',
+                  border: '1px solid var(--border-color, #c92a2a)',
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+                title={ignoredPath}
+              >
+                <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {ignoredPath.split(/[/\\]/).pop() || ignoredPath}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveIgnorePath(ignoredPath)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'inherit',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: '1rem',
+                    lineHeight: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    opacity: 0.8
+                  }}
+                  onMouseOver={(e) => (e.currentTarget.style.opacity = '1')}
+                  onMouseOut={(e) => (e.currentTarget.style.opacity = '0.8')}
+                  title="Remove from ignore list"
+                >
+                  &times;
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="control-group">
         <label>{t('file_types')}</label>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           {(['Images', 'Videos', 'Audio', 'Documents', 'All', 'Custom'] as PresetKey[]).map((p) => (
@@ -347,16 +651,22 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
         )}
       </div>
 
-      <div className="control-group check-group" style={{ marginTop: '10px' }}>
-        <label>
-          <input
-            type="checkbox"
-            checked={isDryRun}
-            onChange={(e) => setIsDryRun(e.target.checked)}
-          />
-          <span className="checkbox-label">{t('dry_run')}</span>
-        </label>
-        <small className="help-text">{t('dry_run_help_scraper')}</small>
+      <div className="control-group" style={{ marginTop: '10px' }}>
+        <button
+          className={`brutalist-button ${isDryRun ? 'warning' : 'secondary'}`}
+          onClick={() => setIsDryRun(!isDryRun)}
+          style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 16px' }}
+        >
+          <div style={{
+            width: '14px', height: '14px', borderRadius: '50%', 
+            background: isDryRun ? '#212529' : 'transparent',
+            border: '2px solid #212529',
+            transition: 'background 0.2s',
+            boxSizing: 'border-box'
+          }} />
+          {t('dry_run')}
+        </button>
+        <small className="help-text" style={{ display: 'block', marginTop: '6px' }}>{t('dry_run_help_scraper')}</small>
       </div>
 
       <div className="action-row">
@@ -396,6 +706,11 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
     </>
   ) : null
 
+  const scrapeTree = useMemo(() => {
+    if (!isFinished || !isDryRun || results.length === 0) return null
+    return buildTree(results, sourcePath)
+  }, [results, sourcePath, isFinished, isDryRun])
+
   const getSlashedPath = (path: string): string => path.split(/[/\\]/).pop() || path
 
   const outputSection = isFinished ? (
@@ -430,49 +745,77 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
                 paddingTop: '10px'
               }}
             >
-              <h4>{isDryRun ? 'Projected Movement:' : 'Actions Performed:'}</h4>
-              <ul
-                style={{
-                  listStyle: 'none',
-                  padding: 0,
-                  marginTop: '10px',
-                  fontSize: '0.9rem',
-                  maxHeight: '200px',
-                  overflowY: 'auto'
-                }}
-              >
-                {results.map((res, i) => (
-                  <li
-                    key={i}
-                    style={{
-                      marginBottom: '8px',
-                      fontFamily: 'monospace',
-                      paddingBottom: '8px',
-                      borderBottom: '1px dashed #ccc'
+              <h4>{isDryRun ? 'Projected Scrape Tree:' : 'Actions Performed:'}</h4>
+              
+              {isDryRun ? (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    maxHeight: '400px',
+                    overflowY: 'auto',
+                    background: 'var(--bg-secondary)',
+                    padding: '10px',
+                    borderRadius: '4px',
+                    fontFamily: 'monospace',
+                    border: '1px solid var(--border-color)'
+                  }}
+                >
+                  <FolderTree
+                    node={scrapeTree!}
+                    ignorePaths={ignorePaths}
+                    toggleIgnore={(p) => {
+                      setIgnorePaths((prev) => 
+                        prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+                      )
                     }}
-                  >
-                    <div style={{ wordBreak: 'break-all', fontSize: '0.8rem' }}>
-                      <span style={{ color: '#ff6b6b' }}>Source: </span> {res.originalPath}
-                    </div>
-                    <div style={{ wordBreak: 'break-all', marginTop: '4px' }}>
-                      <span style={{ color: '#51cf66' }}>Dest: </span>
-                      <b>{getSlashedPath(res.newPath)}</b>
-                    </div>
-                    {!res.success && res.error && !isDryRun && (
-                      <div
-                        style={{
-                          wordBreak: 'break-all',
-                          color: '#ff6b6b',
-                          marginTop: '4px',
-                          fontSize: '0.8rem'
-                        }}
-                      >
-                        Error: {res.error}
+                  />
+                </div>
+              ) : (
+                <ul
+                  style={{
+                    listStyle: 'none',
+                    padding: 0,
+                    marginTop: '10px',
+                    fontSize: '0.9rem',
+                    maxHeight: '200px',
+                    overflowY: 'auto'
+                  }}
+                >
+                  {results
+                    .filter((r) => !r.isDirectoryError)
+                    .map((res, i) => (
+                    <li
+                      key={i}
+                      style={{
+                        marginBottom: '8px',
+                        fontFamily: 'monospace',
+                        paddingBottom: '8px',
+                        borderBottom: '1px dashed #ccc'
+                      }}
+                    >
+                      <div style={{ wordBreak: 'break-all', fontSize: '0.8rem' }}>
+                        <span style={{ color: '#ff6b6b' }}>Source: </span> {res.originalPath}
                       </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                      <div style={{ wordBreak: 'break-all', marginTop: '4px' }}>
+                        <span style={{ color: '#51cf66' }}>Dest: </span>
+                        <b>{getSlashedPath(res.newPath)}</b>
+                      </div>
+                      {!res.success && res.error && !isDryRun && (
+                        <div
+                          style={{
+                            wordBreak: 'break-all',
+                            color: '#ff6b6b',
+                            marginTop: '4px',
+                            fontSize: '0.8rem'
+                          }}
+                        >
+                          Error: {res.error}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </>

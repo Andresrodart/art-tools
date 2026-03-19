@@ -31,7 +31,8 @@ declare global {
         sourcePath: string,
         destinationPath: string,
         extensions: string[],
-        isDryRun: boolean
+        isDryRun: boolean,
+        ignorePaths?: string[]
       ) => Promise<string>
       getActiveTasks: () => Promise<unknown[]>
       cancelTask: (taskId: string) => Promise<boolean>

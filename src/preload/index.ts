@@ -42,14 +42,16 @@ const api = {
     sourcePath: string,
     destinationPath: string,
     extensions: string[],
-    isDryRun: boolean
+    isDryRun: boolean,
+    ignorePaths?: string[]
   ) =>
     ipcRenderer.invoke(
       'task:start-file-scraper',
       sourcePath,
       destinationPath,
       extensions,
-      isDryRun
+      isDryRun,
+      ignorePaths
     ),
   getActiveTasks: () => ipcRenderer.invoke('task:get-active'),
   cancelTask: (taskId: string) => ipcRenderer.invoke('task:cancel', taskId),
