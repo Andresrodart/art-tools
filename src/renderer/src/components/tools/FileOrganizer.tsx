@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
 
 interface OrganizeResult {
   source: string
