@@ -24,7 +24,6 @@ const resources = {
         'Recursively group and merge sparse folders until they reach a target item capacity.',
       open_tool: 'Open Tool',
 
-      target_folder: 'Target Folder:',
       target_root_folder: 'Target Root Folder:',
       no_folder_selected: 'No folder selected...',
       browse: 'Browse...',
@@ -57,10 +56,13 @@ const resources = {
         'Identify and remove folders that are empty or contain only other empty subfolders. Supports selective deletion and dry runs.',
       desc_empty_folder_cleaner:
         'Scan your directory tree for empty folders. Review the list of found folders and choose which ones to remove safely.',
+      target_folder: 'Target Folder: ',
+      btn_execute_delete: 'Execute Actual Deletion',
+      simulation_success_note:
+        'Simulation successful. Review the folders above and click below to delete them for real.',
       btn_scan_empty: 'Scan for Empty Folders',
       btn_delete_empty: 'Delete Selected Folders',
       btn_sim_delete_empty: 'Simulate Folder Deletion',
-      empty_folders_found: 'Empty folders found:',
       no_empty_folders: 'No empty folders found in the selected directory.',
       source_folder: 'Source Directory',
       source_folder_help: 'Select the main root folder to scan internally for files.',
@@ -133,7 +135,6 @@ const resources = {
         'Agrupa y fusiona recursivamente carpetas escasas hasta que alcanzan una capacidad objetivo.',
       open_tool: 'Abrir Herramienta',
 
-      target_folder: 'Carpeta de Destino:',
       target_root_folder: 'Carpeta Raíz de Destino:',
       no_folder_selected: 'Sin carpeta seleccionada...',
       browse: 'Explorar...',
@@ -167,10 +168,13 @@ const resources = {
         'Identifica y elimina carpetas que están vacías o que solo contienen otras subcarpetas vacías. Permite la eliminación selectiva y simulacros.',
       desc_empty_folder_cleaner:
         'Escanea tu árbol de directorios en busca de carpetas vacías. Revisa la lista de carpetas encontradas y elige cuáles eliminar de forma segura.',
+      target_folder: 'Carpeta de Destino: ',
+      btn_execute_delete: 'Ejecutar Eliminación Real',
+      simulation_success_note:
+        'Simulación exitosa. Revisa las carpetas arriba y haz clic abajo para eliminarlas físicamente.',
       btn_scan_empty: 'Buscar Carpetas Vacías',
       btn_delete_empty: 'Eliminar Carpetas Seleccionadas',
       btn_sim_delete_empty: 'Simular Eliminación de Carpetas',
-      empty_folders_found: 'Carpetas vacías encontradas:',
       no_empty_folders: 'No se encontraron carpetas vacías en el directorio seleccionado.',
       source_folder: 'Directorio Origen',
       source_folder_help: 'Seleccione la carpeta raíz para escanear internamente los archivos.',

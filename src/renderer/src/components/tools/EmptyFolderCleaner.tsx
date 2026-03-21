@@ -29,6 +29,7 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
   const [emptyFolders, setEmptyFolders] = useState<string[]>([])
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
   const [logEntries, setLogEntries] = useState<string[]>([])
+  const [lastRunWasDryRun, setLastRunWasDryRun] = useState<boolean>(false)
   const logRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
 
@@ -70,6 +71,13 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
         const folders = taskData.result as string[]
         setEmptyFolders(folders)
         setSelectedFolders(new Set(folders))
+        setLastRunWasDryRun(false)
+      } else if (taskData.type === 'deleteFolders') {
+        setLastRunWasDryRun(false)
+      }
+    } else if (taskData?.status === 'dry-run') {
+      if (taskData.type === 'deleteFolders') {
+        setLastRunWasDryRun(true)
       }
     }
   }, [taskData?.progress?.message, taskData?.status, taskData?.type, taskData?.result])
@@ -106,6 +114,7 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
     if (!targetFolder) return
     setLogEntries([])
     setEmptyFolders([])
+    setLastRunWasDryRun(false)
     try {
       // @ts-ignore: electron api
       const id = await window.api.startFindEmptyFoldersTask(targetFolder)
@@ -171,6 +180,8 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
     taskData?.type === 'deleteFolders' &&
     (taskData.status === 'completed' || taskData.status === 'dry-run')
 
+  const shouldShowResults = isFinishedFind || (isFinishedDelete && lastRunWasDryRun)
+
   const inputSection = (
     <>
       <div className="control-group">
@@ -228,7 +239,20 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
 
   const outputSection = (
     <div className="tool-output-summary">
-      {isFinishedFind && (
+      {targetFolder && (shouldShowResults || isFinishedDelete) && (
+        <div
+          style={{
+            marginBottom: '1rem',
+            paddingBottom: '1rem',
+            borderBottom: 'var(--border-width) solid var(--border-color)'
+          }}
+        >
+          <h4 style={{ margin: '0 0 0.5rem 0' }}>{t('target_folder')}</h4>
+          <div style={{ wordBreak: 'break-all', fontSize: '0.9rem' }}>{targetFolder}</div>
+        </div>
+      )}
+
+      {shouldShowResults && (
         <>
           {emptyFolders.length > 0 ? (
             <>
@@ -279,7 +303,11 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
                   onClick={handleDelete}
                   disabled={selectedFolders.size === 0 || isDeleting}
                 >
-                  {isDryRun ? t('btn_sim_delete_empty') : t('btn_delete_empty')}
+                  {isDryRun
+                    ? t('btn_sim_delete_empty')
+                    : lastRunWasDryRun
+                      ? t('btn_execute_delete')
+                      : t('btn_delete_empty')}
                 </button>
               </div>
             </>
@@ -293,11 +321,11 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
       )}
 
       {isFinishedDelete && (
-        <div className="result-stat">
+        <div className="result-stat" style={{ marginTop: lastRunWasDryRun ? '1rem' : '0' }}>
           <span className="stat-icon">✅</span>
           <span>
             {taskData?.status === 'dry-run'
-              ? 'Simulation complete. Check log for details.'
+              ? t('simulation_success_note')
               : 'Deletion complete successfully.'}
           </span>
         </div>
@@ -310,7 +338,7 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
       description={t('desc_empty_folder_cleaner')}
       inputSection={inputSection}
       progressSection={progressSection}
-      outputSection={isFinishedFind || isFinishedDelete ? outputSection : undefined}
+      outputSection={shouldShowResults || isFinishedDelete ? outputSection : undefined}
     />
   )
 }
