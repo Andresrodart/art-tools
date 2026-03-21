@@ -1,3 +1,6 @@
+@use 'base';
+@use '../styles/components/gallery-controls';
+
 :root {
   --bg-color: #fdf5e6;
   --text-color: #111;

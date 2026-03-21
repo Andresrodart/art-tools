@@ -23,11 +23,8 @@ export const ToolGalleryControls: React.FC = () => {
   }
 
   return (
-    <div
-      className="gallery-controls brutalist-card"
-      style={{ marginBottom: '2rem', padding: '1rem' }}
-    >
-      <div className="search-bar" style={{ marginBottom: '1rem' }}>
+    <div className="gallery-controls brutalist-card">
+      <div className="search-bar">
         <input
           type="text"
           className="brutalist-input w-full"
@@ -36,10 +33,7 @@ export const ToolGalleryControls: React.FC = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
-      <div
-        className="category-filters"
-        style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}
-      >
+      <div className="category-filters">
         <button
           className={`brutalist-button small ${selectedCategory === null ? 'primary' : ''}`}
           onClick={() => handleCategoryClick(null)}
