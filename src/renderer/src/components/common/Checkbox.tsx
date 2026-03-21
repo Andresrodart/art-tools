@@ -1,16 +1,26 @@
 import React from 'react'
 
+/**
+ * Properties for the Checkbox component.
+ */
 interface CheckboxProps {
+  /** Optional label text to display next to the checkbox. */
   label?: string
+  /** Whether the checkbox is currently checked. */
   checked: boolean
+  /** Callback function triggered when the checked state changes. */
   onChange: (checked: boolean) => void
+  /** Whether the checkbox is disabled and non-interactive. */
   disabled?: boolean
+  /** Additional CSS class name for the container. */
   className?: string
 }
 
 /**
  * A reusable Checkbox component following the Neo-Brutalism design system.
  * Characterized by thick borders, sharp shadows, and high contrast.
+ *
+ * @param props The component properties.
  */
 export const Checkbox: React.FC<CheckboxProps> = ({
   label,
@@ -19,6 +29,10 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   disabled = false,
   className = ''
 }) => {
+  /**
+   * Handles the native change event of the hidden input.
+   * @param e The change event.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onChange(e.target.checked)
   }

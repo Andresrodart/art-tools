@@ -4,25 +4,53 @@ import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 import { Checkbox } from '../common/Checkbox'
 
+/**
+ * Representation of a task's progress state.
+ */
 interface TaskProgress {
+  /** The current number of items processed. */
   current: number
+  /** The total number of items to process. */
   total: number
+  /** An optional message describing the current progress step. */
   message?: string
 }
 
+/**
+ * Representation of a background task state.
+ */
 interface Task {
+  /** The unique identifier for the task. */
   id: string
+  /** The type of task (e.g., 'findEmptyFolders'). */
   type: string
+  /** The current execution status. */
   status: 'pending' | 'running' | 'completed' | 'error' | 'dry-run'
+  /** The progress information. */
   progress: TaskProgress
+  /** The final result of the task. */
   result?: unknown
+  /** The error message if the task failed. */
   error?: string
 }
 
+/**
+ * Props for the EmptyFolderCleaner component.
+ */
 interface EmptyFolderCleanerProps {
+  /** Callback to return to the previous view. */
   onBack: () => void
 }
 
+/**
+ * EmptyFolderCleaner component allows users to scan for empty folders within a directory
+ * and selectively delete them.
+ *
+ * It follows Separation of Concerns by using the main process (via IPC) to perform
+ * the actual filesystem operations, while the renderer handles the UI and user interaction.
+ *
+ * @param props The component properties.
+ */
 export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
@@ -100,6 +128,9 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     }
   }, [logEntries])
 
+  /**
+   * Opens the system directory picker and sets the selected folder.
+   */
   const handleSelectFolder = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
@@ -117,6 +148,9 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     }
   }
 
+  /**
+   * Initiates the task to scan for empty folders.
+   */
   const handleScan = async (): Promise<void> => {
     if (!targetFolder) return
     setLogEntries([])
@@ -131,6 +165,9 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     }
   }
 
+  /**
+   * Initiates the task to delete the selected folders.
+   */
   const handleDelete = async (): Promise<void> => {
     if (selectedFolders.size === 0) return
     setLogEntries([])
@@ -144,6 +181,10 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     }
   }
 
+  /**
+   * Toggles the selection state of a folder path.
+   * @param path The absolute path of the folder to toggle.
+   */
   const toggleFolder = (path: string): void => {
     setSelectedFolders((prev) => {
       const next = new Set(prev)
@@ -156,6 +197,9 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     })
   }
 
+  /**
+   * Toggles the selection state of all identified empty folders.
+   */
   const toggleAll = (): void => {
     if (selectedFolders.size === emptyFolders.length) {
       setSelectedFolders(new Set())

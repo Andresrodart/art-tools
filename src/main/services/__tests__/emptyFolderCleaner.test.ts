@@ -4,19 +4,32 @@ import { tmpdir } from 'os'
 import { findEmptyFoldersTask, deleteFoldersTask } from '../emptyFolderCleaner'
 import { taskManager } from '../TaskManager'
 
+/**
+ * Unit tests for the Empty Folder Cleaner Service.
+ */
 describe('Empty Folder Cleaner Service', () => {
   let testRoot: string
 
+  /**
+   * Set up a unique temporary directory before each test.
+   */
   beforeEach(async () => {
     testRoot = join(tmpdir(), `empty-folder-test-${Math.random().toString(36).substring(7)}`)
     await fs.mkdir(testRoot, { recursive: true })
   })
 
+  /**
+   * Clean up the temporary directory after each test.
+   */
   afterEach(async () => {
     await fs.rm(testRoot, { recursive: true, force: true })
   })
 
   describe('findEmptyFoldersTask', () => {
+    /**
+     * Verifies that the task correctly identifies empty folders,
+     * including those that only contain other empty folders.
+     */
     it('should find empty folders and folders with only empty subfolders', async () => {
       // Setup structure:
       // testRoot/
@@ -60,6 +73,9 @@ describe('Empty Folder Cleaner Service', () => {
   })
 
   describe('deleteFoldersTask', () => {
+    /**
+     * Verifies that dry-run mode simulates deletion without actually removing folders.
+     */
     it('should delete folders in dry run mode without affecting filesystem', async () => {
       const empty1 = join(testRoot, 'empty1')
       await fs.mkdir(empty1)
@@ -79,6 +95,9 @@ describe('Empty Folder Cleaner Service', () => {
       ).toBe(true)
     })
 
+    /**
+     * Verifies that folders are correctly deleted when dry-run is disabled.
+     */
     it('should delete folders for real when dry run is false', async () => {
       const empty1 = join(testRoot, 'empty1')
       await fs.mkdir(empty1)
@@ -98,6 +117,10 @@ describe('Empty Folder Cleaner Service', () => {
       ).toBe(false)
     })
 
+    /**
+     * Verifies that folders are deleted from deepest to shallowest to allow
+     * recursive deletion of nested empty folder paths.
+     */
     it('should handle recursive deletion of selected folders from deep to shallow', async () => {
       const parent = join(testRoot, 'parent')
       const child = join(parent, 'child')
