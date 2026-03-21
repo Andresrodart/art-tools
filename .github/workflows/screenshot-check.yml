@@ -45,7 +45,7 @@ jobs:
 
           UI_FILES_REGEX="\.(tsx|ts|css|html|svg|png|jpg|jpeg|webp)$"
 
-          if echo "$FILES_CHANGED" | grep -E "$UI_FILES_REGEX" | grep -vE "^(\.github/|docs/|TODO/)" > /dev/null; then
+          if echo "$FILES_CHANGED" | grep -E "$UI_FILES_REGEX" | grep -vE "^(\.github/|docs/|TODO/|src/main/|src/preload/)" > /dev/null; then
             echo "UI-related files detected."
             echo "ui_changes=true" >> $GITHUB_OUTPUT
           else
