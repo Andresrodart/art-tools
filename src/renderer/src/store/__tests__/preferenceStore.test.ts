@@ -8,7 +8,7 @@ import { act } from 'react'
 const mockSetPreferences = jest.fn()
 const mockGetPreferences = jest.fn()
 
-// @ts-ignore
+// @ts-ignore: mock electron api
 window.api = {
   setPreferences: mockSetPreferences,
   getPreferences: mockGetPreferences
