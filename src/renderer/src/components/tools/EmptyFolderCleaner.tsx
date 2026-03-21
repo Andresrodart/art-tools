@@ -3,36 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 import { Checkbox } from '../common/Checkbox'
-
-/**
- * Representation of a task's progress state.
- */
-interface TaskProgress {
-  /** The current number of items processed. */
-  current: number
-  /** The total number of items to process. */
-  total: number
-  /** An optional message describing the current progress step. */
-  message?: string
-}
-
-/**
- * Representation of a background task state.
- */
-interface Task {
-  /** The unique identifier for the task. */
-  id: string
-  /** The type of task (e.g., 'findEmptyFolders'). */
-  type: string
-  /** The current execution status. */
-  status: 'pending' | 'running' | 'completed' | 'error' | 'dry-run'
-  /** The progress information. */
-  progress: TaskProgress
-  /** The final result of the task. */
-  result?: unknown
-  /** The error message if the task failed. */
-  error?: string
-}
+import { useTaskStore, Task } from '../../store/taskStore'
 
 /**
  * Props for the EmptyFolderCleaner component.
@@ -54,8 +25,6 @@ interface EmptyFolderCleanerProps {
 export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
-  const [taskId, setTaskId] = useState<string | null>(null)
-  const [taskData, setTaskData] = useState<Task | null>(null)
   const [emptyFolders, setEmptyFolders] = useState<string[]>([])
   const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
   const [logEntries, setLogEntries] = useState<string[]>([])
@@ -65,6 +34,9 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
   const setTitle = useHeaderStore((state) => state.setTitle)
   const setNavigation = useHeaderStore((state) => state.setNavigation)
   const reset = useHeaderStore((state) => state.reset)
+
+  const { tasks, activeTabId, addTab } = useTaskStore()
+  const taskData = tasks[activeTabId] as Task | undefined
 
   useEffect(() => {
     setTitle(t('tool_empty_folder_cleaner_title'))
@@ -79,47 +51,26 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     }
   }, [onBack, setTitle, setNavigation, reset, t])
 
-  // Subscribe to task progress
+  // Sync log entries and results from global task store
   useEffect(() => {
-    const handleProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
-      const task = updatedTask as Task
-      if (taskId && task.id === taskId) {
-        setTaskData(task)
-
-        if (task.progress?.message) {
-          setLogEntries((prev) => {
-            const last = prev[prev.length - 1]
-            if (last !== task.progress.message) {
-              return [...prev, task.progress.message!]
-            }
-            return prev
-          })
+    if (taskData?.progress?.message) {
+      setLogEntries((prev) => {
+        const last = prev[prev.length - 1]
+        if (last !== taskData.progress.message) {
+          return [...prev, taskData.progress.message!]
         }
+        return prev
+      })
+    }
 
-        if (task.status === 'completed') {
-          if (task.type === 'findEmptyFolders') {
-            const folders = task.result as string[]
-            setEmptyFolders(folders)
-            setSelectedFolders(new Set(folders))
-          }
-        }
+    if (taskData?.status === 'completed') {
+      if (taskData.type === 'findEmptyFolders') {
+        const folders = taskData.result as string[]
+        setEmptyFolders(folders)
+        setSelectedFolders(new Set(folders))
       }
     }
-
-    // @ts-ignore: electron api
-    if (window.api?.onTaskProgress) {
-      // @ts-ignore: electron api
-      window.api.onTaskProgress(handleProgress)
-    }
-
-    return () => {
-      // @ts-ignore: electron api
-      if (window.api?.removeTaskProgress) {
-        // @ts-ignore: electron api
-        window.api.removeTaskProgress()
-      }
-    }
-  }, [taskId])
+  }, [taskData?.progress?.message, taskData?.status, taskData?.type, taskData?.result])
 
   // Auto-scroll log area
   useEffect(() => {
@@ -140,8 +91,6 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
       if (folderPaths) {
         setTargetFolder(folderPaths)
         setEmptyFolders([])
-        setTaskData(null)
-        setTaskId(null)
       }
     } catch (e: unknown) {
       alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
@@ -155,11 +104,10 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     if (!targetFolder) return
     setLogEntries([])
     setEmptyFolders([])
-    setTaskData(null)
     try {
       // @ts-ignore: electron api
       const id = await window.api.startFindEmptyFoldersTask(targetFolder)
-      setTaskId(id)
+      addTab({ id, title: `Scan: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
     } catch (e: unknown) {
       alert(`Error starting scan: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -171,11 +119,10 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
   const handleDelete = async (): Promise<void> => {
     if (selectedFolders.size === 0) return
     setLogEntries([])
-    setTaskData(null)
     try {
       // @ts-ignore: electron api
       const id = await window.api.startDeleteFoldersTask(Array.from(selectedFolders), isDryRun)
-      setTaskId(id)
+      addTab({ id, title: `Delete: ${selectedFolders.size} folders`, type: 'task' })
     } catch (e: unknown) {
       alert(`Error starting deletion: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -347,7 +294,7 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
         <div className="result-stat">
           <span className="stat-icon">✅</span>
           <span>
-            {isDryRun
+            {taskData?.status === 'dry-run'
               ? 'Simulation complete. Check log for details.'
               : 'Deletion complete successfully.'}
           </span>
@@ -359,7 +306,7 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
   return (
     <ToolView
       description={t('desc_empty_folder_cleaner')}
-      inputSection={inputSection}
+      inputSection={!taskData ? inputSection : undefined}
       progressSection={progressSection}
       outputSection={isFinishedFind || isFinishedDelete ? outputSection : undefined}
     />

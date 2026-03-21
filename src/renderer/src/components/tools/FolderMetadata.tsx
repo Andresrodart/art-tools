@@ -2,21 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-
-interface TaskProgress {
-  current: number
-  total: number
-  message?: string
-}
-
-interface Task {
-  id: string
-  type: string
-  status: 'pending' | 'running' | 'completed' | 'error' | 'dry-run'
-  progress: TaskProgress
-  result?: FolderMetadataResult[]
-  error?: string
-}
+import { useTaskStore, Task } from '../../store/taskStore'
 
 interface FolderMetadataResult {
   originalName: string
@@ -37,10 +23,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
   const [includeElements, setIncludeElements] = useState<boolean>(true)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
 
-  const [taskId, setTaskId] = useState<string | null>(null)
-  const [taskData, setTaskData] = useState<Task | null>(null)
   const [logEntries, setLogEntries] = useState<string[]>([])
-
   const logRef = useRef<HTMLDivElement>(null)
 
   const setTitle = useHeaderStore((state) => state.setTitle)
@@ -48,6 +31,9 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
   const setActions = useHeaderStore((state) => state.setActions)
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
+
+  const { tasks, activeTabId, addTab } = useTaskStore()
+  const taskData = tasks[activeTabId] as Task | undefined
 
   useEffect(() => {
     setTitle(t('tool_folder_metadata_title'))
@@ -63,38 +49,18 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
     }
   }, [onBack, setTitle, setNavigation, setActions, reset, t])
 
-  // Subscribe to task progress
+  // Sync log entries from global task store
   useEffect(() => {
-    const handleProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
-      const task = updatedTask as Task
-      if (taskId && task.id === taskId) {
-        setTaskData(task)
-
-        // Append log entries from progress messages
-        if (task.progress?.message) {
-          setLogEntries((prev) => {
-            const last = prev[prev.length - 1]
-            if (last !== task.progress.message) {
-              return [...prev, task.progress.message!]
-            }
-            return prev
-          })
+    if (taskData?.progress?.message) {
+      setLogEntries((prev) => {
+        const last = prev[prev.length - 1]
+        if (last !== taskData.progress.message) {
+          return [...prev, taskData.progress.message!]
         }
-      }
+        return prev
+      })
     }
-
-    // @ts-ignore: electron api
-    if (window.api?.onTaskProgress) {
-      window.api.onTaskProgress(handleProgress)
-    }
-
-    return () => {
-      // @ts-ignore: electron api
-      if (window.api?.removeTaskProgress) {
-        window.api.removeTaskProgress()
-      }
-    }
-  }, [taskId])
+  }, [taskData?.progress?.message])
 
   // Auto-scroll log area
   useEffect(() => {
@@ -125,7 +91,6 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
 
     // Reset state for new run
     setLogEntries([])
-    setTaskData(null)
 
     try {
       // @ts-ignore: electron api
@@ -138,7 +103,8 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
         includeElements,
         isDryRun
       )
-      setTaskId(id)
+
+      addTab({ id, title: `Meta: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
     } catch (e: unknown) {
       alert(`Error starting folder metadata task: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -171,9 +137,9 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
       taskData.status === 'dry-run')
 
   // ── Result summary ──
-  const results = taskData?.result ?? []
-  const renamedCount = results.filter((r) => r.success || isDryRun).length
-  const failCount = results.filter((r) => !r.success && !isDryRun).length
+  const results = (taskData?.result as FolderMetadataResult[]) ?? []
+  const renamedCount = results.filter((r) => r.success || taskData?.status === 'dry-run').length
+  const failCount = results.filter((r) => !r.success && taskData?.status !== 'dry-run').length
 
   // ==================== SECTIONS ====================
 
@@ -273,7 +239,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
           <div className="result-stat">
             <span className="stat-icon">✅</span>
             <span>
-              {renamedCount} folder(s) {isDryRun ? 'would be renamed' : 'renamed'} successfully
+              {renamedCount} folder(s) {taskData.status === 'dry-run' ? 'would be renamed' : 'renamed'} successfully
             </span>
           </div>
           {failCount > 0 && (
@@ -298,7 +264,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
                 paddingTop: '10px'
               }}
             >
-              <h4>{isDryRun ? 'Projected Changes:' : 'Actions Performed:'}</h4>
+              <h4>{taskData.status === 'dry-run' ? 'Projected Changes:' : 'Actions Performed:'}</h4>
               <ul
                 style={{
                   listStyle: 'none',
@@ -325,7 +291,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
                     <div style={{ wordBreak: 'break-all' }}>
                       <span style={{ color: '#51cf66' }}>New:</span> <b>{res.newName}</b>
                     </div>
-                    {!res.success && res.error && !isDryRun && (
+                    {!res.success && res.error && taskData.status !== 'dry-run' && (
                       <div
                         style={{
                           wordBreak: 'break-all',
@@ -361,7 +327,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
   return (
     <ToolView
       description={t('desc_meta')}
-      inputSection={inputSection}
+      inputSection={!taskData ? inputSection : undefined}
       progressSection={progressSection}
       outputSection={outputSection}
     />
