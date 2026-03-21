@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 import { Checkbox } from '../common/Checkbox'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
 
 /**
  * Props for the EmptyFolderCleaner component.
@@ -11,6 +11,7 @@ import { useTaskStore, Task } from '../../store/taskStore'
 interface EmptyFolderCleanerProps {
   /** Callback to return to the previous view. */
   onBack: () => void
+  tabId: string
 }
 
 /**
@@ -22,7 +23,7 @@ interface EmptyFolderCleanerProps {
  *
  * @param props The component properties.
  */
-export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.JSX.Element {
+export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
   const [emptyFolders, setEmptyFolders] = useState<string[]>([])
@@ -35,8 +36,9 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
   const setNavigation = useHeaderStore((state) => state.setNavigation)
   const reset = useHeaderStore((state) => state.reset)
 
-  const { tasks, activeTabId, addTab } = useTaskStore()
-  const taskData = tasks[activeTabId] as Task | undefined
+  const { tasks, tabs, updateTab } = useTaskStore()
+  const currentTab = tabs.find((t) => t.id === tabId)
+  const taskData = currentTab?.taskId ? tasks[currentTab.taskId] : undefined
 
   useEffect(() => {
     setTitle(t('tool_empty_folder_cleaner_title'))
@@ -107,7 +109,7 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     try {
       // @ts-ignore: electron api
       const id = await window.api.startFindEmptyFoldersTask(targetFolder)
-      addTab({ id, title: `Scan: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
+      updateTab(tabId, { taskId: id, title: `Scan: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
       alert(`Error starting scan: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -122,7 +124,7 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
     try {
       // @ts-ignore: electron api
       const id = await window.api.startDeleteFoldersTask(Array.from(selectedFolders), isDryRun)
-      addTab({ id, title: `Delete: ${selectedFolders.size} folders`, type: 'task' })
+      updateTab(tabId, { taskId: id, title: `Delete: ${selectedFolders.size} folders` })
     } catch (e: unknown) {
       alert(`Error starting deletion: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -306,7 +308,7 @@ export function EmptyFolderCleaner({ onBack }: EmptyFolderCleanerProps): React.J
   return (
     <ToolView
       description={t('desc_empty_folder_cleaner')}
-      inputSection={!taskData ? inputSection : undefined}
+      inputSection={inputSection}
       progressSection={progressSection}
       outputSection={isFinishedFind || isFinishedDelete ? outputSection : undefined}
     />

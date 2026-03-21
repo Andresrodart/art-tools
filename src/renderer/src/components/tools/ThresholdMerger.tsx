@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
 
 interface ThresholdMergerResult {
   originalPaths: string[]
@@ -13,9 +13,10 @@ interface ThresholdMergerResult {
 
 interface ThresholdMergerProps {
   onBack: () => void
+  tabId: string
 }
 
-export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Element {
+export function ThresholdMerger({ onBack, tabId }: ThresholdMergerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [thresholdX, setThresholdX] = useState<number>(5)
   const [maxCapacityY, setMaxCapacityY] = useState<number>(10)
@@ -30,8 +31,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
 
-  const { tasks, activeTabId, addTab } = useTaskStore()
-  const taskData = tasks[activeTabId] as Task | undefined
+  const { tasks, tabs, updateTab } = useTaskStore()
+  const currentTab = tabs.find((t) => t.id === tabId)
+  const taskData = currentTab?.taskId ? tasks[currentTab.taskId] : undefined
 
   useEffect(() => {
     setTitle(t('tool_threshold_merger_title'))
@@ -114,7 +116,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
         isDryRun
       )
 
-      addTab({ id, title: `Merge: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
+      updateTab(tabId, { taskId: id, title: `Merge: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
       alert(`Error starting threshold merger task: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -159,6 +161,8 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   )
 
   // ==================== SECTIONS ====================
+
+  const isTaskRunning = taskData?.status === 'running' || taskData?.status === 'pending'
 
   const inputSection = (
     <>
@@ -227,7 +231,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
         <button
           className={`brutalist-button ${isDryRun ? 'warning' : 'danger'}`}
           onClick={handleStartTask}
-          disabled={!targetFolder}
+          disabled={!targetFolder || isTaskRunning}
         >
           {isDryRun ? t('btn_sim_merge') : t('btn_exec_merge')}
         </button>
@@ -368,7 +372,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   return (
     <ToolView
       description={t('desc_merge')}
-      inputSection={!taskData ? inputSection : undefined}
+      inputSection={inputSection}
       progressSection={progressSection}
       outputSection={outputSection}
     />

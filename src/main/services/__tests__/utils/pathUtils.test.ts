@@ -72,7 +72,7 @@ describe('pathUtils', () => {
         .mockReturnValueOnce(false) // image_1.jpg does not exist
 
       const resultPath = await getUniquePathWithCheck(initialTargetFilePath, mockExistenceCheck)
-      expect(resultPath).toBe('/tmp/dest/image_1.jpg')
+      expect(resultPath).toBe(join('/tmp/dest', 'image_1.jpg'))
     })
   })
 })
