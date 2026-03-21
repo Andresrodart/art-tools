@@ -9,32 +9,7 @@ import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
 import { useHeaderStore } from './store/headerStore'
 import { useTaskStore, TaskTab } from './store/taskStore'
-
-interface ToolCardProps {
-  title: string
-  description: string
-  actionText: string
-  onAction: () => void
-  isDanger?: boolean
-}
-
-function ToolCard({
-  title,
-  description,
-  actionText,
-  onAction,
-  isDanger
-}: ToolCardProps): React.JSX.Element {
-  return (
-    <div className="brutalist-card">
-      <h2>{title}</h2>
-      <p>{description}</p>
-      <button className={`brutalist-button ${isDanger ? 'danger' : 'primary'}`} onClick={onAction}>
-        {actionText}
-      </button>
-    </div>
-  )
-}
+import { ToolCard } from './components/layout/ToolCard'
 
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
@@ -128,10 +103,7 @@ function App(): React.JSX.Element {
       <Tabs />
 
       <main className="main-content">
-        <div
-          style={{ display: activeTabId === 'home' ? 'block' : 'none' }}
-          className="gallery-grid"
-        >
+        <div style={{ display: activeTabId === 'home' ? 'grid' : 'none' }} className="gallery-grid">
           <ToolCard
             title={t('tool_file_organizer_title')}
             description={t('tool_file_organizer_desc')}
