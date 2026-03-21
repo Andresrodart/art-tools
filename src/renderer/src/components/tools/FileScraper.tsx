@@ -2,16 +2,26 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
+import { Task } from '../../types/task'
 
+/**
+ * Result of a file scraping operation.
+ */
 interface FileScraperResult {
+  /** Original absolute path of the file. */
   originalPath: string
+  /** New relative path in the destination folder. */
   newPath: string
+  /** Indicates if the operation was successful. */
   success: boolean
+  /** Error message if the operation failed. */
   error?: string
+  /** Indicates if the error was related to directory access. */
   isDirectoryError?: boolean
 }
 
+/** Presets for common file extensions. */
 const PRESETS = {
   Images: [
     '.jpg',
@@ -37,6 +47,7 @@ const PRESETS = {
 
 type PresetKey = keyof typeof PRESETS | 'Custom' | 'All'
 
+/** Node structure for the directory tree visualization. */
 interface TreeNode {
   name: string
   fullPath: string
@@ -46,10 +57,21 @@ interface TreeNode {
   children: Record<string, TreeNode>
 }
 
+/**
+ * Normalizes a path to use forward slashes.
+ * @param p - The path to normalize.
+ * @returns The normalized path string.
+ */
 function normalizePath(p: string): string {
   return p.replace(/\\/g, '/')
 }
 
+/**
+ * Builds a hierarchical tree from a flat list of scraper results.
+ * @param results - List of scraper results.
+ * @param sourcePath - The root path of the scan.
+ * @returns The root TreeNode of the directory tree.
+ */
 const buildTree = (results: FileScraperResult[], sourcePath: string | null): TreeNode => {
   const root: TreeNode = {
     name: sourcePath ? sourcePath.split(/[/\\]/).pop() || 'Root' : 'Root',
@@ -116,6 +138,9 @@ const buildTree = (results: FileScraperResult[], sourcePath: string | null): Tre
   return root
 }
 
+/**
+ * Recursive component to render a directory tree node.
+ */
 const FolderTree = ({
   node,
   ignorePaths,
@@ -286,10 +311,17 @@ const FolderTree = ({
   )
 }
 
+/** Props for the FileScraper component. */
 interface FileScraperProps {
+  /** Callback to return to the previous view. */
   onBack: () => void
 }
 
+/**
+ * FileScraper component for extracting and flattening files from a directory tree.
+ *
+ * @param props The component properties.
+ */
 export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
   const [sourcePath, setSourcePath] = useState<string | null>(null)
   const [destinationPath, setDestinationPath] = useState<string | null>(null)
@@ -344,6 +376,10 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
     }
   }, [logEntries])
 
+  /**
+   * Opens the system folder selection dialog.
+   * @param isSource - Whether we are selecting the source or destination.
+   */
   const handleSelectFolder = async (isSource: boolean): Promise<void> => {
     try {
       // @ts-ignore: electron api
@@ -359,6 +395,9 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
     }
   }
 
+  /**
+   * Adds a folder to the ignore list.
+   */
   const handleAddIgnorePath = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
@@ -373,10 +412,17 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
     }
   }
 
+  /**
+   * Removes a folder from the ignore list.
+   * @param pathToRemove - The path to remove.
+   */
   const handleRemoveIgnorePath = (pathToRemove: string): void => {
     setIgnorePaths((prev) => prev.filter((p) => p !== pathToRemove))
   }
 
+  /**
+   * Starts the scraping task.
+   */
   const handleStartTask = async (): Promise<void> => {
     if (!sourcePath || !destinationPath) {
       alert('Please select both a source and destination folder.')
@@ -421,6 +467,9 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
     }
   }
 
+  /**
+   * Opens the destination folder in the system file explorer.
+   */
   const handleOpenFolder = async (): Promise<void> => {
     if (destinationPath) {
       try {

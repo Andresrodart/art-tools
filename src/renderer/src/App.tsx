@@ -4,20 +4,15 @@ import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
 import { ToolGalleryControls } from './components/layout/ToolGalleryControls'
 import { useHeaderStore } from './store/headerStore'
-import { useTaskStore, TaskTab } from './store/taskStore'
+import { useTaskStore } from './store/taskStore'
 import { usePreferenceStore } from './store/preferenceStore'
 import { TOOLS } from './config/tools'
+import { ToolCardProps } from './types/tool'
+import { TaskTab } from './types/task'
 
-interface ToolCardProps {
-  title: string
-  description: string
-  actionText: string
-  onAction: () => void
-  isDanger?: boolean
-  isFavorite: boolean
-  onToggleFavorite: () => void
-}
-
+/**
+ * Component for rendering a tool card in the gallery.
+ */
 function ToolCard({
   title,
   description,
@@ -59,6 +54,9 @@ function ToolCard({
   )
 }
 
+/**
+ * Main application component.
+ */
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const setTitle = useHeaderStore((state) => state.setTitle)
@@ -78,26 +76,39 @@ function App(): React.JSX.Element {
     initializePrefs()
   }, [initializeTasks, initializePrefs])
 
+  /**
+   * Navigates back to the home gallery.
+   */
   const handleCloseTool = useCallback(() => {
-    // In the new system, "Back" or "Close" from a tool setup just goes back to home tab
     useTaskStore.getState().setActiveTab('home')
   }, [])
 
-  const openTool = (toolName: string, title: string): void => {
+  /**
+   * Opens a tool by adding its setup tab.
+   * @param toolId - ID of the tool to open.
+   * @param title - Display title for the tool tab.
+   */
+  const openTool = (toolId: string, title: string): void => {
     const tab: TaskTab = {
-      id: `setup-${toolName.toLowerCase()}`,
+      id: `setup-${toolId.toLowerCase()}`,
       title: title,
-      type: 'task' // We treat setup pages as task tabs for navigation
+      type: 'task'
     }
     addTab(tab)
   }
 
+  /**
+   * Toggles the application's visual theme.
+   */
   const toggleTheme = useCallback((): void => {
     const currentTheme = document.documentElement.getAttribute('data-theme')
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark'
     document.documentElement.setAttribute('data-theme', newTheme)
   }, [])
 
+  /**
+   * Toggles the application's language.
+   */
   const toggleLanguage = useCallback((): void => {
     const newLang = i18n.language === 'en' ? 'es' : 'en'
     i18n.changeLanguage(newLang)
@@ -110,11 +121,12 @@ function App(): React.JSX.Element {
         { label: t('lang_toggle'), onClick: toggleLanguage },
         { label: t('theme_toggle'), onClick: toggleTheme }
       ])
-    } else {
-      // Actions are now mostly handled by the tools themselves or the header store within tools
     }
   }, [activeTabId, t, setTitle, setActions, toggleLanguage, toggleTheme])
 
+  /**
+   * Filters the tool registry based on search query and selected category.
+   */
   const filteredTools = useMemo(() => {
     return TOOLS.filter((tool) => {
       const matchesSearch =
@@ -131,6 +143,9 @@ function App(): React.JSX.Element {
     })
   }, [searchQuery, selectedCategory, favorites, t])
 
+  /**
+   * Renders the content corresponding to the active tab.
+   */
   const renderActiveContent = (): React.JSX.Element => {
     if (activeTabId === 'home') {
       return (

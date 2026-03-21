@@ -2,16 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
+import { Task } from '../../types/task'
+import { OrganizeResult } from '../../types/results'
 
-interface OrganizeResult {
-  source: string
-  destination: string
-  success: boolean
-  timestampCorrected?: boolean
-  error?: string
-}
-
+/** Constants for common file extensions. */
 const COMMON_EXTENSIONS = [
   '*',
   '.jpg',
@@ -43,10 +38,19 @@ const COMMON_EXTENSIONS = [
   '.tar.gz'
 ]
 
+/**
+ * Props for the FileOrganizer component.
+ */
 interface FileOrganizerProps {
+  /** Callback to return to the previous view. */
   onBack: () => void
 }
 
+/**
+ * FileOrganizer component for organizing files by date into subdirectories.
+ *
+ * @param props The component properties.
+ */
 export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [selectedExtensions, setSelectedExtensions] = useState<string[]>(['*'])
@@ -65,6 +69,10 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const { tasks, activeTabId, addTab } = useTaskStore()
   const taskData = tasks[activeTabId] as Task | undefined
 
+  /**
+   * Adds a file extension to the selected list.
+   * @param ext - The extension to add.
+   */
   const addExtension = (ext: string): void => {
     let newExt = ext.trim().toLowerCase()
     if (!newExt.startsWith('.') && newExt !== '*') {
@@ -86,6 +94,10 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     setShowExtDropdown(false)
   }
 
+  /**
+   * Removes a file extension from the selected list.
+   * @param ext - The extension to remove.
+   */
   const removeExtension = (ext: string): void => {
     setSelectedExtensions((prev) => {
       const newExts = prev.filter((e) => e !== ext)
@@ -127,6 +139,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     }
   }, [logEntries])
 
+  /**
+   * Opens the system folder selection dialog.
+   */
   const handleSelectFolder = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
@@ -141,6 +156,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     }
   }
 
+  /**
+   * Starts the file organization task.
+   */
   const handleStartOrganize = async (): Promise<void> => {
     if (!targetFolder) {
       alert('Please select a folder first.')
@@ -165,6 +183,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     }
   }
 
+  /**
+   * Opens the target folder in the system file explorer.
+   */
   const handleOpenFolder = async (): Promise<void> => {
     if (targetFolder) {
       try {

@@ -2,19 +2,23 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
+import { Task } from '../../types/task'
+import { MergerResult } from '../../types/results'
 
-interface ThresholdMergerResult {
-  originalPaths: string[]
-  newPath: string
-  success: boolean
-  error?: string
-}
-
+/**
+ * Props for the ThresholdMerger component.
+ */
 interface ThresholdMergerProps {
+  /** Callback to return to the previous view. */
   onBack: () => void
 }
 
+/**
+ * ThresholdMerger component for merging small folders into larger groups.
+ *
+ * @param props The component properties.
+ */
 export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [thresholdX, setThresholdX] = useState<number>(5)
@@ -67,6 +71,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     }
   }, [logEntries])
 
+  /**
+   * Opens the system folder selection dialog.
+   */
   const handleSelectFolder = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
@@ -81,6 +88,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     }
   }
 
+  /**
+   * Starts the threshold merger task.
+   */
   const handleStartTask = async (): Promise<void> => {
     if (!targetFolder) {
       alert('Please select a folder first.')
@@ -120,6 +130,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     }
   }
 
+  /**
+   * Opens the target folder in the system file explorer.
+   */
   const handleOpenFolder = async (): Promise<void> => {
     if (targetFolder) {
       try {
@@ -147,7 +160,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
       taskData.status === 'dry-run')
 
   // ── Result summary ──
-  const results = (taskData?.result as ThresholdMergerResult[]) ?? []
+  const results = (taskData?.result as MergerResult[]) ?? []
   const mergedGroupsCount = results.filter(
     (r) => r.success || taskData?.status === 'dry-run'
   ).length
@@ -267,6 +280,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     </>
   ) : null
 
+  /**
+   * Helper to get the base name of a path.
+   */
   const getSlashedPath = (path: string): string => path.split(/[/\\]/).pop() || path
 
   const outputSection = isFinished ? (

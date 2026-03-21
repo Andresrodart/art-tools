@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 import { Checkbox } from '../common/Checkbox'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
+import { Task } from '../../types/task'
 
 /**
  * Props for the EmptyFolderCleaner component.

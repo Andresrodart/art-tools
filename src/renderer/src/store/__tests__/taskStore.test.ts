@@ -1,7 +1,10 @@
-import { useTaskStore, Task, TaskTab } from '../taskStore'
+import { Task, TaskTab } from '../../types/task'
 import { act } from 'react'
+import { useTaskStore } from '../taskStore'
 
-// Reset Zustand state manually between tests
+/**
+ * Resets the Zustand state manually between tests.
+ */
 const resetStore = (): void => {
   useTaskStore.setState({
     tasks: {},

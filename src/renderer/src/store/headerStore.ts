@@ -1,24 +1,7 @@
 import { create } from 'zustand'
-import { ReactNode } from 'react'
+import { HeaderState } from '../types/header'
 
-interface HeaderAction {
-  label: string
-  onClick: () => void
-  variant?: 'primary' | 'danger' | 'success' | 'warning' | 'info'
-}
-
-interface HeaderState {
-  title: string
-  navigation: ReactNode | null
-  snippets: ReactNode | null
-  actions: HeaderAction[]
-  setTitle: (title: string) => void
-  setNavigation: (navigation: ReactNode | null) => void
-  setSnippets: (snippets: ReactNode | null) => void
-  setActions: (actions: HeaderAction[]) => void
-  reset: () => void
-}
-
+/** Initial state for the header store. */
 const initialState = {
   title: 'Tool Gallery',
   navigation: null,
@@ -26,6 +9,9 @@ const initialState = {
   actions: []
 }
 
+/**
+ * Global store for managing the application's header configuration.
+ */
 export const useHeaderStore = create<HeaderState>((set) => ({
   ...initialState,
   setTitle: (title) => set({ title }),

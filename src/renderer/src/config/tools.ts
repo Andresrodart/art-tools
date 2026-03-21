@@ -3,18 +3,11 @@ import { FolderMetadata } from '../components/tools/FolderMetadata'
 import { ThresholdMerger } from '../components/tools/ThresholdMerger'
 import { FileScraper } from '../components/tools/FileScraper'
 import { EmptyFolderCleaner } from '../components/tools/EmptyFolderCleaner'
+import { Tool, ToolCategory } from '../types/tool'
 
-export type ToolCategory = 'file-management' | 'media' | 'utility' | 'system'
-
-export interface Tool {
-  id: string
-  titleKey: string
-  descriptionKey: string
-  categories: ToolCategory[]
-  component: React.ComponentType<{ onBack: () => void }>
-  taskTypes: string[]
-}
-
+/**
+ * Registry of all available tools in the application.
+ */
 export const TOOLS: Tool[] = [
   {
     id: 'file-organizer',
@@ -58,4 +51,7 @@ export const TOOLS: Tool[] = [
   }
 ]
 
+/**
+ * List of all available tool categories.
+ */
 export const ALL_CATEGORIES: ToolCategory[] = ['file-management', 'media', 'utility', 'system']

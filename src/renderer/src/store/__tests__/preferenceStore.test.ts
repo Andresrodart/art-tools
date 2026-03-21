@@ -8,11 +8,19 @@ import { act } from 'react'
 const mockSetPreferences = jest.fn()
 const mockGetPreferences = jest.fn()
 
+/**
+ * Mock interface for the Electron API exposed to the renderer.
+ */
+interface MockApi {
+  setPreferences: jest.Mock
+  getPreferences: jest.Mock
+}
+
 // @ts-ignore: mock electron api
 window.api = {
   setPreferences: mockSetPreferences,
   getPreferences: mockGetPreferences
-}
+} as unknown as MockApi
 
 describe('preferenceStore', () => {
   beforeEach(() => {

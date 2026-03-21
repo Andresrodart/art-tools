@@ -1,6 +1,9 @@
 import React from 'react'
 import { useHeaderStore } from '../../store/headerStore'
 
+/**
+ * Header component that displays the application title and controls.
+ */
 export const Header: React.FC = () => {
   const { title, navigation, snippets, actions } = useHeaderStore()
 

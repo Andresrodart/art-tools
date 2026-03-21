@@ -2,21 +2,23 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
+import { Task } from '../../types/task'
+import { MetadataResult } from '../../types/results'
 
-interface FolderMetadataResult {
-  originalName: string
-  newName: string
-  originalPath: string
-  newPath: string
-  success: boolean
-  error?: string
-}
-
+/**
+ * Props for the FolderMetadata component.
+ */
 interface FolderMetadataProps {
+  /** Callback to return to the previous view. */
   onBack: () => void
 }
 
+/**
+ * FolderMetadata component for appending size and item count to folder names.
+ *
+ * @param props The component properties.
+ */
 export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [includeSize, setIncludeSize] = useState<boolean>(true)
@@ -69,6 +71,9 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
     }
   }, [logEntries])
 
+  /**
+   * Opens the system folder selection dialog.
+   */
   const handleSelectFolder = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
@@ -83,6 +88,9 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
     }
   }
 
+  /**
+   * Starts the folder metadata appending task.
+   */
   const handleStartTask = async (): Promise<void> => {
     if (!targetFolder) {
       alert('Please select a folder first.')
@@ -110,6 +118,9 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
     }
   }
 
+  /**
+   * Opens the target folder in the system file explorer.
+   */
   const handleOpenFolder = async (): Promise<void> => {
     if (targetFolder) {
       try {
@@ -137,7 +148,7 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
       taskData.status === 'dry-run')
 
   // ── Result summary ──
-  const results = (taskData?.result as FolderMetadataResult[]) ?? []
+  const results = (taskData?.result as MetadataResult[]) ?? []
   const renamedCount = results.filter((r) => r.success || taskData?.status === 'dry-run').length
   const failCount = results.filter((r) => !r.success && taskData?.status !== 'dry-run').length
 
@@ -287,10 +298,10 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
                     }}
                   >
                     <div style={{ wordBreak: 'break-all' }}>
-                      <span style={{ color: '#ff6b6b' }}>Old:</span> {res.originalName}
+                      <span style={{ color: '#ff6b6b' }}>Old:</span> {res.originalPath}
                     </div>
                     <div style={{ wordBreak: 'break-all' }}>
-                      <span style={{ color: '#51cf66' }}>New:</span> <b>{res.newName}</b>
+                      <span style={{ color: '#51cf66' }}>New:</span> <b>{res.newPath}</b>
                     </div>
                     {!res.success && res.error && taskData.status !== 'dry-run' && (
                       <div
