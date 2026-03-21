@@ -1,74 +1,65 @@
+import * as path from 'path'
 import { thresholdMergerTask, getImmediateElementCount } from '../thresholdMerger'
 import { promises as fs } from 'fs'
-import * as path from 'path'
-import * as os from 'os'
-import { taskManager } from '../TaskManager'
+import { TestSandbox, setupDummyTask } from './testHelpers.fixture'
 
+/**
+ * Test suite for the Threshold Merger Service.
+ * Verifies grouping of sibling folders based on item count and capacity.
+ */
 describe('Threshold Merger Service', () => {
-  let tmpDir: string
+  const sandbox = new TestSandbox()
 
   beforeEach(async () => {
-    // Create a temporary directory for each test
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'threshold-merger-test-'))
+    // Initialize a new unique temporary sandbox for each test case
+    await sandbox.setup('threshold-merger-test-')
   })
 
   afterEach(async () => {
-    // Clean up
-    try {
-      await fs.rm(tmpDir, { recursive: true, force: true })
-    } catch {
-      // Ignore cleanup errors
-    }
+    // Clean up all temporary files and folders
+    await sandbox.teardown()
   })
 
   describe('getImmediateElementCount', () => {
-    it('should return correct number of direct children', async () => {
-      await fs.mkdir(path.join(tmpDir, 'folder1'))
-      await fs.writeFile(path.join(tmpDir, 'file1.txt'), 'data')
+    test('returns the correct number of direct children in a folder', async () => {
+      // Setup: 1 folder and 1 file
+      await sandbox.createDirectory('folder1')
+      await sandbox.createFile('file1.txt', 'data')
 
-      const count = await getImmediateElementCount(tmpDir)
-      expect(count).toBe(2)
+      const elementCount = await getImmediateElementCount(sandbox.rootPath)
+      expect(elementCount).toBe(2)
     })
   })
 
   describe('thresholdMergerTask', () => {
-    it('should group siblings up to Y elements when < X', async () => {
-      // Setup:
-      // Root
-      //  -> A (2 elements) -> A1.txt, A2.txt
-      //  -> B (3 elements) -> B1.txt, B2.txt, B3.txt
-      //  -> C (4 elements) -> C1.txt, C2.txt, C3.txt, C4.txt
-      //  -> D (1 element)  -> D1.txt
-      //  -> E (10 elements) -> Too big, should not be merged if X=5
+    test('groups sibling folders into batches when below the item threshold', async () => {
+      // Setup tree:
+      // A (2 elements) -> A1.txt, A2.txt
+      // B (3 elements) -> B1.txt, B2.txt, B3.txt
+      // C (4 elements) -> C1.txt, C2.txt, C3.txt, C4.txt
+      // D (1 element)  -> D1.txt
+      // E (10 elements) -> Too big, should not be merged if thresholdX=5
 
-      const dirA = path.join(tmpDir, 'A')
-      const dirB = path.join(tmpDir, 'B')
-      const dirC = path.join(tmpDir, 'C')
-      const dirD = path.join(tmpDir, 'D')
-      const dirE = path.join(tmpDir, 'E')
+      await sandbox.createFile('A/A1.txt', '')
+      await sandbox.createFile('A/A2.txt', '')
+      await sandbox.createFile('B/B1.txt', '')
+      await sandbox.createFile('B/B2.txt', '')
+      await sandbox.createFile('B/B3.txt', '')
+      await sandbox.createFile('C/C1.txt', '')
+      await sandbox.createFile('C/C2.txt', '')
+      await sandbox.createFile('C/C3.txt', '')
+      await sandbox.createFile('C/C4.txt', '')
+      await sandbox.createFile('D/D1.txt', '')
+      for (let i = 0; i < 10; i++) {
+        await sandbox.createFile(`E/E${i}.txt`, '')
+      }
 
-      await fs.mkdir(dirA)
-      await fs.writeFile(path.join(dirA, 'A1.txt'), '')
-      await fs.writeFile(path.join(dirA, 'A2.txt'), '')
-      await fs.mkdir(dirB)
-      await fs.writeFile(path.join(dirB, 'B1.txt'), '')
-      await fs.writeFile(path.join(dirB, 'B2.txt'), '')
-      await fs.writeFile(path.join(dirB, 'B3.txt'), '')
-      await fs.mkdir(dirC)
-      await fs.writeFile(path.join(dirC, 'C1.txt'), '')
-      await fs.writeFile(path.join(dirC, 'C2.txt'), '')
-      await fs.writeFile(path.join(dirC, 'C3.txt'), '')
-      await fs.writeFile(path.join(dirC, 'C4.txt'), '')
-      await fs.mkdir(dirD)
-      await fs.writeFile(path.join(dirD, 'D1.txt'), '')
-      await fs.mkdir(dirE)
-      for (let i = 0; i < 10; i++) await fs.writeFile(path.join(dirE, `E${i}.txt`), '')
+      const taskId = 'test-threshold-merge'
+      setupDummyTask(taskId, 'threshold-merger')
 
-      const task = taskManager.createTask('thresholdMetadata')
-
-      // X = 5, Y = 6
-      const results = await thresholdMergerTask(task.id, {
-        rootPath: tmpDir,
+      // Logic: X = 5, Y = 6
+      const taskResults = await thresholdMergerTask(taskId, {
+        rootPath: sandbox.rootPath,
         thresholdX: 5,
         maxCapacityY: 6,
         isDryRun: false
@@ -79,52 +70,50 @@ describe('Threshold Merger Service', () => {
       // C (4) + D(1) = 5 (<= 6) -> C___D
       // E (10) is >= X, so not merged at all.
 
-      expect(results.length).toBe(2)
+      expect(taskResults).toHaveLength(2)
 
-      const merges = results.map((r) => path.basename(r.newPath)).sort()
-      expect(merges).toEqual(['A___B', 'C___D'])
+      const mergedNames = taskResults.map((result) => path.basename(result.newPath)).sort()
+      expect(mergedNames).toEqual(['A___B', 'C___D'])
 
-      // Verify files were moved
-      const mergedABCount = await getImmediateElementCount(path.join(tmpDir, 'A___B'))
+      // Verify that files were correctly moved into the new merged folders
+      const mergedABCount = await getImmediateElementCount(sandbox.getAbsolutePath('A___B'))
       expect(mergedABCount).toBe(5) // (A1, A2, B1, B2, B3)
 
-      const mergedCDCount = await getImmediateElementCount(path.join(tmpDir, 'C___D'))
+      const mergedCDCount = await getImmediateElementCount(sandbox.getAbsolutePath('C___D'))
       expect(mergedCDCount).toBe(5) // (C1...C4, D1)
 
-      // Verify old folders are gone
-      const rootFolders = await fs.readdir(tmpDir)
-      expect(rootFolders).not.toContain('A')
-      expect(rootFolders).not.toContain('B')
-      expect(rootFolders).not.toContain('C')
-      expect(rootFolders).not.toContain('D')
-      expect(rootFolders).toContain('E')
+      // Verify the source folders have been removed after the merge
+      const remainingRootFolders = await fs.readdir(sandbox.rootPath)
+      expect(remainingRootFolders).not.toContain('A')
+      expect(remainingRootFolders).not.toContain('B')
+      expect(remainingRootFolders).not.toContain('C')
+      expect(remainingRootFolders).not.toContain('D')
+      expect(remainingRootFolders).toContain('E')
     })
 
-    it('should do nothing in a dry run', async () => {
-      const dirA = path.join(tmpDir, 'A')
-      const dirB = path.join(tmpDir, 'B')
-      await fs.mkdir(dirA)
-      await fs.writeFile(path.join(dirA, 'A1.txt'), '')
-      await fs.mkdir(dirB)
-      await fs.writeFile(path.join(dirB, 'B1.txt'), '')
+    test('performs no changes to the filesystem when isDryRun is true', async () => {
+      // Setup folders A and B for a potential merge
+      await sandbox.createFile('A/A1.txt', '')
+      await sandbox.createFile('B/B1.txt', '')
 
-      const task = taskManager.createTask('thresholdMetadata')
+      const taskId = 'test-threshold-dryrun'
+      setupDummyTask(taskId, 'threshold-merger')
 
-      const results = await thresholdMergerTask(task.id, {
-        rootPath: tmpDir,
+      const taskResults = await thresholdMergerTask(taskId, {
+        rootPath: sandbox.rootPath,
         thresholdX: 5,
         maxCapacityY: 10,
         isDryRun: true
       })
 
-      expect(results.length).toBe(1)
-      expect(path.basename(results[0].newPath)).toBe('A___B')
+      expect(taskResults).toHaveLength(1)
+      expect(path.basename(taskResults[0].newPath)).toBe('A___B')
 
-      // Since it's a dry run, the folders should still exist named A and B
-      const rootFolders = await fs.readdir(tmpDir)
-      expect(rootFolders).toContain('A')
-      expect(rootFolders).toContain('B')
-      expect(rootFolders).not.toContain('A___B')
+      // Verify that in dry-run, the folders were NOT actually merged on disk
+      const remainingRootFolders = await fs.readdir(sandbox.rootPath)
+      expect(remainingRootFolders).toContain('A')
+      expect(remainingRootFolders).toContain('B')
+      expect(remainingRootFolders).not.toContain('A___B')
     })
   })
 })

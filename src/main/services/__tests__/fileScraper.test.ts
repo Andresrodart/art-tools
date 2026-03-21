@@ -1,125 +1,123 @@
 import { fileScraperTask, FileScraperOptions } from '../fileScraper'
 import { taskManager } from '../TaskManager'
 import { promises as fs } from 'fs'
-import { join } from 'path'
-import * as os from 'os'
+import { TestSandbox } from './testHelpers.fixture'
 
+/**
+ * Test suite for the fileScraperTask service.
+ * Verifies finding nested files, moving them to a flat folder, and handling collisions.
+ */
 describe('fileScraperTask', () => {
-  let testRoot: string
-  let sourceDir: string
-  let destDir: string
+  const sandbox = new TestSandbox()
 
   beforeEach(async () => {
-    // Create a unique temporary directory for each test
-    testRoot = await fs.mkdtemp(join(os.tmpdir(), 'art-tools-scraper-test-'))
-    sourceDir = join(testRoot, 'source')
-    destDir = join(testRoot, 'dest')
-
-    await fs.mkdir(sourceDir)
+    // Initialize a new unique temporary sandbox for each test case
+    await sandbox.setup('scraper-test-')
+    // Create the required source and destination directory structures
+    await sandbox.createDirectory('source')
   })
 
   afterEach(async () => {
-    // Clean up
-    await fs.rm(testRoot, { recursive: true, force: true })
+    // Ensure all temporary files and directories are completely removed
+    await sandbox.teardown()
   })
 
-  it('should find nested files and move them to a flat destination directory', async () => {
-    // Setup nested source files
-    const sub1 = join(sourceDir, 'level1')
-    const sub2 = join(sub1, 'level2')
-    await fs.mkdir(sub2, { recursive: true })
+  test('successfully finds nested files and moves them to a flat destination directory', async () => {
+    const sourceDirectory = sandbox.getAbsolutePath('source')
+    const destinationDirectory = sandbox.getAbsolutePath('dest')
 
-    await fs.writeFile(join(sourceDir, 'root.jpg'), 'content')
-    await fs.writeFile(join(sub1, 'nested1.jpg'), 'content')
-    await fs.writeFile(join(sub2, 'nested2.txt'), 'content')
-    await fs.writeFile(join(sub2, 'nested3.jpg'), 'content')
+    // Setup nested source files for testing
+    await sandbox.createFile('source/root.jpg', 'content')
+    await sandbox.createFile('source/level1/nested1.jpg', 'content')
+    await sandbox.createFile('source/level1/level2/nested2.txt', 'content')
+    await sandbox.createFile('source/level1/level2/nested3.jpg', 'content')
 
-    const taskId = 'test-scrape-1'
-    const options: FileScraperOptions = {
-      sourcePath: sourceDir,
-      destinationPath: destDir,
+    const taskId = 'test-scrape-flat'
+    const scraperOptions: FileScraperOptions = {
+      sourcePath: sourceDirectory,
+      destinationPath: destinationDirectory,
       extensions: ['.jpg'],
       isDryRun: false
     }
 
+    // Mock the TaskManager to return our custom task ID
     taskManager.createTask = jest.fn().mockReturnValue({ id: taskId })
 
-    const results = await fileScraperTask(taskId, options)
+    const taskResults = await fileScraperTask(taskId, scraperOptions)
 
-    expect(results).toHaveLength(3) // root.jpg, nested1.jpg, nested3.jpg
-    expect(results.every((r) => r.success)).toBe(true)
+    // Verify correct identification: root.jpg, nested1.jpg, and nested3.jpg should be matched
+    expect(taskResults).toHaveLength(3)
+    expect(taskResults.every((result) => result.success)).toBe(true)
 
-    // Verify files were actually moved
-    const newFiles = await fs.readdir(destDir)
-    expect(newFiles).toHaveLength(3)
-    expect(newFiles).toContain('root.jpg')
-    expect(newFiles).toContain('nested1.jpg')
-    expect(newFiles).toContain('nested3.jpg')
+    // Verify all files were correctly moved to the flat destination directory
+    const destinationFiles = await fs.readdir(destinationDirectory)
+    expect(destinationFiles).toHaveLength(3)
+    expect(destinationFiles).toContain('root.jpg')
+    expect(destinationFiles).toContain('nested1.jpg')
+    expect(destinationFiles).toContain('nested3.jpg')
 
-    // Verify source files are gone
-    await expect(fs.stat(join(sourceDir, 'root.jpg'))).rejects.toThrow()
-    await expect(fs.stat(join(sub1, 'nested1.jpg'))).rejects.toThrow()
+    // Verify original source files were successfully removed after the move
+    expect(await sandbox.exists('source/root.jpg')).toBe(false)
+    expect(await sandbox.exists('source/level1/nested1.jpg')).toBe(false)
 
-    // txt file should remain
-    const txtStat = await fs.stat(join(sub2, 'nested2.txt'))
-    expect(txtStat.isFile()).toBe(true)
+    // Verify the .txt file was skipped and remains in its original location
+    expect(await sandbox.exists('source/level1/level2/nested2.txt')).toBe(true)
   })
 
-  it('should handle filename collisions correctly', async () => {
-    // Setup nested source files with identical names
-    const sub1 = join(sourceDir, 'folderA')
-    const sub2 = join(sourceDir, 'folderB')
-    await fs.mkdir(sub1)
-    await fs.mkdir(sub2)
+  test('correctly handles filename collisions in the destination directory', async () => {
+    const sourceDirectory = sandbox.getAbsolutePath('source')
+    const destinationDirectory = sandbox.getAbsolutePath('dest')
 
-    await fs.writeFile(join(sub1, 'image.jpg'), 'file1')
-    await fs.writeFile(join(sub2, 'image.jpg'), 'file2')
+    // Setup nested files with identical names to trigger a collision
+    await sandbox.createFile('source/folderA/image.jpg', 'fileA')
+    await sandbox.createFile('source/folderB/image.jpg', 'fileB')
 
     const taskId = 'test-scrape-collision'
-    const options: FileScraperOptions = {
-      sourcePath: sourceDir,
-      destinationPath: destDir,
+    const scraperOptions: FileScraperOptions = {
+      sourcePath: sourceDirectory,
+      destinationPath: destinationDirectory,
       extensions: ['*'],
       isDryRun: false
     }
 
     taskManager.createTask = jest.fn().mockReturnValue({ id: taskId })
 
-    const results = await fileScraperTask(taskId, options)
+    const taskResults = await fileScraperTask(taskId, scraperOptions)
 
-    expect(results).toHaveLength(2)
-    expect(results.every((r) => r.success)).toBe(true)
+    expect(taskResults).toHaveLength(2)
+    expect(taskResults.every((result) => result.success)).toBe(true)
 
-    // Verify both files exist with correct names in destination
-    const newFiles = await fs.readdir(destDir)
-    expect(newFiles).toHaveLength(2)
-    expect(newFiles).toContain('image.jpg')
-    expect(newFiles).toContain('image_1.jpg')
+    // Verify both files were moved and assigned unique names in the destination
+    const destinationFiles = await fs.readdir(destinationDirectory)
+    expect(destinationFiles).toHaveLength(2)
+    expect(destinationFiles).toContain('image.jpg')
+    expect(destinationFiles).toContain('image_1.jpg')
   })
 
-  it('should not modify files if isDryRun is true', async () => {
-    await fs.writeFile(join(sourceDir, 'test.jpg'), 'content')
+  test('does not modify the filesystem when isDryRun is set to true', async () => {
+    const sourceDirectory = sandbox.getAbsolutePath('source')
+    const destinationDirectory = sandbox.getAbsolutePath('dest')
+    await sandbox.createFile('source/test.jpg', 'content')
 
     const taskId = 'test-scrape-dryrun'
-    const options: FileScraperOptions = {
-      sourcePath: sourceDir,
-      destinationPath: destDir,
+    const scraperOptions: FileScraperOptions = {
+      sourcePath: sourceDirectory,
+      destinationPath: destinationDirectory,
       extensions: ['.jpg'],
       isDryRun: true
     }
 
     taskManager.createTask = jest.fn().mockReturnValue({ id: taskId })
 
-    const results = await fileScraperTask(taskId, options)
+    const taskResults = await fileScraperTask(taskId, scraperOptions)
 
-    expect(results).toHaveLength(1)
-    expect(results[0].success).toBe(true)
+    expect(taskResults).toHaveLength(1)
+    expect(taskResults[0].success).toBe(true)
 
-    // Verify destination dir wasn't even implicitly created
-    await expect(fs.stat(destDir)).rejects.toThrow()
+    // Verify the destination directory was not created during a dry-run
+    expect(await sandbox.exists('dest')).toBe(false)
 
-    // Verify source file still exists
-    const srcStat = await fs.stat(join(sourceDir, 'test.jpg'))
-    expect(srcStat.isFile()).toBe(true)
+    // Verify the original source file remains untouched
+    expect(await sandbox.exists('source/test.jpg')).toBe(true)
   })
 })

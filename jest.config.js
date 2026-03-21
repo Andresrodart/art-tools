@@ -7,5 +7,6 @@ module.exports = {
   testEnvironment: 'node',
   transform: {
     ...tsJestTransformCfg
-  }
+  },
+  testMatch: ['**/*.test.ts']
 }
