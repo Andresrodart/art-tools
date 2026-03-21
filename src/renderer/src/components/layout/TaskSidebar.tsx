@@ -31,7 +31,7 @@ export function TaskSidebar(): React.JSX.Element {
         .catch((err: unknown) => console.error('Failed to fetch tasks', err))
     }
 
-    const handleTaskProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
+    const handleTaskProgress = (_event: unknown, updatedTask: unknown): void => {
       const task = updatedTask as Task
       setTasks((prevTasks) => {
         const existingInd = prevTasks.findIndex((t) => t.id === task.id)

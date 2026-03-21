@@ -45,8 +45,8 @@ export const usePreferenceStore = create<PreferenceState>((set, get) => ({
     if (window.api?.getPreferences) {
       // @ts-ignore: electron api
       const prefs = await window.api.getPreferences()
-      if (prefs && prefs.favorites) {
-        set({ favorites: new Set(prefs.favorites) })
+      if (prefs && Array.isArray(prefs.favorites)) {
+        set({ favorites: new Set(prefs.favorites as string[]) })
       }
     }
     set({ initialized: true })
