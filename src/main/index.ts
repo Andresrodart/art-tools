@@ -79,8 +79,6 @@ app.whenReady().then(() => {
     }
   })
 
-  ipcMain.on('ping', () => console.log('pong'))
-
   // Open a folder or file in the system explorer
   ipcMain.handle('open-path', async (_, targetPath: string) => {
     return shell.openPath(targetPath)
