@@ -1,129 +1,126 @@
-import * as fs from 'fs/promises'
+import { promises as fs } from 'fs'
 import * as path from 'path'
-import * as os from 'os'
-import { getFolderStats, collectDirectories, folderMetadataTask } from '../folderMetadata'
-import { taskManager } from '../TaskManager'
+import { folderMetadataTask, FolderMetadataOptions } from '../folderMetadata'
+import { getFolderStats, collectAllDirectoryPaths } from '../utils/folderUtils'
+import { TestSandbox, setupDummyTask } from './testHelpers.fixture'
 
+/**
+ * Test suite for the Folder Metadata Service.
+ * Verifies calculation of directory stats, collection of directories, and naming logic.
+ */
 describe('Folder Metadata Service', () => {
-  let tmpDir: string
-
-  let rootPathsToClean: string[] = []
+  const sandbox = new TestSandbox()
 
   beforeEach(async () => {
-    // Create a temporary sandbox directory for each test
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'folder-metadata-test-'))
-    rootPathsToClean = [tmpDir]
+    // Initialize a unique temporary sandbox root for each test case
+    await sandbox.setup('metadata-test-')
   })
 
   afterEach(async () => {
-    // Clean up temporary directories
-    for (const dir of rootPathsToClean) {
-      await fs.rm(dir, { recursive: true, force: true })
-    }
+    // Clean up all temporary files and directories after the test finishes
+    await sandbox.teardown()
   })
 
   describe('getFolderStats', () => {
-    it('should calculate size and element count correctly', async () => {
-      // Setup: 1 file, 1 subfolder with 1 file
-      await fs.writeFile(path.join(tmpDir, 'file1.txt'), 'Hello') // 5 bytes
-      const subFolder = path.join(tmpDir, 'sub')
-      await fs.mkdir(subFolder)
-      await fs.writeFile(path.join(subFolder, 'file2.txt'), 'World!') // 6 bytes
+    test('calculates folder size and element count correctly across nested structures', async () => {
+      // Setup: Create a file and a subfolder containing another file
+      await sandbox.createFile('file1.txt', 'Hello') // 5 bytes
+      await sandbox.createDirectory('sub')
+      await sandbox.createFile('sub/file2.txt', 'World!') // 6 bytes
 
-      const stats = await getFolderStats(tmpDir)
+      const statistics = await getFolderStats(sandbox.rootPath)
 
-      // Total size: 5 + 6 = 11 bytes
-      expect(stats.sizeBytes).toBe(11)
+      // Total size: 5 (file1.txt) + 6 (file2.txt) = 11 bytes
+      expect(statistics.sizeInBytes).toBe(11)
 
-      // Total elements: file1.txt, sub (direct), and file2.txt (inside sub) -> 3 elements
-      expect(stats.elementCount).toBe(3)
+      // Total elements: 'file1.txt', 'sub', 'file2.txt' (inside sub) -> 3 elements
+      expect(statistics.totalElementCount).toBe(3)
     })
   })
 
-  describe('collectDirectories', () => {
-    it('should list all directories recursively including root', async () => {
-      const sub1 = path.join(tmpDir, 'sub1')
-      const sub2 = path.join(tmpDir, 'sub2')
-      const sub1_nested = path.join(sub1, 'nested')
+  describe('collectAllDirectoryPaths', () => {
+    test('successfully lists all directory paths recursively, including the root', async () => {
+      // Setup: Create several nested and sibling folders
+      const subFolder1 = await sandbox.createDirectory('sub1')
+      const subFolder2 = await sandbox.createDirectory('sub2')
+      const nestedSubFolder1 = await sandbox.createDirectory('sub1/nested')
 
-      await fs.mkdir(sub1)
-      await fs.mkdir(sub2)
-      await fs.mkdir(sub1_nested)
+      const collectedPaths = await collectAllDirectoryPaths(sandbox.rootPath)
 
-      const dirs = await collectDirectories(tmpDir)
-      expect(dirs).toHaveLength(4)
-      expect(dirs).toContain(tmpDir)
-      expect(dirs).toContain(sub1)
-      expect(dirs).toContain(sub2)
-      expect(dirs).toContain(sub1_nested)
+      // Total folders: root, sub1, sub2, nestedSubFolder1 -> 4 total
+      expect(collectedPaths).toHaveLength(4)
+      expect(collectedPaths).toContain(sandbox.rootPath)
+      expect(collectedPaths).toContain(subFolder1)
+      expect(collectedPaths).toContain(subFolder2)
+      expect(collectedPaths).toContain(nestedSubFolder1)
     })
   })
 
   describe('folderMetadataTask', () => {
-    const DUMMY_TASK_ID = 'test-task-123'
+    const DUMMY_TASK_ID = 'test-metadata-task'
 
     beforeEach(() => {
-      // Create a dummy task in the manager so updates don't throw warnings
-      taskManager['tasks'].set(DUMMY_TASK_ID, {
-        id: DUMMY_TASK_ID,
-        type: 'folder-metadata',
-        status: 'pending',
-        progress: { current: 0, total: 0 },
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      })
+      // Initialize the TaskManager state with a dummy task for testing
+      setupDummyTask(DUMMY_TASK_ID, 'folder-metadata')
     })
 
-    it('should perform a dry run and project paths correctly', async () => {
-      const subFolder = path.join(tmpDir, 'sub')
-      await fs.mkdir(subFolder)
-      await fs.writeFile(path.join(subFolder, 'test.txt'), 'A'.repeat(1024 * 1024)) // 1MB
+    test('performs a dry-run and calculates the projected names without renaming', async () => {
+      // Setup: Create a folder with 1MB of data
+      await sandbox.createDirectory('sub')
+      await sandbox.createFile('sub/test.txt', 'A'.repeat(1024 * 1024)) // Exactly 1MB
 
-      const results = await folderMetadataTask(DUMMY_TASK_ID, {
-        rootPath: tmpDir,
+      const metadataOptions: FolderMetadataOptions = {
+        rootPath: sandbox.rootPath,
         includeSize: true,
         includeElements: true,
         isDryRun: true
-      })
+      }
 
-      // 2 directories: root, and sub
-      expect(results).toHaveLength(2)
+      const taskResults = await folderMetadataTask(DUMMY_TASK_ID, metadataOptions)
 
-      const subResult = results.find((r) => r.originalName === 'sub')
+      // Results for: root and sub
+      expect(taskResults).toHaveLength(2)
+
+      const subResult = taskResults.find((result) => result.originalName === 'sub')
       expect(subResult).toBeDefined()
-      // size: 1MB = ~0.00GB (<0.01GB fallback will trigger, or rounded to 0.00 depending on math)
-      // 1MB is 0.00097 GB. Our logic says if > 0 and < 0.01, it uses '<0.01GB'.
+      // Projected name should append the size and element count
       expect(subResult?.newName).toBe('sub_1MB_1')
-      expect(subResult?.newPath).toBe(path.join(tmpDir, 'sub_1MB_1'))
+      expect(subResult?.newPath).toBe(sandbox.getAbsolutePath('sub_1MB_1'))
 
-      // Ensure that in a dry run, the folder was NOT actually renamed
-      const stat = await fs.stat(subFolder)
-      expect(stat.isDirectory()).toBe(true)
+      // Ensure that in a dry-run, the folder was NOT actually renamed on disk
+      expect(await sandbox.exists('sub')).toBe(true)
     })
 
-    it('should actually rename folders when not a dry run', async () => {
-      const subFolder = path.join(tmpDir, 'sub')
-      await fs.mkdir(subFolder)
+    test('renames folders correctly when isDryRun is false', async () => {
+      // Setup: Create a subfolder to rename
+      await sandbox.createDirectory('sub')
 
-      const results = await folderMetadataTask(DUMMY_TASK_ID, {
-        rootPath: tmpDir,
+      const metadataOptions: FolderMetadataOptions = {
+        rootPath: sandbox.rootPath,
         includeSize: false,
         includeElements: true,
         isDryRun: false
-      })
-
-      // The root directory also gets renamed, so we need to track its new name for cleanup
-      // and for asserting the subfolder's existence.
-      const rootResult = results.find((r) => r.originalPath === tmpDir)
-      const newRootPath = rootResult ? rootResult.newPath : tmpDir
-      if (rootResult) {
-        rootPathsToClean.push(newRootPath)
       }
 
-      // Should be renamed to sub_0 since it's empty
-      const renamedSubPath = path.join(newRootPath, 'sub_0')
-      const stat = await fs.stat(renamedSubPath)
-      expect(stat.isDirectory()).toBe(true)
+      const taskResults = await folderMetadataTask(DUMMY_TASK_ID, metadataOptions)
+
+      // When the root folder is also renamed, the paths in the task results are built
+      // relative to the old parent path.
+
+      // Let's find the result for the root folder
+      const rootResult = taskResults.find((result) => result.originalPath === sandbox.rootPath)
+      expect(rootResult).toBeDefined()
+      expect(rootResult?.success).toBe(true)
+      const newRootPath = rootResult!.newPath
+      sandbox.trackPathForCleanup(newRootPath)
+
+      // The subfolder was renamed first. Its name is "sub_0".
+      // Since the parent (root) was also renamed, its final physical path is <newRootPath>/sub_0.
+      const finalSubFolderPath = path.join(newRootPath, 'sub_0')
+
+      // Check the filesystem directly
+      const resultStat = await fs.stat(finalSubFolderPath)
+      expect(resultStat.isDirectory()).toBe(true)
     })
   })
 })

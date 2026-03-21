@@ -1,183 +1,130 @@
 import { join, parse } from 'path'
 import { promises as fs } from 'fs'
-import { taskManager } from './TaskManager'
+import { TaskReporter } from './utils/taskReporter'
+import {
+  getFolderStats,
+  formatBytesToHumanReadable,
+  collectAllDirectoryPaths,
+  FolderMetadataResult
+} from './utils/folderUtils'
 
+/**
+ * Configuration for the folder metadata appendage task.
+ */
 export interface FolderMetadataOptions {
+  /** The root directory to start analyzing folders. */
   rootPath: string
+  /** Whether to append the folder's total size (e.g., "_1.5MB"). */
   includeSize: boolean
+  /** Whether to append the total element count (e.g., "_10"). */
   includeElements: boolean
+  /** If true, simulates folder renaming without modifying the filesystem. */
   isDryRun: boolean
 }
 
-export interface FolderMetadataResult {
-  originalName: string
-  newName: string
-  originalPath: string
-  newPath: string
-  success: boolean
-  error?: string
-}
-
-export interface FolderStats {
-  sizeBytes: number
-  elementCount: number
-}
-
 /**
- * Recursively calculates the total size and number of elements (files + folders) in a directory.
- */
-export async function getFolderStats(dir: string): Promise<FolderStats> {
-  let sizeBytes = 0
-  let elementCount = 0
-
-  try {
-    const entries = await fs.readdir(dir, { withFileTypes: true })
-    elementCount += entries.length // Count direct children
-
-    for (const entry of entries) {
-      const fullPath = join(dir, entry.name)
-      if (entry.isDirectory()) {
-        const subStats = await getFolderStats(fullPath)
-        sizeBytes += subStats.sizeBytes
-        elementCount += subStats.elementCount
-      } else if (entry.isFile()) {
-        try {
-          const stat = await fs.stat(fullPath)
-          sizeBytes += stat.size
-        } catch {
-          // File might have been removed or is inaccessible
-        }
-      }
-    }
-  } catch {
-    // Ignore inaccessible directories
-  }
-
-  return { sizeBytes, elementCount }
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + sizes[i]
-}
-
-/**
- * Recursively collects all directories within a root path, including the root itself.
- */
-export async function collectDirectories(dir: string): Promise<string[]> {
-  const dirs: string[] = [dir]
-  try {
-    const entries = await fs.readdir(dir, { withFileTypes: true })
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        const fullPath = join(dir, entry.name)
-        const subDirs = await collectDirectories(fullPath)
-        dirs.push(...subDirs)
-      }
-    }
-  } catch {
-    // Ignore inaccessible directories
-  }
-  return dirs
-}
-
-/**
- * Core task executor for folder metadata appender.
+ * Appends metadata (total size and element count) to directory names within a root path.
+ * This is a recursive operation starting from the deepest directories upwards.
+ *
+ * @param taskId The unique ID for the task in the TaskManager.
+ * @param options Configuration for what metadata to append and where.
+ * @returns A promise that resolves to the rename results for each folder.
  */
 export async function folderMetadataTask(
   taskId: string,
   options: FolderMetadataOptions
 ): Promise<FolderMetadataResult[]> {
-  taskManager.updateTaskStatus(taskId, options.isDryRun ? 'dry-run' : 'running')
-  const results: FolderMetadataResult[] = []
+  const reporter = new TaskReporter(taskId)
+  reporter.setStatus(options.isDryRun ? 'dry-run' : 'running')
+  const metadataResults: FolderMetadataResult[] = []
 
   try {
-    const directories = await collectDirectories(options.rootPath)
+    // 1. Collect all directory paths recursively to prepare for the analysis
+    const allDirectoryPaths = await collectAllDirectoryPaths(options.rootPath)
 
-    taskManager.updateTaskProgress(taskId, {
+    reporter.updateProgress({
       current: 0,
-      total: directories.length,
+      total: allDirectoryPaths.length,
       message: 'Scanning directories...'
     })
 
-    let current = 0
-    // Sort descending by depth so we rename leaf folders first.
-    // Otherwise, renaming a parent folder breaks the paths for its children.
-    directories.sort((a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length)
+    let processedDirectoryCount = 0
 
-    for (const dir of directories) {
-      const task = taskManager.getActiveTasks().find((t) => t.id === taskId)
-      if (task?.status === 'error') {
-        throw new Error('Task cancelled by user')
-      }
+    // 2. Sort directories descending by depth so we rename leaf folders first.
+    // This is crucial because renaming a parent folder would break child paths.
+    allDirectoryPaths.sort(
+      (pathA, pathB) => pathB.split(/[\\/]/).length - pathA.split(/[\\/]/).length
+    )
 
-      const stats = await getFolderStats(dir)
-      const parsedPath = parse(dir)
+    for (const directoryPath of allDirectoryPaths) {
+      // Yield to the event loop and check for cancellation before processing each directory
+      await reporter.yieldAndCheckCancellation()
 
-      const parts: string[] = []
+      const folderStatistics = await getFolderStats(directoryPath)
+      const parsedPathMetadata = parse(directoryPath)
+
+      const nameSuffixParts: string[] = []
       if (options.includeSize) {
-        parts.push(formatBytes(stats.sizeBytes))
+        nameSuffixParts.push(formatBytesToHumanReadable(folderStatistics.sizeInBytes))
       }
 
       if (options.includeElements) {
-        parts.push(stats.elementCount.toString())
+        nameSuffixParts.push(folderStatistics.totalElementCount.toString())
       }
 
-      let newName = parsedPath.name
-      if (parts.length > 0 && newName) {
-        // Prevent appending over and over if it already ends with this pattern.
-        // For simplicity right now, we just append blindly as requested,
-        // but maybe we can just do a very basic check.
-        // We'll append if it doesn't already end with exactly this suffix.
-        const suffix = `_${parts.join('_')}`
-        if (!newName.endsWith(suffix)) {
-          newName = `${newName}${suffix}`
+      let newDirectoryName = parsedPathMetadata.name
+      if (nameSuffixParts.length > 0 && newDirectoryName) {
+        // Prevent appending the same suffix multiple times if it already ends with it
+        const suffixString = `_${nameSuffixParts.join('_')}`
+        if (!newDirectoryName.endsWith(suffixString)) {
+          newDirectoryName = `${newDirectoryName}${suffixString}`
         }
       }
 
-      if (newName !== parsedPath.name) {
-        const newPath = join(parsedPath.dir, newName)
+      // Rename the directory only if its name has actually changed
+      if (newDirectoryName !== parsedPathMetadata.name) {
+        const newDirectoryFullPath = join(parsedPathMetadata.dir, newDirectoryName)
 
-        let success = true
-        let errorMsg: string | undefined
+        let renameSuccess = true
+        let renameErrorMessage: string | undefined
 
         if (!options.isDryRun) {
           try {
-            await fs.rename(dir, newPath)
-          } catch (e: unknown) {
-            success = false
-            errorMsg = e instanceof Error ? e.message : String(e)
-            console.error(`Failed to rename ${dir} to ${newPath}`, errorMsg)
+            await fs.rename(directoryPath, newDirectoryFullPath)
+          } catch (error: unknown) {
+            renameSuccess = false
+            renameErrorMessage = error instanceof Error ? error.message : String(error)
+            console.error(
+              `Failed to rename ${directoryPath} to ${newDirectoryFullPath}`,
+              renameErrorMessage
+            )
           }
         }
 
-        results.push({
-          originalName: parsedPath.name,
-          newName,
-          originalPath: dir,
-          newPath,
-          success,
-          error: errorMsg
+        metadataResults.push({
+          originalName: parsedPathMetadata.name,
+          newName: newDirectoryName,
+          originalPath: directoryPath,
+          newPath: newDirectoryFullPath,
+          success: renameSuccess,
+          error: renameErrorMessage
         })
       }
 
-      current++
-      taskManager.updateTaskProgress(taskId, {
-        current,
-        total: directories.length,
-        message: `Processed ${parsedPath.name}`
+      processedDirectoryCount++
+      reporter.updateProgress({
+        current: processedDirectoryCount,
+        total: allDirectoryPaths.length,
+        message: `Processed ${parsedPathMetadata.name}`
       })
     }
 
-    taskManager.updateTaskStatus(taskId, 'completed')
-    taskManager.completeTask(taskId, results)
-    return results
+    // Mark task as complete with the resulting metadata results
+    reporter.complete(metadataResults)
+    return metadataResults
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error)
-    taskManager.updateTaskStatus(taskId, 'error', msg)
+    const message = error instanceof Error ? error.message : String(error)
+    reporter.error(message)
     throw error
   }
 }
