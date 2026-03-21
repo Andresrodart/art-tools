@@ -1,0 +1,26 @@
+/* ── Global SCSS Variables ── */
+/* These variables mirror the CSS variables in main.css for use in SCSS math or mixins if needed. */
+/* Note: Since the app heavily relies on CSS variables for theme switching ([data-theme='dark']),
+   it's often best to continue using var(--...) in SCSS so CSS handles the live swapping.
+   We provide these as references or fallbacks. */
+
+$bg-color-light: #fdf5e6;
+$text-color-light: #111;
+$bg-color-dark: #222;
+$text-color-dark: #eee;
+
+$primary-color: #ff5e5e;
+$secondary-color: #4dc274;
+$border-width: 4px;
+$border-color-light: #000;
+$border-color-dark: #fff;
+$shadow-offset: 6px;
+
+// Mixins for common Brutalist patterns could go here
+@mixin brutalist-border {
+  border: var(--border-width) solid var(--border-color);
+}
+
+@mixin brutalist-shadow {
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--border-color);
+}

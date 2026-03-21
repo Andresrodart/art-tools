@@ -9,32 +9,7 @@ import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
 import { useHeaderStore } from './store/headerStore'
 import { useTaskStore, TaskTab } from './store/taskStore'
-
-interface ToolCardProps {
-  title: string
-  description: string
-  actionText: string
-  onAction: () => void
-  isDanger?: boolean
-}
-
-function ToolCard({
-  title,
-  description,
-  actionText,
-  onAction,
-  isDanger
-}: ToolCardProps): React.JSX.Element {
-  return (
-    <div className="brutalist-card">
-      <h2>{title}</h2>
-      <p>{description}</p>
-      <button className={`brutalist-button ${isDanger ? 'danger' : 'primary'}`} onClick={onAction}>
-        {actionText}
-      </button>
-    </div>
-  )
-}
+import { ToolCard } from './components/layout/ToolCard'
 
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
@@ -84,10 +59,51 @@ function App(): React.JSX.Element {
     }
   }, [activeTabId, t, setTitle, setActions, toggleLanguage, toggleTheme])
 
-  const renderActiveContent = (): React.JSX.Element => {
-    if (activeTabId === 'home') {
-      return (
-        <div className="gallery-grid">
+  const renderTool = (tab: TaskTab): React.JSX.Element | null => {
+    // Determine the component based on toolName or fall back to legacy task types if needed
+    const tool = tab.toolName || ''
+
+    // For legacy running tasks that don't have toolName but are type 'task'
+    if (tab.type === 'task' && tasks[tab.id]) {
+      const task = tasks[tab.id]
+      switch (task.type) {
+        case 'organize-files':
+          return <FileOrganizer onBack={handleCloseTool} tabId={tab.id} />
+        case 'folder-metadata':
+          return <FolderMetadata onBack={handleCloseTool} tabId={tab.id} />
+        case 'thresholdMerger':
+          return <ThresholdMerger onBack={handleCloseTool} tabId={tab.id} />
+        case 'fileScraper':
+          return <FileScraper onBack={handleCloseTool} tabId={tab.id} />
+        case 'findEmptyFolders':
+        case 'deleteFolders':
+          return <EmptyFolderCleaner onBack={handleCloseTool} tabId={tab.id} />
+      }
+    }
+
+    switch (tool) {
+      case 'FileOrganizer':
+        return <FileOrganizer onBack={handleCloseTool} tabId={tab.id} />
+      case 'FolderMetadata':
+        return <FolderMetadata onBack={handleCloseTool} tabId={tab.id} />
+      case 'ThresholdMerger':
+        return <ThresholdMerger onBack={handleCloseTool} tabId={tab.id} />
+      case 'FileScraper':
+        return <FileScraper onBack={handleCloseTool} tabId={tab.id} />
+      case 'EmptyFolderCleaner':
+        return <EmptyFolderCleaner onBack={handleCloseTool} tabId={tab.id} />
+      default:
+        return <div>Unknown tool: {tool}</div>
+    }
+  }
+
+  return (
+    <div className="brutalist-container">
+      <Header />
+      <Tabs />
+
+      <main className="main-content">
+        <div style={{ display: activeTabId === 'home' ? 'grid' : 'none' }} className="gallery-grid">
           <ToolCard
             title={t('tool_file_organizer_title')}
             description={t('tool_file_organizer_desc')}
