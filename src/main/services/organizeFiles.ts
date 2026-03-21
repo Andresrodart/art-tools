@@ -81,9 +81,17 @@ export async function organizeFilesTask(
   const dryRunSimulatedExistsSet = new Set<string>()
 
   // Helper function to check for path collisions, considering dry-run simulations
-  const checkFileExistence = (targetPath: string): boolean => {
-    if (isDryRun) return dryRunSimulatedExistsSet.has(targetPath) || fs.existsSync(targetPath)
-    return fs.existsSync(targetPath)
+  const checkFileExistence = async (targetPath: string): Promise<boolean> => {
+    if (isDryRun) {
+      if (dryRunSimulatedExistsSet.has(targetPath)) return true
+    }
+
+    try {
+      await fs.promises.stat(targetPath)
+      return true
+    } catch {
+      return false
+    }
   }
 
   for (const sourceFilePath of matchedFilePaths) {
@@ -118,7 +126,7 @@ export async function organizeFilesTask(
     // --- Step 2.2: Correct filesystem timestamp if using EXIF capture date ---
     let wasTimestampUpdated = false
     if (source === 'exif' && !isDryRun) {
-      wasTimestampUpdated = synchronizeTimestampWithExif(sourceFilePath, resolvedDate)
+      wasTimestampUpdated = await synchronizeTimestampWithExif(sourceFilePath, resolvedDate)
     }
 
     // --- Step 2.3: Build the destination path (Year/Month/Day) ---
@@ -132,7 +140,10 @@ export async function organizeFilesTask(
     if (sourceFilePath === destinationFilePath) continue
 
     // Ensure the destination path is unique to prevent overwriting existing files
-    const uniqueDestinationPath = getUniquePathWithCheck(destinationFilePath, checkFileExistence)
+    const uniqueDestinationPath = await getUniquePathWithCheck(
+      destinationFilePath,
+      checkFileExistence
+    )
 
     // --- Step 2.4: Execute Move or Simulate in Dry-Run ---
     if (isDryRun) {
@@ -146,11 +157,13 @@ export async function organizeFilesTask(
     } else {
       try {
         // Create the necessary Year/Month/Day directories on the fly
-        if (!fs.existsSync(destinationDirectory)) {
-          fs.mkdirSync(destinationDirectory, { recursive: true })
+        try {
+          await fs.promises.stat(destinationDirectory)
+        } catch {
+          await fs.promises.mkdir(destinationDirectory, { recursive: true })
         }
 
-        fs.renameSync(sourceFilePath, uniqueDestinationPath)
+        await fs.promises.rename(sourceFilePath, uniqueDestinationPath)
 
         organizationResults.push({
           source: sourceFilePath,
