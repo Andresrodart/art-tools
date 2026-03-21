@@ -1,0 +1,69 @@
+name: Screenshot Check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  screenshot-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for screenshots in PR description
+        id: check-screenshot
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # Use regex to find images in markdown (both standard markdown and HTML <img> tags)
+          # Common patterns: ![alt text](url) or <img src="url"> or common image upload formats in GitHub
+          if echo "$PR_BODY" | grep -Ei "(!\[.*\]\(.*\)|<img.*src=.*>|https?://user-images\.githubusercontent\.com/|https?://github\.com/.*/assets/|https?://github\.com/user-attachments/assets/)" > /dev/null; then
+            echo "Screenshot found in PR description!"
+            echo "has_screenshot=true" >> $GITHUB_OUTPUT
+          else
+            echo "No screenshot found in PR description."
+            echo "has_screenshot=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if changes are only to non-UI files
+        id: check-files
+        run: |
+          # List all files changed in this PR compared to the base branch
+          git fetch origin ${{ github.base_ref }}
+          FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+
+          echo "Files changed:"
+          echo "$FILES_CHANGED"
+
+          # Check if any "UI" related files are changed.
+          # We consider .tsx, .ts, .css, .html, .svg, .png, .jpg files as potentially UI-related.
+          # We ignore .github, .json (except package.json maybe), .md, .gitignore, etc.
+          # If only non-UI files are changed, we can skip the screenshot requirement.
+
+          UI_FILES_REGEX="\.(tsx|ts|css|html|svg|png|jpg|jpeg|webp)$"
+
+          if echo "$FILES_CHANGED" | grep -E "$UI_FILES_REGEX" | grep -vE "^(\.github/|docs/|TODO/)" > /dev/null; then
+            echo "UI-related files detected."
+            echo "ui_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "Only non-UI files detected."
+            echo "ui_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Enforce Screenshot Requirement
+        run: |
+          HAS_SCREENSHOT="${{ steps.check-screenshot.outputs.has_screenshot }}"
+          UI_CHANGES="${{ steps.check-files.outputs.ui_changes }}"
+
+          if [ "$UI_CHANGES" = "true" ] && [ "$HAS_SCREENSHOT" = "false" ]; then
+            echo "Error: This PR contains UI-related changes but no screenshot or media was found in the description."
+            echo "Please add a screenshot to help reviewers visualize your changes."
+            exit 1
+          elif [ "$UI_CHANGES" = "false" ]; then
+            echo "Skipping screenshot requirement: No UI-related files changed."
+          else
+            echo "Screenshot check passed!"
+          fi
