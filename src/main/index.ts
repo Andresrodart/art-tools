@@ -1,8 +1,5 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
-import { readFileSync, writeFileSync } from 'fs'
-import { exec } from 'child_process'
-import { promisify } from 'util'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
@@ -59,25 +56,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC API endpoints for System Interactions
-  ipcMain.handle('read-file', async (_, filePath) => {
-    return readFileSync(filePath, 'utf-8')
-  })
-
-  ipcMain.handle('write-file', async (_, filePath, content) => {
-    writeFileSync(filePath, content, 'utf-8')
-    return true
-  })
-
-  ipcMain.handle('exec-command', async (_, command) => {
-    const execPromise = promisify(exec)
-    try {
-      const { stdout, stderr } = await execPromise(command)
-      return { success: true, stdout, stderr }
-    } catch (e: unknown) {
-      return { success: false, error: e instanceof Error ? e.message : String(e) }
-    }
-  })
 
   ipcMain.on('ping', () => console.log('pong'))
 
