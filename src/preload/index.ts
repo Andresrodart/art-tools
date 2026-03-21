@@ -53,6 +53,10 @@ const api = {
       isDryRun,
       ignorePaths
     ),
+  startFindEmptyFoldersTask: (rootPath: string) =>
+    ipcRenderer.invoke('task:find-empty-folders', rootPath),
+  startDeleteFoldersTask: (foldersToDelete: string[], isDryRun: boolean) =>
+    ipcRenderer.invoke('task:delete-folders', foldersToDelete, isDryRun),
   getActiveTasks: () => ipcRenderer.invoke('task:get-active'),
   cancelTask: (taskId: string) => ipcRenderer.invoke('task:cancel', taskId),
   onTaskProgress: (callback: (event: Electron.IpcRendererEvent, task: unknown) => void) =>

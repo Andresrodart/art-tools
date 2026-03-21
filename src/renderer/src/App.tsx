@@ -5,6 +5,7 @@ import { FileOrganizer } from './components/tools/FileOrganizer'
 import { FolderMetadata } from './components/tools/FolderMetadata'
 import { ThresholdMerger } from './components/tools/ThresholdMerger'
 import { FileScraper } from './components/tools/FileScraper'
+import { EmptyFolderCleaner } from './components/tools/EmptyFolderCleaner'
 import { Header } from './components/layout/Header'
 import { useHeaderStore } from './store/headerStore'
 
@@ -100,6 +101,7 @@ function App(): React.JSX.Element {
             {activeTool === 'FolderMetadata' && <FolderMetadata onBack={handleCloseTool} />}
             {activeTool === 'ThresholdMerger' && <ThresholdMerger onBack={handleCloseTool} />}
             {activeTool === 'FileScraper' && <FileScraper onBack={handleCloseTool} />}
+            {activeTool === 'EmptyFolderCleaner' && <EmptyFolderCleaner onBack={handleCloseTool} />}
           </div>
         ) : (
           <div className="gallery-grid">
@@ -126,6 +128,12 @@ function App(): React.JSX.Element {
               description={t('desc_file_scraper')}
               actionText={t('open_tool')}
               onAction={() => setActiveTool('FileScraper')}
+            />
+            <ToolCard
+              title={t('tool_empty_folder_cleaner_title')}
+              description={t('tool_empty_folder_cleaner_desc')}
+              actionText={t('open_tool')}
+              onAction={() => setActiveTool('EmptyFolderCleaner')}
             />
           </div>
         )}
