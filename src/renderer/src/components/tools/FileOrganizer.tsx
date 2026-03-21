@@ -2,21 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-
-interface TaskProgress {
-  current: number
-  total: number
-  message?: string
-}
-
-interface Task {
-  id: string
-  type: string
-  status: 'pending' | 'running' | 'completed' | 'error' | 'dry-run'
-  progress: TaskProgress
-  result?: OrganizeResult[]
-  error?: string
-}
+import { useTaskStore, Task } from '../../store/taskStore'
 
 interface OrganizeResult {
   source: string
@@ -67,8 +53,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const [extensionInput, setExtensionInput] = useState<string>('')
   const [showExtDropdown, setShowExtDropdown] = useState<boolean>(false)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
-  const [taskId, setTaskId] = useState<string | null>(null)
-  const [taskData, setTaskData] = useState<Task | null>(null)
+
   const [logEntries, setLogEntries] = useState<string[]>([])
   const logRef = useRef<HTMLDivElement>(null)
   const setTitle = useHeaderStore((state) => state.setTitle)
@@ -76,6 +61,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const setActions = useHeaderStore((state) => state.setActions)
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
+
+  const { tasks, activeTabId, addTab } = useTaskStore()
+  const taskData = tasks[activeTabId] as Task | undefined
 
   const addExtension = (ext: string): void => {
     let newExt = ext.trim().toLowerCase()
@@ -119,38 +107,18 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
     }
   }, [onBack, setTitle, setNavigation, setActions, reset, t])
 
-  // Subscribe to task progress
+  // Sync log entries from global task store
   useEffect(() => {
-    const handleProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
-      const task = updatedTask as Task
-      if (taskId && task.id === taskId) {
-        setTaskData(task)
-
-        // Append log entries from progress messages
-        if (task.progress?.message) {
-          setLogEntries((prev) => {
-            const last = prev[prev.length - 1]
-            if (last !== task.progress.message) {
-              return [...prev, task.progress.message!]
-            }
-            return prev
-          })
+    if (taskData?.progress?.message) {
+      setLogEntries((prev) => {
+        const last = prev[prev.length - 1]
+        if (last !== taskData.progress.message) {
+          return [...prev, taskData.progress.message!]
         }
-      }
+        return prev
+      })
     }
-
-    // @ts-ignore: electron api
-    if (window.api?.onTaskProgress) {
-      window.api.onTaskProgress(handleProgress)
-    }
-
-    return () => {
-      // @ts-ignore: electron api
-      if (window.api?.removeTaskProgress) {
-        window.api.removeTaskProgress()
-      }
-    }
-  }, [taskId])
+  }, [taskData?.progress?.message])
 
   // Auto-scroll log area
   useEffect(() => {
@@ -181,7 +149,6 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
     // Reset state for new run
     setLogEntries([])
-    setTaskData(null)
 
     try {
       const typesArray = selectedExtensions.length > 0 ? selectedExtensions : ['*']
@@ -191,7 +158,8 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
 
       // @ts-ignore: electron api
       const id = await window.api.startOrganizeTask(targetFolder, typesArray, isDryRun)
-      setTaskId(id)
+
+      addTab({ id, title: `Org: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
     } catch (e: unknown) {
       alert(`Error starting organize task: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -224,7 +192,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
       taskData.status === 'dry-run')
 
   // ── Result summary ──
-  const results = taskData?.result ?? []
+  const results = (taskData?.result as OrganizeResult[]) ?? []
   const successCount = results.filter((r) => r.success).length
   const failCount = results.filter((r) => !r.success).length
 
@@ -461,7 +429,8 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
           <div className="result-stat">
             <span className="stat-icon">✅</span>
             <span>
-              {successCount} file(s) {isDryRun ? 'would be moved' : 'moved'} successfully
+              {successCount} file(s) {taskData.status === 'dry-run' ? 'would be moved' : 'moved'}{' '}
+              successfully
             </span>
           </div>
           {failCount > 0 && (
@@ -495,7 +464,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   return (
     <ToolView
       description={t('desc_org')}
-      inputSection={inputSection}
+      inputSection={!taskData ? inputSection : undefined}
       progressSection={progressSection}
       outputSection={outputSection}
     />

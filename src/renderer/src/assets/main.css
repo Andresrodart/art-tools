@@ -343,6 +343,77 @@ body {
   color: var(--primary-color);
 }
 
+/* ── Tab Navigation Styles ── */
+
+.brutalist-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.brutalist-tab {
+  background-color: var(--panel-bg);
+  border: var(--border-width) solid var(--border-color);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  box-shadow: 4px 4px 0 var(--border-color);
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+
+.brutalist-tab:hover {
+  background-color: var(--bg-color);
+}
+
+.brutalist-tab.active {
+  background-color: var(--secondary-color);
+  color: #000;
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--border-color);
+}
+
+.brutalist-tab.error {
+  border-color: var(--primary-color);
+}
+
+.brutalist-tab.success {
+  border-color: var(--secondary-color);
+}
+
+.tab-title {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s;
+}
+
+.tab-close:hover {
+  transform: scale(1.2);
+  color: var(--primary-color);
+}
+
 /* ── Output Section Styles ── */
 
 .tool-output-summary {

@@ -2,21 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-
-interface TaskProgress {
-  current: number
-  total: number
-  message?: string
-}
-
-interface Task {
-  id: string
-  type: string
-  status: 'pending' | 'running' | 'completed' | 'error' | 'dry-run'
-  progress: TaskProgress
-  result?: ThresholdMergerResult[]
-  error?: string
-}
+import { useTaskStore, Task } from '../../store/taskStore'
 
 interface ThresholdMergerResult {
   originalPaths: string[]
@@ -35,10 +21,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   const [maxCapacityY, setMaxCapacityY] = useState<number>(10)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
 
-  const [taskId, setTaskId] = useState<string | null>(null)
-  const [taskData, setTaskData] = useState<Task | null>(null)
   const [logEntries, setLogEntries] = useState<string[]>([])
-
   const logRef = useRef<HTMLDivElement>(null)
 
   const setTitle = useHeaderStore((state) => state.setTitle)
@@ -46,6 +29,9 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   const setActions = useHeaderStore((state) => state.setActions)
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
+
+  const { tasks, activeTabId, addTab } = useTaskStore()
+  const taskData = tasks[activeTabId] as Task | undefined
 
   useEffect(() => {
     setTitle(t('tool_threshold_merger_title'))
@@ -61,38 +47,18 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
     }
   }, [onBack, setTitle, setNavigation, setActions, reset, t])
 
-  // Subscribe to task progress
+  // Sync log entries from global task store
   useEffect(() => {
-    const handleProgress = (_event: Electron.IpcRendererEvent, updatedTask: unknown): void => {
-      const task = updatedTask as Task
-      if (taskId && task.id === taskId) {
-        setTaskData(task)
-
-        // Append log entries from progress messages
-        if (task.progress?.message) {
-          setLogEntries((prev) => {
-            const last = prev[prev.length - 1]
-            if (last !== task.progress.message) {
-              return [...prev, task.progress.message!]
-            }
-            return prev
-          })
+    if (taskData?.progress?.message) {
+      setLogEntries((prev) => {
+        const last = prev[prev.length - 1]
+        if (last !== taskData.progress.message) {
+          return [...prev, taskData.progress.message!]
         }
-      }
+        return prev
+      })
     }
-
-    // @ts-ignore: electron api
-    if (window.api?.onTaskProgress) {
-      window.api.onTaskProgress(handleProgress)
-    }
-
-    return () => {
-      // @ts-ignore: electron api
-      if (window.api?.removeTaskProgress) {
-        window.api.removeTaskProgress()
-      }
-    }
-  }, [taskId])
+  }, [taskData?.progress?.message])
 
   // Auto-scroll log area
   useEffect(() => {
@@ -135,7 +101,6 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
 
     // Reset state for new run
     setLogEntries([])
-    setTaskData(null)
 
     try {
       // @ts-ignore: electron api
@@ -148,7 +113,8 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
         maxCapacityY,
         isDryRun
       )
-      setTaskId(id)
+
+      addTab({ id, title: `Merge: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
     } catch (e: unknown) {
       alert(`Error starting threshold merger task: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -181,11 +147,14 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
       taskData.status === 'dry-run')
 
   // ── Result summary ──
-  const results = taskData?.result ?? []
-  const mergedGroupsCount = results.filter((r) => r.success || isDryRun).length
-  const failCount = results.filter((r) => !r.success && !isDryRun).length
+  const results = (taskData?.result as ThresholdMergerResult[]) ?? []
+  const mergedGroupsCount = results.filter(
+    (r) => r.success || taskData?.status === 'dry-run'
+  ).length
+  const failCount = results.filter((r) => !r.success && taskData?.status !== 'dry-run').length
   const totalFoldersMerged = results.reduce(
-    (acc, current) => acc + (current.success || isDryRun ? current.originalPaths.length : 0),
+    (acc, current) =>
+      acc + (current.success || taskData?.status === 'dry-run' ? current.originalPaths.length : 0),
     0
   )
 
@@ -272,7 +241,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
         <div
           className="tool-progress-bar-fill"
           style={{
-            width: `${pct === 100 ? 100 : 100}%` /* Usually unknown total during recursive pass so fake it visually */
+            width: `${taskData.status === 'running' && taskData.progress.total === 0 ? 100 : pct}%`
           }}
         />
       </div>
@@ -332,7 +301,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
                 paddingTop: '10px'
               }}
             >
-              <h4>{isDryRun ? 'Projected Merges:' : 'Actions Performed:'}</h4>
+              <h4>{taskData.status === 'dry-run' ? 'Projected Merges:' : 'Actions Performed:'}</h4>
               <ul
                 style={{
                   listStyle: 'none',
@@ -363,7 +332,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
                       <span style={{ color: '#51cf66' }}>To:</span>{' '}
                       <b>{getSlashedPath(res.newPath)}</b>
                     </div>
-                    {!res.success && res.error && !isDryRun && (
+                    {!res.success && res.error && taskData.status !== 'dry-run' && (
                       <div
                         style={{
                           wordBreak: 'break-all',
@@ -399,7 +368,7 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
   return (
     <ToolView
       description={t('desc_merge')}
-      inputSection={inputSection}
+      inputSection={!taskData ? inputSection : undefined}
       progressSection={progressSection}
       outputSection={outputSection}
     />
