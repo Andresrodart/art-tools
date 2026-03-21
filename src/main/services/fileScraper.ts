@@ -1,6 +1,8 @@
-import { join, parse, sep } from 'path'
+import { join, parse } from 'path'
 import { promises as fs } from 'fs'
-import { taskManager } from './TaskManager'
+import { TaskReporter } from './utils/taskReporter'
+import { FileWalker } from './utils/fileWalker'
+import { getUniqueFilePath } from './utils/pathUtils'
 
 export interface FileScraperOptions {
   sourcePath: string
@@ -18,59 +20,13 @@ export interface FileScraperResult {
   isDirectoryError?: boolean
 }
 
-/**
- * Checks if a file matches the provided extensions.
- */
-function isExtensionMatch(filename: string, extensions: string[]): boolean {
-  if (extensions.includes('*')) return true
-  const ext = parse(filename).ext.toLowerCase()
-  return extensions.includes(ext)
-}
-
-/**
- * Generates a unique filename in the destination directory to prevent overwrites.
- * e.g., if "image.jpg" exists, returns "image_1.jpg".
- */
-async function getUniqueFilePath(
-  destDir: string,
-  originalName: string,
-  ext: string
-): Promise<string> {
-  let newName = `${originalName}${ext}`
-  let newPath = join(destDir, newName)
-  let counter = 1
-
-  while (true) {
-    try {
-      await fs.stat(newPath)
-      // File exists, try another name
-      newName = `${originalName}_${counter}${ext}`
-      newPath = join(destDir, newName)
-      counter++
-    } catch {
-      // stat throws if file doesn't exist, which means this path is safe to use
-      break
-    }
-  }
-
-  return newPath
-}
-
 export async function fileScraperTask(
   taskId: string,
   options: FileScraperOptions
 ): Promise<FileScraperResult[]> {
-  taskManager.updateTaskStatus(taskId, options.isDryRun ? 'dry-run' : 'running')
+  const reporter = new TaskReporter(taskId)
+  reporter.setStatus(options.isDryRun ? 'dry-run' : 'running')
   const results: FileScraperResult[] = []
-
-  // Ensure extensions are lowercase and formatted
-  const validExtensions = options.extensions.map((ext) =>
-    ext === '*'
-      ? '*'
-      : ext.toLowerCase().startsWith('.')
-        ? ext.toLowerCase()
-        : `.${ext.toLowerCase()}`
-  )
 
   try {
     // 1. Ensure target source exists
@@ -80,78 +36,27 @@ export async function fileScraperTask(
       throw new Error(`Source path does not exist: ${options.sourcePath}`)
     }
 
-    // 2. Build flat list of all files recursively (DFS)
+    // 2. Build flat list of all files recursively
     const allFiles: string[] = []
-    let lastProgressTime = Date.now()
+    const walker = new FileWalker(reporter, {
+      ignorePaths: options.ignorePaths,
+      extensions: options.extensions
+    })
 
-    async function walk(dir: string): Promise<void> {
-      // Skip if exactly matches or starts with an ignored path + sep
-      if (options.ignorePaths && options.ignorePaths.length > 0) {
-        const isIgnored = options.ignorePaths.some(
-          (ignored) => dir === ignored || dir.startsWith(ignored + sep)
-        )
-        if (isIgnored) {
-          console.log(`Skipping ignored directory: ${dir}`)
-          return
-        }
-      }
-
-      // Check cancellation
-      const task = taskManager.getActiveTasks().find((t) => t.id === taskId)
-      if (task?.status === 'error') throw new Error('Task cancelled by user')
-
-      try {
-        const entries = await fs.readdir(dir, { withFileTypes: true })
-        for (const entry of entries) {
-          // Report progress roughly every 150ms to avoid IPC bottleneck
-          const now = Date.now()
-          if (now - lastProgressTime > 150) {
-            lastProgressTime = now
-            
-            // Allow event loop to breathe during massive scans
-            await new Promise(resolve => setTimeout(resolve, 0))
-
-            taskManager.updateTaskProgress(taskId, {
-              current: allFiles.length,
-              total: 0, // 0 indicating 'unknown total' still scanning
-              message: `Scanning... Found ${allFiles.length} matches. Looking at: ${entry.name}`
-            })
-          }
-
-          const fullPath = join(dir, entry.name)
-          if (entry.isDirectory()) {
-            await walk(fullPath)
-          } else if (entry.isFile()) {
-            if (isExtensionMatch(entry.name, validExtensions)) {
-              allFiles.push(fullPath)
-            }
-          }
-        }
-      } catch (e: unknown) {
-        const err = e as NodeJS.ErrnoException
-        if (err.code && ['EPERM', 'EACCES', 'EBUSY'].includes(err.code)) {
-          // Log graciously without spamming stack trace
-          console.warn(`Skipped inaccessible directory (${err.code}): ${dir}`)
-          results.push({
-            originalPath: dir,
-            newPath: '',
-            success: false,
-            error: err.code,
-            isDirectoryError: true
-          })
-        } else {
-          console.warn(`Could not read directory ${dir}`, e)
-        }
-      }
-    }
-
-    taskManager.updateTaskProgress(taskId, {
+    reporter.updateProgress({
       current: 0,
       total: 0,
       message: 'Starting initial directory scan...'
     })
 
-    await walk(options.sourcePath)
+    await walker.walk(options.sourcePath, async (fullPath, entry) => {
+      allFiles.push(fullPath)
+      reporter.updateProgressThrottled({
+        current: allFiles.length,
+        total: 0, // 0 indicating 'unknown total' still scanning
+        message: `Scanning... Found ${allFiles.length} matches. Looking at: ${entry.name}`
+      })
+    })
 
     // 3. Process matches
     if (allFiles.length > 0 && !options.isDryRun) {
@@ -161,16 +66,12 @@ export async function fileScraperTask(
 
     let current = 0
     for (const sourceFilePath of allFiles) {
-      // Check cancellation again within the loop
-      const task = taskManager.getActiveTasks().find((t) => t.id === taskId)
-      if (task?.status === 'error') throw new Error('Task cancelled by user')
+      await reporter.yieldAndCheck()
 
       const parsedSource = parse(sourceFilePath)
 
       let newPath: string
       if (options.isDryRun) {
-        // Just construct a fast naive path for dry runs, realistic but skipping stat calls for speed
-        // in a production level scale, dry-run exactness can be debated, but this is sufficient.
         newPath = join(options.destinationPath, `${parsedSource.name}${parsedSource.ext}`)
       } else {
         newPath = await getUniqueFilePath(
@@ -201,7 +102,7 @@ export async function fileScraperTask(
       })
 
       current++
-      taskManager.updateTaskProgress(taskId, {
+      reporter.updateProgress({
         current,
         total: allFiles.length,
         message: `Scraped ${parsedSource.base}`
@@ -209,18 +110,18 @@ export async function fileScraperTask(
     }
 
     if (allFiles.length === 0) {
-      taskManager.updateTaskProgress(taskId, {
+      reporter.updateProgress({
         current: 0,
         total: 0,
         message: 'No matching files found.'
       })
     }
 
-    taskManager.completeTask(taskId, results)
+    reporter.complete(results)
     return results
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
-    taskManager.updateTaskStatus(taskId, 'error', msg)
+    reporter.error(msg)
     throw error
   }
 }

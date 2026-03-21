@@ -1,10 +1,10 @@
 import * as path from 'path'
 import {
   parseDateFromFilename,
-  getUniquePath,
   getMonthName,
   buildDestination
-} from '../organizeFiles'
+} from '../utils/organizeUtils'
+import { getUniquePathWithCheck } from '../utils/pathUtils'
 
 describe('File Organizer Utility Functions', () => {
   // -----------------------------------------------------------------------
@@ -35,13 +35,13 @@ describe('File Organizer Utility Functions', () => {
   })
 
   // -----------------------------------------------------------------------
-  // getUniquePath
+  // getUniquePathWithCheck
   // -----------------------------------------------------------------------
-  describe('getUniquePath', () => {
+  describe('getUniquePathWithCheck', () => {
     it('should return original path when no collision', () => {
       const mock = jest.fn(() => false)
       const dest = path.join('folder', 'file.jpg')
-      expect(getUniquePath(dest, mock)).toBe(dest)
+      expect(getUniquePathWithCheck(dest, mock)).toBe(dest)
       expect(mock).toHaveBeenCalledTimes(1)
     })
 
@@ -52,7 +52,7 @@ describe('File Organizer Utility Functions', () => {
         return calls === 1
       })
       const dest = path.join('folder', 'file.jpg')
-      expect(getUniquePath(dest, mock)).toBe(path.join('folder', 'file_1.jpg'))
+      expect(getUniquePathWithCheck(dest, mock)).toBe(path.join('folder', 'file_1.jpg'))
       expect(mock).toHaveBeenCalledTimes(2)
     })
 
@@ -63,7 +63,7 @@ describe('File Organizer Utility Functions', () => {
         return calls <= 3
       })
       const dest = path.join('folder', 'file.jpg')
-      expect(getUniquePath(dest, mock)).toBe(path.join('folder', 'file_3.jpg'))
+      expect(getUniquePathWithCheck(dest, mock)).toBe(path.join('folder', 'file_3.jpg'))
       expect(mock).toHaveBeenCalledTimes(4)
     })
   })

@@ -1,6 +1,6 @@
 import { join, parse } from 'path'
 import { promises as fs } from 'fs'
-import { taskManager } from './TaskManager'
+import { TaskReporter } from './utils/taskReporter'
 
 export interface ThresholdMergerOptions {
   rootPath: string
@@ -104,18 +104,14 @@ export async function mergeSiblingsRecursive(
   currentDir: string,
   options: ThresholdMergerOptions,
   results: ThresholdMergerResult[],
-  taskId: string
+  reporter: TaskReporter
 ): Promise<void> {
-  // Check cancellation
-  const task = taskManager.getActiveTasks().find((t) => t.id === taskId)
-  if (task?.status === 'error') {
-    throw new Error('Task cancelled by user')
-  }
+  await reporter.yieldAndCheck()
 
   // 1. First traverse children (bottom-up approach)
   const subDirs = await getSubdirectories(currentDir)
   for (const subDir of subDirs) {
-    await mergeSiblingsRecursive(subDir, options, results, taskId)
+    await mergeSiblingsRecursive(subDir, options, results, reporter)
   }
 
   // Re-fetch subdirectories since the recursive calls might have merged/renamed them!
@@ -136,8 +132,6 @@ export async function mergeSiblingsRecursive(
   }
 
   // 3. Group and merge
-  // We process candidates sequentially.
-  // If we have less than 2 candidates, there is nothing to merge
   let i = 0
   while (i < mergableCandidates.length) {
     const currentGroup: MergableFolder[] = []
@@ -167,7 +161,7 @@ export async function mergeSiblingsRecursive(
 
     // A group must have at least 2 folders to be a merge
     if (currentGroup.length > 1) {
-      taskManager.updateTaskProgress(taskId, {
+      reporter.updateProgress({
         current: results.length + 1,
         total: results.length + 1, // We don't know total upfront due to tree structure
         message: `Merging ${currentGroup.length} folders in ${currentDir}...`
@@ -186,31 +180,32 @@ export async function thresholdMergerTask(
   taskId: string,
   options: ThresholdMergerOptions
 ): Promise<ThresholdMergerResult[]> {
-  taskManager.updateTaskStatus(taskId, options.isDryRun ? 'dry-run' : 'running')
+  const reporter = new TaskReporter(taskId)
+  reporter.setStatus(options.isDryRun ? 'dry-run' : 'running')
   const results: ThresholdMergerResult[] = []
 
   try {
-    taskManager.updateTaskProgress(taskId, {
+    reporter.updateProgress({
       current: 0,
       total: 1,
       message: 'Starting threshold merger...'
     })
 
-    await mergeSiblingsRecursive(options.rootPath, options, results, taskId)
+    await mergeSiblingsRecursive(options.rootPath, options, results, reporter)
 
     // Ensure total is realistic at the end
     const finalCount = results.length
-    taskManager.updateTaskProgress(taskId, {
+    reporter.updateProgress({
       current: finalCount,
       total: finalCount,
       message: 'Processing complete.'
     })
 
-    taskManager.completeTask(taskId, results)
+    reporter.complete(results)
     return results
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error)
-    taskManager.updateTaskStatus(taskId, 'error', msg)
+    reporter.error(msg)
     throw error
   }
 }

@@ -1,7 +1,8 @@
 import * as fs from 'fs/promises'
 import * as path from 'path'
 import * as os from 'os'
-import { getFolderStats, collectDirectories, folderMetadataTask } from '../folderMetadata'
+import { folderMetadataTask } from '../folderMetadata'
+import { getFolderStats, collectDirectories } from '../utils/folderUtils'
 import { taskManager } from '../TaskManager'
 
 describe('Folder Metadata Service', () => {
@@ -91,8 +92,6 @@ describe('Folder Metadata Service', () => {
 
       const subResult = results.find((r) => r.originalName === 'sub')
       expect(subResult).toBeDefined()
-      // size: 1MB = ~0.00GB (<0.01GB fallback will trigger, or rounded to 0.00 depending on math)
-      // 1MB is 0.00097 GB. Our logic says if > 0 and < 0.01, it uses '<0.01GB'.
       expect(subResult?.newName).toBe('sub_1MB_1')
       expect(subResult?.newPath).toBe(path.join(tmpDir, 'sub_1MB_1'))
 
@@ -113,14 +112,15 @@ describe('Folder Metadata Service', () => {
       })
 
       // The root directory also gets renamed, so we need to track its new name for cleanup
-      // and for asserting the subfolder's existence.
       const rootResult = results.find((r) => r.originalPath === tmpDir)
       const newRootPath = rootResult ? rootResult.newPath : tmpDir
       if (rootResult) {
         rootPathsToClean.push(newRootPath)
       }
 
-      // Should be renamed to sub_0 since it's empty
+      // Should be renamed to sub_1 since it contains 0 elements but it is an element itself of root?
+      // Wait, let's re-check getFolderStats. elementCount is entries.length + recursive.
+      // subFolder is empty, so entries.length is 0. elementCount is 0.
       const renamedSubPath = path.join(newRootPath, 'sub_0')
       const stat = await fs.stat(renamedSubPath)
       expect(stat.isDirectory()).toBe(true)
