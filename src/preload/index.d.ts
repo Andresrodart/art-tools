@@ -34,6 +34,8 @@ declare global {
         isDryRun: boolean,
         ignorePaths?: string[]
       ) => Promise<string>
+      startFindEmptyFoldersTask: (rootPath: string) => Promise<string>
+      startDeleteFoldersTask: (foldersToDelete: string[], isDryRun: boolean) => Promise<string>
       getActiveTasks: () => Promise<unknown[]>
       cancelTask: (taskId: string) => Promise<boolean>
       onTaskProgress: (

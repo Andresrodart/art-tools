@@ -11,6 +11,7 @@ import { organizeFilesTask, OrganizeOptions } from './services/organizeFiles'
 import { folderMetadataTask } from './services/folderMetadata'
 import { thresholdMergerTask } from './services/thresholdMerger'
 import { fileScraperTask } from './services/fileScraper'
+import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderCleaner'
 
 function createWindow(): void {
   // Create the browser window.
@@ -204,6 +205,40 @@ app.whenReady().then(() => {
         ignorePaths
       }).catch((err) => {
         console.error('File Scraper background error:', err)
+      })
+
+      return task.id
+    }
+  )
+
+  // --------------- Empty Folder Cleaner ----------------
+  ipcMain.handle('task:find-empty-folders', async (_event, rootPath: string) => {
+    const task = taskManager.createTask('findEmptyFolders')
+
+    findEmptyFoldersTask(task.id, { rootPath }).catch((err) => {
+      console.error('Find Empty Folders background error:', err)
+      taskManager.updateTaskStatus(
+        task.id,
+        'error',
+        err instanceof Error ? err.message : String(err)
+      )
+    })
+
+    return task.id
+  })
+
+  ipcMain.handle(
+    'task:delete-folders',
+    async (_event, foldersToDelete: string[], isDryRun: boolean) => {
+      const task = taskManager.createTask('deleteFolders')
+
+      deleteFoldersTask(task.id, { foldersToDelete, isDryRun }).catch((err) => {
+        console.error('Delete Folders background error:', err)
+        taskManager.updateTaskStatus(
+          task.id,
+          'error',
+          err instanceof Error ? err.message : String(err)
+        )
       })
 
       return task.id

@@ -52,6 +52,16 @@ const resources = {
       tool_file_scraper_title: 'File Scraper',
       desc_file_scraper:
         'Extract specific files recursively from a targeted directory and flatten them entirely into a destination.',
+      tool_empty_folder_cleaner_title: 'Empty Folder Cleaner',
+      tool_empty_folder_cleaner_desc:
+        'Identify and remove folders that are empty or contain only other empty subfolders. Supports selective deletion and dry runs.',
+      desc_empty_folder_cleaner:
+        'Scan your directory tree for empty folders. Review the list of found folders and choose which ones to remove safely.',
+      btn_scan_empty: 'Scan for Empty Folders',
+      btn_delete_empty: 'Delete Selected Folders',
+      btn_sim_delete_empty: 'Simulate Folder Deletion',
+      empty_folders_found: 'Empty folders found:',
+      no_empty_folders: 'No empty folders found in the selected directory.',
       source_folder: 'Source Directory',
       source_folder_help: 'Select the main root folder to scan internally for files.',
       destination_folder: 'Destination Directory',
@@ -152,6 +162,16 @@ const resources = {
       tool_file_scraper_title: 'Extractor y Aplanador',
       desc_file_scraper:
         'Extrae archivos específicos recursivamente desde un directorio y muévelos aplanados a un destino.',
+      tool_empty_folder_cleaner_title: 'Limpiador de Carpetas Vacías',
+      tool_empty_folder_cleaner_desc:
+        'Identifica y elimina carpetas que están vacías o que solo contienen otras subcarpetas vacías. Permite la eliminación selectiva y simulacros.',
+      desc_empty_folder_cleaner:
+        'Escanea tu árbol de directorios en busca de carpetas vacías. Revisa la lista de carpetas encontradas y elige cuáles eliminar de forma segura.',
+      btn_scan_empty: 'Buscar Carpetas Vacías',
+      btn_delete_empty: 'Eliminar Carpetas Seleccionadas',
+      btn_sim_delete_empty: 'Simular Eliminación de Carpetas',
+      empty_folders_found: 'Carpetas vacías encontradas:',
+      no_empty_folders: 'No se encontraron carpetas vacías en el directorio seleccionado.',
       source_folder: 'Directorio Origen',
       source_folder_help: 'Seleccione la carpeta raíz para escanear internamente los archivos.',
       destination_folder: 'Directorio Destino',
