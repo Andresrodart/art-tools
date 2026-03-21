@@ -18,11 +18,9 @@ export interface Task {
 }
 
 export interface TaskTab {
-  id: string // 'home' or unique instance ID (e.g. tool-fileorganizer-1234)
+  id: string // 'home' or taskId
   title: string
-  type: 'home' | 'task' | 'tool_task'
-  toolName?: string
-  taskId?: string
+  type: 'home' | 'task'
 }
 
 interface TaskStore {
@@ -32,7 +30,6 @@ interface TaskStore {
   addTask: (task: Task) => void
   updateTask: (task: Task) => void
   addTab: (tab: TaskTab) => void
-  updateTab: (id: string, updates: Partial<TaskTab>) => void
   removeTab: (id: string) => void
   setActiveTab: (id: string) => void
   initialize: () => void
@@ -64,12 +61,6 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
         activeTabId: tab.id
       }
     })
-  },
-
-  updateTab: (id, updates) => {
-    set((state) => ({
-      tabs: state.tabs.map((tab) => (tab.id === id ? { ...tab, ...updates } : tab))
-    }))
   },
 
   removeTab: (id) => {

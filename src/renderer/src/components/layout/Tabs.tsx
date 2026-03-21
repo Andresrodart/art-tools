@@ -8,9 +8,7 @@ export const Tabs: React.FC = () => {
 
   const handleClose = (e: React.MouseEvent, id: string): void => {
     e.stopPropagation()
-    const tabToClose = tabs.find((t) => t.id === id)
-    const taskIdToCancel = tabToClose?.taskId || id
-    const task = tasks[taskIdToCancel]
+    const task = tasks[id]
     const isRunning = task && (task.status === 'running' || task.status === 'pending')
 
     const message = isRunning
@@ -21,7 +19,7 @@ export const Tabs: React.FC = () => {
 
     if (window.confirm(message)) {
       if (isRunning && window.api?.cancelTask) {
-        window.api.cancelTask(taskIdToCancel).catch(console.error)
+        window.api.cancelTask(id).catch(console.error)
       }
       removeTab(id)
     }
@@ -31,7 +29,7 @@ export const Tabs: React.FC = () => {
     <nav className="brutalist-tabs">
       {tabs.map((tab) => {
         const isActive = activeTabId === tab.id
-        const task = tab.taskId ? tasks[tab.taskId] : tasks[tab.id]
+        const task = tasks[tab.id]
         const isError = task?.status === 'error'
         const isSuccess = task?.status === 'completed'
 
@@ -42,7 +40,7 @@ export const Tabs: React.FC = () => {
             onClick={() => setActiveTab(tab.id)}
           >
             <span className="tab-title">{tab.title}</span>
-            {tab.type !== 'home' && (
+            {tab.type === 'task' && (
               <button
                 className="tab-close"
                 onClick={(e) => handleClose(e, tab.id)}

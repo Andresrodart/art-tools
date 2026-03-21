@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore } from '../../store/taskStore'
+import { useTaskStore, Task } from '../../store/taskStore'
 
 interface FolderMetadataResult {
   originalName: string
@@ -15,10 +15,9 @@ interface FolderMetadataResult {
 
 interface FolderMetadataProps {
   onBack: () => void
-  tabId: string
 }
 
-export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JSX.Element {
+export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [includeSize, setIncludeSize] = useState<boolean>(true)
   const [includeElements, setIncludeElements] = useState<boolean>(true)
@@ -33,9 +32,8 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
 
-  const { tasks, tabs, updateTab } = useTaskStore()
-  const currentTab = tabs.find((t) => t.id === tabId)
-  const taskData = currentTab?.taskId ? tasks[currentTab.taskId] : undefined
+  const { tasks, activeTabId, addTab } = useTaskStore()
+  const taskData = tasks[activeTabId] as Task | undefined
 
   useEffect(() => {
     setTitle(t('tool_folder_metadata_title'))
@@ -106,7 +104,7 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
         isDryRun
       )
 
-      updateTab(tabId, { taskId: id, title: `Meta: ${targetFolder.split(/[/\\]/).pop()}` })
+      addTab({ id, title: `Meta: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
     } catch (e: unknown) {
       alert(`Error starting folder metadata task: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -144,8 +142,6 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
   const failCount = results.filter((r) => !r.success && taskData?.status !== 'dry-run').length
 
   // ==================== SECTIONS ====================
-
-  const isTaskRunning = taskData?.status === 'running' || taskData?.status === 'pending'
 
   const inputSection = (
     <>
@@ -204,7 +200,7 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
         <button
           className={`brutalist-button ${isDryRun ? 'warning' : 'danger'}`}
           onClick={handleStartTask}
-          disabled={!targetFolder || (!includeSize && !includeElements) || isTaskRunning}
+          disabled={!targetFolder || (!includeSize && !includeElements)}
         >
           {isDryRun ? t('btn_sim_meta') : t('btn_exec_meta')}
         </button>
@@ -332,7 +328,7 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
   return (
     <ToolView
       description={t('desc_meta')}
-      inputSection={inputSection}
+      inputSection={!taskData ? inputSection : undefined}
       progressSection={progressSection}
       outputSection={outputSection}
     />

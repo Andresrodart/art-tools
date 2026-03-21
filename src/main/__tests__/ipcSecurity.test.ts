@@ -71,15 +71,14 @@ describe('Main Process Security Verification', () => {
    */
   it('should not register dangerous IPC handlers', async () => {
     // Load the main process entry point. It calls app.whenReady().then(...)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('../index')
 
     // Wait for the app.whenReady() promise and its subsequent .then() block to execute
     await new Promise((resolve) => setImmediate(resolve))
 
     // Capture all handlers that were registered during the initialization
-    const registeredHandlers = (ipcMain.handle as jest.Mock).mock.calls.map(
-      (call) => call[0]
-    )
+    const registeredHandlers = (ipcMain.handle as jest.Mock).mock.calls.map((call) => call[0])
 
     const dangerousHandlers = ['read-file', 'write-file', 'exec-command']
 

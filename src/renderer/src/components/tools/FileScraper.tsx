@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore } from '../../store/taskStore'
+import { useTaskStore, Task } from '../../store/taskStore'
 
 interface FileScraperResult {
   originalPath: string
@@ -288,10 +288,9 @@ const FolderTree = ({
 
 interface FileScraperProps {
   onBack: () => void
-  tabId: string
 }
 
-export function FileScraper({ onBack, tabId }: FileScraperProps): React.JSX.Element {
+export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
   const [sourcePath, setSourcePath] = useState<string | null>(null)
   const [destinationPath, setDestinationPath] = useState<string | null>(null)
   const [preset, setPreset] = useState<PresetKey>('Images')
@@ -308,9 +307,8 @@ export function FileScraper({ onBack, tabId }: FileScraperProps): React.JSX.Elem
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
 
-  const { tasks, tabs, updateTab } = useTaskStore()
-  const currentTab = tabs.find((t) => t.id === tabId)
-  const taskData = currentTab?.taskId ? tasks[currentTab.taskId] : undefined
+  const { tasks, activeTabId, addTab } = useTaskStore()
+  const taskData = tasks[activeTabId] as Task | undefined
 
   useEffect(() => {
     setTitle(t('tool_file_scraper_title'))
@@ -417,7 +415,7 @@ export function FileScraper({ onBack, tabId }: FileScraperProps): React.JSX.Elem
         ignorePaths
       )
 
-      updateTab(tabId, { taskId: id, title: `Scrape: ${sourcePath.split(/[/\\]/).pop()}` })
+      addTab({ id, title: `Scrape: ${sourcePath.split(/[/\\]/).pop()}`, type: 'task' })
     } catch (e: unknown) {
       alert(`Error starting file scraper: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -682,12 +680,7 @@ export function FileScraper({ onBack, tabId }: FileScraperProps): React.JSX.Elem
         <button
           className={`brutalist-button ${isDryRun ? 'warning' : 'danger'}`}
           onClick={handleStartTask}
-          disabled={
-            !sourcePath ||
-            !destinationPath ||
-            taskData?.status === 'running' ||
-            taskData?.status === 'pending'
-          }
+          disabled={!sourcePath || !destinationPath}
         >
           {isDryRun ? t('btn_sim_scraper') : t('btn_exec_scraper')}
         </button>
@@ -854,7 +847,7 @@ export function FileScraper({ onBack, tabId }: FileScraperProps): React.JSX.Elem
   return (
     <ToolView
       description={t('desc_file_scraper')}
-      inputSection={inputSection}
+      inputSection={!taskData ? inputSection : undefined}
       progressSection={progressSection}
       outputSection={outputSection}
     />

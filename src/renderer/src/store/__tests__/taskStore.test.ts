@@ -97,27 +97,4 @@ describe('taskStore', () => {
     expect(useTaskStore.getState().tabs).toHaveLength(1)
     expect(useTaskStore.getState().tabs[0].id).toBe('home')
   })
-
-  it('should update tab properties when updateTab is called', () => {
-    const tab: TaskTab = {
-      id: 'tool-1',
-      title: 'File Organizer',
-      type: 'tool_task',
-      toolName: 'FileOrganizer'
-    }
-
-    act(() => {
-      useTaskStore.getState().addTab(tab)
-    })
-
-    act(() => {
-      useTaskStore.getState().updateTab('tool-1', { taskId: 'task-1', title: 'Running Org' })
-    })
-
-    const updatedTab = useTaskStore.getState().tabs.find((t) => t.id === 'tool-1')
-    expect(updatedTab).toBeDefined()
-    expect(updatedTab?.taskId).toBe('task-1')
-    expect(updatedTab?.title).toBe('Running Org')
-    expect(updatedTab?.toolName).toBe('FileOrganizer')
-  })
 })
