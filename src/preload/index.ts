@@ -3,11 +3,6 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
-  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
-  writeFile: (filePath: string, content: string) =>
-    ipcRenderer.invoke('write-file', filePath, content),
-  execCommand: (command: string) => ipcRenderer.invoke('exec-command', command),
-
   // File Organizer & Tasks
   selectFolder: () => ipcRenderer.invoke('select-folder'),
   startOrganizeTask: (folderPath: string, fileTypes: string[], isDryRun: boolean) =>
