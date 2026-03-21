@@ -34,6 +34,7 @@ The services follow a consistent pattern:
 ## How it Works
 
 When a task is triggered from the renderer:
+
 1.  An IPC message is sent to the main process.
 2.  The main process creates a task in `TaskManager` and calls the corresponding service task function.
 3.  The service task uses `TaskReporter` to update its status to 'running' or 'dry-run'.

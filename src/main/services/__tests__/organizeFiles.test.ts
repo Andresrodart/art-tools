@@ -1,9 +1,5 @@
 import * as path from 'path'
-import {
-  parseDateFromFilename,
-  getMonthName,
-  buildDestination
-} from '../utils/organizeUtils'
+import { parseDateFromFilename, getMonthName, buildDestination } from '../utils/organizeUtils'
 import { getUniquePathWithCheck } from '../utils/pathUtils'
 
 describe('File Organizer Utility Functions', () => {

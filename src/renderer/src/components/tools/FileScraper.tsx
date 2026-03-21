@@ -152,14 +152,28 @@ const FolderTree = ({
   const isEffectivelyIgnored = isDirectlyIgnored || isParentIgnored
 
   return (
-    <div style={{ paddingLeft: depth === 0 ? 0 : '16px', marginTop: '2px', width: '100%', boxSizing: 'border-box' }}>
+    <div
+      style={{
+        paddingLeft: depth === 0 ? 0 : '16px',
+        marginTop: '2px',
+        width: '100%',
+        boxSizing: 'border-box'
+      }}
+    >
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: isParentIgnored ? 'rgba(255, 255, 255, 0.05)' : node.isError ? 'rgba(255, 107, 107, 0.15)' : 'transparent',
-          border: node.isError && !isParentIgnored ? '1px dashed rgba(255, 107, 107, 0.3)' : '1px solid transparent',
+          background: isParentIgnored
+            ? 'rgba(255, 255, 255, 0.05)'
+            : node.isError
+              ? 'rgba(255, 107, 107, 0.15)'
+              : 'transparent',
+          border:
+            node.isError && !isParentIgnored
+              ? '1px dashed rgba(255, 107, 107, 0.3)'
+              : '1px solid transparent',
           padding: '4px 8px',
           borderRadius: '4px',
           width: '100%',
@@ -208,63 +222,76 @@ const FolderTree = ({
         )}
 
         {/* Dotted Leader Line */}
-        {depth > 0 && <div style={{ flexGrow: 1, borderBottom: '1px dotted #555', margin: '0 8px', position: 'relative', top: '-4px' }} />}
+        {depth > 0 && (
+          <div
+            style={{
+              flexGrow: 1,
+              borderBottom: '1px dotted #555',
+              margin: '0 8px',
+              position: 'relative',
+              top: '-4px'
+            }}
+          />
+        )}
 
-        {depth > 0 && (() => {
-          if (isParentIgnored) {
+        {depth > 0 &&
+          (() => {
+            if (isParentIgnored) {
+              return (
+                <span
+                  style={{
+                    fontSize: '0.7rem',
+                    color: '#666',
+                    textTransform: 'uppercase',
+                    fontWeight: 'bold',
+                    minWidth: '85px',
+                    textAlign: 'center'
+                  }}
+                >
+                  Skipped
+                </span>
+              )
+            }
+
             return (
-              <span style={{
-                fontSize: '0.7rem',
-                color: '#666',
-                textTransform: 'uppercase',
-                fontWeight: 'bold',
-                minWidth: '85px',
-                textAlign: 'center'
-              }}>
-                Skipped
-              </span>
+              <button
+                onClick={() => toggleIgnore(node.fullPath)}
+                title={isDirectlyIgnored ? 'Remove from Skip List' : 'Add to Skip List'}
+                onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(1.5)')}
+                onMouseOut={(e) => (e.currentTarget.style.filter = 'none')}
+                style={{
+                  background: isDirectlyIgnored ? '#495057' : 'var(--bg-tertiary, #e03131)',
+                  border: isDirectlyIgnored ? '1px solid #777' : 'none',
+                  borderRadius: '6px',
+                  color: isDirectlyIgnored ? '#aaa' : 'white',
+                  fontSize: '0.7rem',
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  marginLeft: 'auto',
+                  textTransform: 'uppercase',
+                  fontWeight: 'bold',
+                  minWidth: '85px',
+                  textAlign: 'center',
+                  transition: 'all 0.2s',
+                  opacity: isDirectlyIgnored ? 0.7 : 1
+                }}
+              >
+                {isDirectlyIgnored ? '✔ Ignored' : '🚫 Ignore'}
+              </button>
             )
-          }
-
-          return (
-            <button
-              onClick={() => toggleIgnore(node.fullPath)}
-              title={isDirectlyIgnored ? "Remove from Skip List" : "Add to Skip List"}
-              onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(1.5)')}
-              onMouseOut={(e) => (e.currentTarget.style.filter = 'none')}
-              style={{
-                background: isDirectlyIgnored ? '#495057' : 'var(--bg-tertiary, #e03131)',
-                border: isDirectlyIgnored ? '1px solid #777' : 'none',
-                borderRadius: '6px',
-                color: isDirectlyIgnored ? '#aaa' : 'white',
-                fontSize: '0.7rem',
-                padding: '4px 10px',
-                cursor: 'pointer',
-                marginLeft: 'auto',
-                textTransform: 'uppercase',
-                fontWeight: 'bold',
-                minWidth: '85px',
-                textAlign: 'center',
-                transition: 'all 0.2s',
-                opacity: isDirectlyIgnored ? 0.7 : 1
-              }}
-            >
-              {isDirectlyIgnored ? '✔ Ignored' : '🚫 Ignore'}
-            </button>
-          )
-        })()}
+          })()}
       </div>
 
       {expanded && hasChildren && (
         <div style={{ width: '100%', boxSizing: 'border-box' }}>
           {Object.values(node.children).map((child) => (
-            <FolderTree 
-              key={child.fullPath} 
-              node={child} 
-              ignorePaths={ignorePaths} 
-              toggleIgnore={toggleIgnore} 
-              depth={depth + 1} 
-              isParentIgnored={isEffectivelyIgnored} 
+            <FolderTree
+              key={child.fullPath}
+              node={child}
+              ignorePaths={ignorePaths}
+              toggleIgnore={toggleIgnore}
+              depth={depth + 1}
+              isParentIgnored={isEffectivelyIgnored}
             />
           ))}
         </div>
@@ -521,7 +548,9 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
             + Add Folder to Ignore
           </button>
         </div>
-        <small className="help-text">Select sub-folders that you want to avoid scanning entirely.</small>
+        <small className="help-text">
+          Select sub-folders that you want to avoid scanning entirely.
+        </small>
 
         {ignorePaths.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '12px' }}>
@@ -655,18 +684,30 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
         <button
           className={`brutalist-button ${isDryRun ? 'warning' : 'secondary'}`}
           onClick={() => setIsDryRun(!isDryRun)}
-          style={{ width: 'fit-content', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 16px' }}
+          style={{
+            width: 'fit-content',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 16px'
+          }}
         >
-          <div style={{
-            width: '14px', height: '14px', borderRadius: '50%', 
-            background: isDryRun ? '#212529' : 'transparent',
-            border: '2px solid #212529',
-            transition: 'background 0.2s',
-            boxSizing: 'border-box'
-          }} />
+          <div
+            style={{
+              width: '14px',
+              height: '14px',
+              borderRadius: '50%',
+              background: isDryRun ? '#212529' : 'transparent',
+              border: '2px solid #212529',
+              transition: 'background 0.2s',
+              boxSizing: 'border-box'
+            }}
+          />
           {t('dry_run')}
         </button>
-        <small className="help-text" style={{ display: 'block', marginTop: '6px' }}>{t('dry_run_help_scraper')}</small>
+        <small className="help-text" style={{ display: 'block', marginTop: '6px' }}>
+          {t('dry_run_help_scraper')}
+        </small>
       </div>
 
       <div className="action-row">
@@ -746,7 +787,7 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
               }}
             >
               <h4>{isDryRun ? 'Projected Scrape Tree:' : 'Actions Performed:'}</h4>
-              
+
               {isDryRun ? (
                 <div
                   style={{
@@ -764,7 +805,7 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
                     node={scrapeTree!}
                     ignorePaths={ignorePaths}
                     toggleIgnore={(p) => {
-                      setIgnorePaths((prev) => 
+                      setIgnorePaths((prev) =>
                         prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
                       )
                     }}
@@ -784,36 +825,36 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
                   {results
                     .filter((r) => !r.isDirectoryError)
                     .map((res, i) => (
-                    <li
-                      key={i}
-                      style={{
-                        marginBottom: '8px',
-                        fontFamily: 'monospace',
-                        paddingBottom: '8px',
-                        borderBottom: '1px dashed #ccc'
-                      }}
-                    >
-                      <div style={{ wordBreak: 'break-all', fontSize: '0.8rem' }}>
-                        <span style={{ color: '#ff6b6b' }}>Source: </span> {res.originalPath}
-                      </div>
-                      <div style={{ wordBreak: 'break-all', marginTop: '4px' }}>
-                        <span style={{ color: '#51cf66' }}>Dest: </span>
-                        <b>{getSlashedPath(res.newPath)}</b>
-                      </div>
-                      {!res.success && res.error && !isDryRun && (
-                        <div
-                          style={{
-                            wordBreak: 'break-all',
-                            color: '#ff6b6b',
-                            marginTop: '4px',
-                            fontSize: '0.8rem'
-                          }}
-                        >
-                          Error: {res.error}
+                      <li
+                        key={i}
+                        style={{
+                          marginBottom: '8px',
+                          fontFamily: 'monospace',
+                          paddingBottom: '8px',
+                          borderBottom: '1px dashed #ccc'
+                        }}
+                      >
+                        <div style={{ wordBreak: 'break-all', fontSize: '0.8rem' }}>
+                          <span style={{ color: '#ff6b6b' }}>Source: </span> {res.originalPath}
                         </div>
-                      )}
-                    </li>
-                  ))}
+                        <div style={{ wordBreak: 'break-all', marginTop: '4px' }}>
+                          <span style={{ color: '#51cf66' }}>Dest: </span>
+                          <b>{getSlashedPath(res.newPath)}</b>
+                        </div>
+                        {!res.success && res.error && !isDryRun && (
+                          <div
+                            style={{
+                              wordBreak: 'break-all',
+                              color: '#ff6b6b',
+                              marginTop: '4px',
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            Error: {res.error}
+                          </div>
+                        )}
+                      </li>
+                    ))}
                 </ul>
               )}
             </div>

@@ -55,9 +55,7 @@ describe('pathUtils', () => {
     })
 
     test('returns unique path if check function returns true', () => {
-      const checkExists = jest.fn()
-        .mockReturnValueOnce(true)
-        .mockReturnValueOnce(false)
+      const checkExists = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false)
 
       const result = getUniquePathWithCheck(destPath, checkExists)
       expect(result).toBe('/tmp/dest/image_1.jpg')

@@ -1,4 +1,4 @@
-import { join, parse } from 'path'
+import { join } from 'path'
 import { promises as fs } from 'fs'
 
 export interface FolderStats {

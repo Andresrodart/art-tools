@@ -3,11 +3,7 @@ import * as path from 'path'
 import { TaskReporter } from './utils/taskReporter'
 import { FileWalker } from './utils/fileWalker'
 import { getUniquePathWithCheck } from './utils/pathUtils'
-import {
-  resolveFileDate,
-  correctTimestamp,
-  buildDestination
-} from './utils/organizeUtils'
+import { resolveFileDate, correctTimestamp, buildDestination } from './utils/organizeUtils'
 
 // ---------------------------------------------------------------------------
 // Types

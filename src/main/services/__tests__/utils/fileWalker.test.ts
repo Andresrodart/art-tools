@@ -16,17 +16,13 @@ describe('FileWalker', () => {
 
   test('walk traverses directories and calls callback for files', async () => {
     const dir = '/tmp/test'
-    const files = ['file1.jpg', 'file2.png']
-    const subDirs = ['subdir']
 
     ;(fs.readdir as jest.Mock)
       .mockResolvedValueOnce([
         { name: 'file1.jpg', isDirectory: () => false, isFile: () => true },
         { name: 'subdir', isDirectory: () => true, isFile: () => false }
       ])
-      .mockResolvedValueOnce([
-        { name: 'file2.png', isDirectory: () => false, isFile: () => true }
-      ])
+      .mockResolvedValueOnce([{ name: 'file2.png', isDirectory: () => false, isFile: () => true }])
 
     const callback = jest.fn()
     const walker = new FileWalker()
