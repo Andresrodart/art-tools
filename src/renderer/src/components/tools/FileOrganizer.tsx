@@ -429,7 +429,8 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
           <div className="result-stat">
             <span className="stat-icon">✅</span>
             <span>
-              {successCount} file(s) {taskData.status === 'dry-run' ? 'would be moved' : 'moved'} successfully
+              {successCount} file(s) {taskData.status === 'dry-run' ? 'would be moved' : 'moved'}{' '}
+              successfully
             </span>
           </div>
           {failCount > 0 && (

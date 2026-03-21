@@ -12,7 +12,9 @@ export const Tabs: React.FC = () => {
     const isRunning = task && (task.status === 'running' || task.status === 'pending')
 
     const message = isRunning
-      ? t('confirm_close_active_task', { defaultValue: 'This task is still running. Closing this tab will cancel it. Are you sure?' })
+      ? t('confirm_close_active_task', {
+          defaultValue: 'This task is still running. Closing this tab will cancel it. Are you sure?'
+        })
       : t('confirm_close_task', { defaultValue: 'Are you sure you want to close this tab?' })
 
     if (window.confirm(message)) {

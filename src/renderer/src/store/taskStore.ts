@@ -85,10 +85,13 @@ export const useTaskStore = create<TaskStore>((set, get) => ({
     if (window.api?.getActiveTasks) {
       // @ts-ignore: electron api
       window.api.getActiveTasks().then((activeTasks: Task[]) => {
-        const tasksObj = activeTasks.reduce((acc, task) => {
-          acc[task.id] = task
-          return acc
-        }, {} as Record<string, Task>)
+        const tasksObj = activeTasks.reduce(
+          (acc, task) => {
+            acc[task.id] = task
+            return acc
+          },
+          {} as Record<string, Task>
+        )
         set({ tasks: tasksObj })
       })
     }

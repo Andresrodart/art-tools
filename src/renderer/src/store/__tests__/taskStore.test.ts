@@ -2,7 +2,7 @@ import { useTaskStore, Task, TaskTab } from '../taskStore'
 import { act } from 'react'
 
 // Reset Zustand state manually between tests
-const resetStore = () => {
+const resetStore = (): void => {
   useTaskStore.setState({
     tasks: {},
     tabs: [{ id: 'home', title: 'Home', type: 'home' }],
@@ -86,7 +86,7 @@ describe('taskStore', () => {
 
     const state = useTaskStore.getState()
     expect(state.tabs).toHaveLength(2) // home and task-1
-    expect(state.tabs.find(t => t.id === 'task-2')).toBeUndefined()
+    expect(state.tabs.find((t) => t.id === 'task-2')).toBeUndefined()
     expect(state.activeTabId).toBe('task-1')
   })
 

@@ -239,7 +239,8 @@ export function FolderMetadata({ onBack }: FolderMetadataProps): React.JSX.Eleme
           <div className="result-stat">
             <span className="stat-icon">✅</span>
             <span>
-              {renamedCount} folder(s) {taskData.status === 'dry-run' ? 'would be renamed' : 'renamed'} successfully
+              {renamedCount} folder(s){' '}
+              {taskData.status === 'dry-run' ? 'would be renamed' : 'renamed'} successfully
             </span>
           </div>
           {failCount > 0 && (

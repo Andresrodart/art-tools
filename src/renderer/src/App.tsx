@@ -126,11 +126,16 @@ function App(): React.JSX.Element {
     if (activeTabId.startsWith('setup-')) {
       const tool = activeTabId.replace('setup-', '')
       switch (tool) {
-        case 'fileorganizer': return <FileOrganizer onBack={handleCloseTool} />
-        case 'foldermetadata': return <FolderMetadata onBack={handleCloseTool} />
-        case 'thresholdmerger': return <ThresholdMerger onBack={handleCloseTool} />
-        case 'filescraper': return <FileScraper onBack={handleCloseTool} />
-        case 'emptyfoldercleaner': return <EmptyFolderCleaner onBack={handleCloseTool} />
+        case 'fileorganizer':
+          return <FileOrganizer onBack={handleCloseTool} />
+        case 'foldermetadata':
+          return <FolderMetadata onBack={handleCloseTool} />
+        case 'thresholdmerger':
+          return <ThresholdMerger onBack={handleCloseTool} />
+        case 'filescraper':
+          return <FileScraper onBack={handleCloseTool} />
+        case 'emptyfoldercleaner':
+          return <EmptyFolderCleaner onBack={handleCloseTool} />
       }
     }
 
@@ -140,12 +145,17 @@ function App(): React.JSX.Element {
       // For now, we reuse the tool components but they will need to be updated to "read" the task state
       // Actually, it might be better to have a dedicated TaskView or make tools accept a taskId
       switch (task.type) {
-        case 'organize-files': return <FileOrganizer onBack={handleCloseTool} />
-        case 'folder-metadata': return <FolderMetadata onBack={handleCloseTool} />
-        case 'thresholdMerger': return <ThresholdMerger onBack={handleCloseTool} />
-        case 'fileScraper': return <FileScraper onBack={handleCloseTool} />
+        case 'organize-files':
+          return <FileOrganizer onBack={handleCloseTool} />
+        case 'folder-metadata':
+          return <FolderMetadata onBack={handleCloseTool} />
+        case 'thresholdMerger':
+          return <ThresholdMerger onBack={handleCloseTool} />
+        case 'fileScraper':
+          return <FileScraper onBack={handleCloseTool} />
         case 'findEmptyFolders':
-        case 'deleteFolders': return <EmptyFolderCleaner onBack={handleCloseTool} />
+        case 'deleteFolders':
+          return <EmptyFolderCleaner onBack={handleCloseTool} />
       }
     }
 
@@ -157,9 +167,7 @@ function App(): React.JSX.Element {
       <Header />
       <Tabs />
 
-      <main className="main-content">
-        {renderActiveContent()}
-      </main>
+      <main className="main-content">{renderActiveContent()}</main>
     </div>
   )
 }

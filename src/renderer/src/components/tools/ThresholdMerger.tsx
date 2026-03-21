@@ -148,10 +148,13 @@ export function ThresholdMerger({ onBack }: ThresholdMergerProps): React.JSX.Ele
 
   // ── Result summary ──
   const results = (taskData?.result as ThresholdMergerResult[]) ?? []
-  const mergedGroupsCount = results.filter((r) => r.success || taskData?.status === 'dry-run').length
+  const mergedGroupsCount = results.filter(
+    (r) => r.success || taskData?.status === 'dry-run'
+  ).length
   const failCount = results.filter((r) => !r.success && taskData?.status !== 'dry-run').length
   const totalFoldersMerged = results.reduce(
-    (acc, current) => acc + (current.success || taskData?.status === 'dry-run' ? current.originalPaths.length : 0),
+    (acc, current) =>
+      acc + (current.success || taskData?.status === 'dry-run' ? current.originalPaths.length : 0),
     0
   )
 

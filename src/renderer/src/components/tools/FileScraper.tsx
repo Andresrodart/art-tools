@@ -467,7 +467,7 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
       taskData.status === 'dry-run')
 
   // ── Result summary ──
-  const results = (taskData?.result as FileScraperResult[]) ?? []
+  const results = useMemo(() => (taskData?.result as FileScraperResult[]) ?? [], [taskData?.result])
   const scrapedCount = results.filter((r) => r.success || taskData?.status === 'dry-run').length
   const failCount = results.filter((r) => !r.success && taskData?.status !== 'dry-run').length
 
@@ -727,7 +727,8 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
           <div className="result-stat">
             <span className="stat-icon">✅</span>
             <span>
-              {scrapedCount} files(s) {taskData.status === 'dry-run' ? 'would be moved' : 'moved and flattened'}
+              {scrapedCount} files(s){' '}
+              {taskData.status === 'dry-run' ? 'would be moved' : 'moved and flattened'}
             </span>
           </div>
           {failCount > 0 && (
@@ -752,7 +753,9 @@ export function FileScraper({ onBack }: FileScraperProps): React.JSX.Element {
                 paddingTop: '10px'
               }}
             >
-              <h4>{taskData.status === 'dry-run' ? 'Projected Scrape Tree:' : 'Actions Performed:'}</h4>
+              <h4>
+                {taskData.status === 'dry-run' ? 'Projected Scrape Tree:' : 'Actions Performed:'}
+              </h4>
 
               {taskData.status === 'dry-run' ? (
                 <div
