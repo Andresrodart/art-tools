@@ -8,5 +8,8 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg
   },
+  moduleNameMapper: {
+    '\\.(png|jpg|jpeg|gif|svg)(\\?asset)?$': '<rootDir>/__mocks__/fileMock.js'
+  },
   testMatch: ['**/*.test.ts']
 }
