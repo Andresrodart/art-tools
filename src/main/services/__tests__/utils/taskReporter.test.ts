@@ -1,6 +1,7 @@
 import { taskManager } from '../../TaskManager'
 import { TaskReporter } from '../../utils/taskReporter'
 
+// Mock the TaskManager to isolate the TaskReporter behavior
 jest.mock('../../TaskManager', () => ({
   taskManager: {
     updateTaskStatus: jest.fn(),
@@ -10,39 +11,48 @@ jest.mock('../../TaskManager', () => ({
   }
 }))
 
+/**
+ * Test suite for the TaskReporter class.
+ * Ensures it correctly calls TaskManager and handles cancellation logic.
+ */
 describe('TaskReporter', () => {
   const taskId = 'test-task'
-  let reporter: TaskReporter
+  let reporterInstance: TaskReporter
 
   beforeEach(() => {
+    // Clear all mock call history before each test
     jest.clearAllMocks()
-    reporter = new TaskReporter(taskId)
+    reporterInstance = new TaskReporter(taskId)
   })
 
-  test('setStatus updates task status', () => {
-    reporter.setStatus('running')
+  test('setStatus updates task status correctly', () => {
+    reporterInstance.setStatus('running')
     expect(taskManager.updateTaskStatus).toHaveBeenCalledWith(taskId, 'running', undefined)
   })
 
-  test('updateProgress updates task progress', () => {
-    const progress = { current: 10, total: 100 }
-    reporter.updateProgress(progress)
-    expect(taskManager.updateTaskProgress).toHaveBeenCalledWith(taskId, progress)
+  test('updateProgress updates task progress correctly', () => {
+    const progressData = { current: 10, total: 100 }
+    reporterInstance.updateProgress(progressData)
+    expect(taskManager.updateTaskProgress).toHaveBeenCalledWith(taskId, progressData)
   })
 
-  test('complete completes the task', () => {
-    const result = { success: true }
-    reporter.complete(result)
-    expect(taskManager.completeTask).toHaveBeenCalledWith(taskId, result)
+  test('complete marks the task as finished with a result', () => {
+    const resultData = { success: true }
+    reporterInstance.complete(resultData)
+    expect(taskManager.completeTask).toHaveBeenCalledWith(taskId, resultData)
   })
 
-  test('checkCancellation throws error if task status is error', () => {
+  test('checkCancellation throws an error if task status is "error"', () => {
+    // Mock the TaskManager to return a cancelled task status
     ;(taskManager.getAllTasks as jest.Mock).mockReturnValue([{ id: taskId, status: 'error' }])
-    expect(() => reporter.checkCancellation()).toThrow('Task cancelled by user')
+
+    expect(() => reporterInstance.checkCancellation()).toThrow('Task cancelled by user')
   })
 
-  test('checkCancellation does not throw if task status is not error', () => {
+  test('checkCancellation does not throw if task status is not "error"', () => {
+    // Mock the TaskManager to return a running task status
     ;(taskManager.getAllTasks as jest.Mock).mockReturnValue([{ id: taskId, status: 'running' }])
-    expect(() => reporter.checkCancellation()).not.toThrow()
+
+    expect(() => reporterInstance.checkCancellation()).not.toThrow()
   })
 })

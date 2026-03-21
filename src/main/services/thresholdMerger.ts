@@ -2,179 +2,231 @@ import { join, parse } from 'path'
 import { promises as fs } from 'fs'
 import { TaskReporter } from './utils/taskReporter'
 
+/**
+ * Configuration for the threshold folder merger task.
+ */
 export interface ThresholdMergerOptions {
+  /** The root directory to start searching for small folders to merge. */
   rootPath: string
-  thresholdX: number // Merge if items < X
-  maxCapacityY: number // Stop merging when group items >= Y
+  /** The item count threshold. Folders with fewer items than this will be merged. */
+  thresholdX: number
+  /** The maximum capacity of a merged group. Merging stops if total items exceed this. */
+  maxCapacityY: number
+  /** If true, simulates folder merges without modifying the filesystem. */
   isDryRun: boolean
 }
 
+/**
+ * Result object for each merged folder group.
+ */
 export interface ThresholdMergerResult {
-  originalPaths: string[] // Array of original folder paths that were merged
-  newPath: string // The new merged folder path
+  /** The list of original absolute paths of the folders that were merged. */
+  originalPaths: string[]
+  /** The newly created merged folder path containing all items. */
+  newPath: string
+  /** Whether the merge operation was successful. */
   success: boolean
+  /** Descriptive error message if the merge failed. */
   error?: string
 }
 
 /**
- * Gets the number of immediate elements (files and folders) within a directory.
+ * Metadata for a directory being evaluated for a potential merge.
  */
-export async function getImmediateElementCount(dir: string): Promise<number> {
-  try {
-    const entries = await fs.readdir(dir)
-    return entries.length
-  } catch {
-    return 0 // Inaccessible or non-existent
-  }
-}
-
-/**
- * Finds all subdirectories of a given directory.
- */
-export async function getSubdirectories(dir: string): Promise<string[]> {
-  try {
-    const entries = await fs.readdir(dir, { withFileTypes: true })
-    return entries.filter((e) => e.isDirectory()).map((e) => join(dir, e.name))
-  } catch {
-    return []
-  }
-}
-
-interface MergableFolder {
+interface MergableFolderMetadata {
+  /** The absolute path of the directory. */
   path: string
+  /** The name of the directory. */
   name: string
+  /** The number of immediate elements (files and folders) it contains. */
   elementCount: number
 }
 
 /**
- * Handles the merging of a group of folders into a single folder.
+ * Retrieves the count of immediate elements (files and folders) within a directory.
+ *
+ * @param directoryPath The absolute path of the directory to inspect.
+ * @returns The number of direct children found.
  */
-async function performMerge(
+export async function getImmediateElementCount(directoryPath: string): Promise<number> {
+  try {
+    const entries = await fs.readdir(directoryPath)
+    return entries.length
+  } catch {
+    // Inaccessible or non-existent; return 0 to consider it mergeable
+    return 0
+  }
+}
+
+/**
+ * Finds all immediate subdirectories of a given directory.
+ *
+ * @param directoryPath The absolute path of the directory to search.
+ * @returns A list of absolute paths for each subdirectory found.
+ */
+export async function getImmediateSubdirectoryPaths(directoryPath: string): Promise<string[]> {
+  try {
+    const entries = await fs.readdir(directoryPath, { withFileTypes: true })
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => join(directoryPath, entry.name))
+  } catch {
+    // Access error; return an empty list
+    return []
+  }
+}
+
+/**
+ * Performs a physical merge of multiple folders into a single target directory.
+ * The new folder name is derived by concatenating the names of the source folders.
+ *
+ * @param parentPath The common parent directory where the new merged folder will reside.
+ * @param folderGroup A list of folders to be merged.
+ * @param isDryRun If true, skips physical filesystem operations.
+ * @returns A promise that resolves to the merge result.
+ */
+async function executeMergeOperation(
   parentPath: string,
-  folders: MergableFolder[],
+  folderGroup: MergableFolderMetadata[],
   isDryRun: boolean
 ): Promise<ThresholdMergerResult> {
-  const originalPaths = folders.map((f) => f.path)
+  const originalAbsolutePaths = folderGroup.map((folder) => folder.path)
 
-  // Construct the new folder name: folderA___folderB___folderC
-  const newFolderName = folders.map((f) => f.name).join('___')
-  const newPath = join(parentPath, newFolderName)
+  // Derive the new folder name: "folderA___folderB___folderC"
+  const mergedFolderName = folderGroup.map((folder) => folder.name).join('___')
+  const mergedFolderFullPath = join(parentPath, mergedFolderName)
 
-  let success = true
-  let errorMsg: string | undefined
+  let mergeSuccess = true
+  let mergeErrorMessage: string | undefined
 
   if (!isDryRun) {
     try {
-      // 1. Create the new target directory
-      await fs.mkdir(newPath, { recursive: true })
+      // 1. Create the target destination for all items
+      await fs.mkdir(mergedFolderFullPath, { recursive: true })
 
-      // 2. Move contents of all folders into the new directory
-      for (const folder of folders) {
-        const entries = await fs.readdir(folder.path)
-        for (const entry of entries) {
-          const oldEntryPath = join(folder.path, entry)
-          const newEntryPath = join(newPath, entry)
+      // 2. Move contents of each source folder into the new target directory
+      for (const folder of folderGroup) {
+        const directoryEntries = await fs.readdir(folder.path)
+        for (const entryName of directoryEntries) {
+          const oldEntryPath = join(folder.path, entryName)
+          const newEntryPath = join(mergedFolderFullPath, entryName)
           await fs.rename(oldEntryPath, newEntryPath)
         }
       }
 
-      // 3. Delete the original empty folders
-      for (const folder of folders) {
+      // 3. Delete the now-empty source folders
+      for (const folder of folderGroup) {
         await fs.rmdir(folder.path)
       }
-    } catch (e: unknown) {
-      success = false
-      errorMsg = e instanceof Error ? e.message : String(e)
-      console.error(`Merge failed for ${newPath}: ${errorMsg}`)
+    } catch (error: unknown) {
+      mergeSuccess = false
+      mergeErrorMessage = error instanceof Error ? error.message : String(error)
+      console.error(`Merge failed for ${mergedFolderFullPath}: ${mergeErrorMessage}`)
     }
   }
 
   return {
-    originalPaths,
-    newPath,
-    success,
-    error: errorMsg
+    originalPaths: originalAbsolutePaths,
+    newPath: mergedFolderFullPath,
+    success: mergeSuccess,
+    error: mergeErrorMessage
   }
 }
 
 /**
- * Recursively processes directories bottom-up to merge siblings.
+ * Recursively scans a directory tree and merges sibling folders that fall below the item threshold.
+ * It uses a bottom-up approach to ensure child folders are processed before their parents.
+ *
+ * @param currentDirectoryPath The directory to evaluate for merging its subfolders.
+ * @param mergeOptions Configuration for the merge logic.
+ * @param mergeResults Shared list to collect results of each merge.
+ * @param reporter The task reporter for progress updates and cancellation.
  */
-export async function mergeSiblingsRecursive(
-  currentDir: string,
-  options: ThresholdMergerOptions,
-  results: ThresholdMergerResult[],
+export async function mergeSiblingFoldersRecursively(
+  currentDirectoryPath: string,
+  mergeOptions: ThresholdMergerOptions,
+  mergeResults: ThresholdMergerResult[],
   reporter: TaskReporter
 ): Promise<void> {
-  await reporter.yieldAndCheck()
+  // Yield and check for task cancellation at each depth
+  await reporter.yieldAndCheckCancellation()
 
-  // 1. First traverse children (bottom-up approach)
-  const subDirs = await getSubdirectories(currentDir)
-  for (const subDir of subDirs) {
-    await mergeSiblingsRecursive(subDir, options, results, reporter)
+  // 1. Traverse all children first (bottom-up approach)
+  const initialSubdirectoryPaths = await getImmediateSubdirectoryPaths(currentDirectoryPath)
+  for (const path of initialSubdirectoryPaths) {
+    await mergeSiblingFoldersRecursively(path, mergeOptions, mergeResults, reporter)
   }
 
-  // Re-fetch subdirectories since the recursive calls might have merged/renamed them!
-  const currentSubDirs = await getSubdirectories(currentDir)
+  // 2. Re-fetch children after recursion as sibling merges might have changed them!
+  const currentSubdirectoryPaths = await getImmediateSubdirectoryPaths(currentDirectoryPath)
 
-  // 2. Evaluate all children of currentDir for merging
-  const mergableCandidates: MergableFolder[] = []
+  // 3. Identify all subfolders that are candidates for merging based on their element count
+  const mergeCandidates: MergableFolderMetadata[] = []
 
-  for (const dirPath of currentSubDirs) {
-    const elementCount = await getImmediateElementCount(dirPath)
-    if (elementCount < options.thresholdX) {
-      mergableCandidates.push({
-        path: dirPath,
-        name: parse(dirPath).name,
-        elementCount
+  for (const path of currentSubdirectoryPaths) {
+    const itemVolume = await getImmediateElementCount(path)
+    if (itemVolume < mergeOptions.thresholdX) {
+      mergeCandidates.push({
+        path: path,
+        name: parse(path).name,
+        elementCount: itemVolume
       })
     }
   }
 
-  // 3. Group and merge
-  let i = 0
-  while (i < mergableCandidates.length) {
-    const currentGroup: MergableFolder[] = []
-    let currentGroupCount = 0
+  // 4. Group candidate subfolders into batches and perform the merges
+  let candidateIndex = 0
+  while (candidateIndex < mergeCandidates.length) {
+    const folderBatch: MergableFolderMetadata[] = []
+    let currentBatchElementCount = 0
 
-    // Build the group
-    while (i < mergableCandidates.length) {
-      const candidate = mergableCandidates[i]
+    // Build a batch that respects the maximum capacity (maxCapacityY)
+    while (candidateIndex < mergeCandidates.length) {
+      const folderCandidate = mergeCandidates[candidateIndex]
 
-      // If adding this would exceed Y, and we already have at least 1 item, stop this group
+      // Stop if adding this folder would exceed the batch capacity
       if (
-        currentGroup.length > 0 &&
-        currentGroupCount + candidate.elementCount > options.maxCapacityY
+        folderBatch.length > 0 &&
+        currentBatchElementCount + folderCandidate.elementCount > mergeOptions.maxCapacityY
       ) {
         break
       }
 
-      currentGroup.push(candidate)
-      currentGroupCount += candidate.elementCount
-      i++
+      folderBatch.push(folderCandidate)
+      currentBatchElementCount += folderCandidate.elementCount
+      candidateIndex++
 
-      // If we reached exact capacity, stop this group
-      if (currentGroupCount >= options.maxCapacityY) {
+      // Stop if the batch has reached the exact capacity limit
+      if (currentBatchElementCount >= mergeOptions.maxCapacityY) {
         break
       }
     }
 
-    // A group must have at least 2 folders to be a merge
-    if (currentGroup.length > 1) {
+    // A merge requires at least 2 sibling folders
+    if (folderBatch.length > 1) {
       reporter.updateProgress({
-        current: results.length + 1,
-        total: results.length + 1, // We don't know total upfront due to tree structure
-        message: `Merging ${currentGroup.length} folders in ${currentDir}...`
+        current: mergeResults.length + 1,
+        total: mergeResults.length + 1, // Total count is dynamic and unknown upfront
+        message: `Merging ${folderBatch.length} folders in ${currentDirectoryPath}...`
       })
 
-      const result = await performMerge(currentDir, currentGroup, options.isDryRun)
-      results.push(result)
+      const operationResult = await executeMergeOperation(
+        currentDirectoryPath,
+        folderBatch,
+        mergeOptions.isDryRun
+      )
+      mergeResults.push(operationResult)
     }
   }
 }
 
 /**
- * Core task executor for threshold merger.
+ * Core task executor for the threshold folder merger.
+ * Merges sibling directories that contain fewer items than a specified threshold.
+ *
+ * @param taskId Unique ID for task tracking.
+ * @param options Logic configuration for the merge.
+ * @returns A promise resolving to a summary of all merges performed.
  */
 export async function thresholdMergerTask(
   taskId: string,
@@ -182,7 +234,7 @@ export async function thresholdMergerTask(
 ): Promise<ThresholdMergerResult[]> {
   const reporter = new TaskReporter(taskId)
   reporter.setStatus(options.isDryRun ? 'dry-run' : 'running')
-  const results: ThresholdMergerResult[] = []
+  const totalMergeResults: ThresholdMergerResult[] = []
 
   try {
     reporter.updateProgress({
@@ -191,21 +243,22 @@ export async function thresholdMergerTask(
       message: 'Starting threshold merger...'
     })
 
-    await mergeSiblingsRecursive(options.rootPath, options, results, reporter)
+    // Initiate recursive bottom-up sibling merging
+    await mergeSiblingFoldersRecursively(options.rootPath, options, totalMergeResults, reporter)
 
-    // Ensure total is realistic at the end
-    const finalCount = results.length
+    // Finalize the task with accurate progress counts
+    const totalCount = totalMergeResults.length
     reporter.updateProgress({
-      current: finalCount,
-      total: finalCount,
+      current: totalCount,
+      total: totalCount,
       message: 'Processing complete.'
     })
 
-    reporter.complete(results)
-    return results
+    reporter.complete(totalMergeResults)
+    return totalMergeResults
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error)
-    reporter.error(msg)
+    const message = error instanceof Error ? error.message : String(error)
+    reporter.error(message)
     throw error
   }
 }

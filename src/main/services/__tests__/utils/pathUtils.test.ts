@@ -2,63 +2,77 @@ import { promises as fs } from 'fs'
 import { join } from 'path'
 import { getUniqueFilePath, getUniquePathWithCheck } from '../../utils/pathUtils'
 
+// Mock the Node.js promises filesystem to control the test environment
 jest.mock('fs', () => ({
   promises: {
     stat: jest.fn()
   }
 }))
 
+/**
+ * Test suite for the pathUtils module.
+ * Verifies the generation of unique file paths for avoiding collisions.
+ */
 describe('pathUtils', () => {
   describe('getUniqueFilePath', () => {
-    const destDir = '/tmp/dest'
-    const name = 'image'
-    const ext = '.jpg'
+    const destinationDirectory = '/tmp/dest'
+    const baseName = 'image'
+    const extension = '.jpg'
 
     beforeEach(() => {
+      // Clear the call history of all mocks before each test
       jest.clearAllMocks()
     })
 
-    test('returns original path if file does not exist', async () => {
+    test('returns original path if the file does not already exist on disk', async () => {
+      // Mock stat() to fail (ENOENT), indicating the file doesn't exist
       ;(fs.stat as jest.Mock).mockRejectedValue(new Error('ENOENT'))
-      const result = await getUniqueFilePath(destDir, name, ext)
-      expect(result).toBe(join(destDir, 'image.jpg'))
+      const resultPath = await getUniqueFilePath(destinationDirectory, baseName, extension)
+      expect(resultPath).toBe(join(destinationDirectory, 'image.jpg'))
     })
 
-    test('returns unique path if file already exists', async () => {
+    test('returns a unique path if the initial filename already exists', async () => {
+      // Mock stat() to find the first file, but not the second
       ;(fs.stat as jest.Mock)
         .mockResolvedValueOnce({}) // image.jpg exists
         .mockRejectedValueOnce(new Error('ENOENT')) // image_1.jpg does not exist
 
-      const result = await getUniqueFilePath(destDir, name, ext)
-      expect(result).toBe(join(destDir, 'image_1.jpg'))
+      const resultPath = await getUniqueFilePath(destinationDirectory, baseName, extension)
+      expect(resultPath).toBe(join(destinationDirectory, 'image_1.jpg'))
     })
 
-    test('increments counter until path is unique', async () => {
+    test('increments the counter multiple times until it finds a unique path', async () => {
+      // Mock stat() to simulate several existing files
       ;(fs.stat as jest.Mock)
         .mockResolvedValueOnce({}) // image.jpg exists
         .mockResolvedValueOnce({}) // image_1.jpg exists
         .mockRejectedValueOnce(new Error('ENOENT')) // image_2.jpg does not exist
 
-      const result = await getUniqueFilePath(destDir, name, ext)
-      expect(result).toBe(join(destDir, 'image_2.jpg'))
+      const resultPath = await getUniqueFilePath(destinationDirectory, baseName, extension)
+      expect(resultPath).toBe(join(destinationDirectory, 'image_2.jpg'))
     })
   })
 
   describe('getUniquePathWithCheck', () => {
-    const destPath = '/tmp/dest/image.jpg'
+    const initialTargetFilePath = '/tmp/dest/image.jpg'
 
-    test('returns original path if check function returns false', () => {
-      const checkExists = jest.fn().mockReturnValue(false)
-      const result = getUniquePathWithCheck(destPath, checkExists)
-      expect(result).toBe(destPath)
-      expect(checkExists).toHaveBeenCalledWith(destPath)
+    test('returns the original path if the custom check function returns false', () => {
+      // The check function indicates the file is not taken
+      const mockExistenceCheck = jest.fn().mockReturnValue(false)
+      const resultPath = getUniquePathWithCheck(initialTargetFilePath, mockExistenceCheck)
+      expect(resultPath).toBe(initialTargetFilePath)
+      expect(mockExistenceCheck).toHaveBeenCalledWith(initialTargetFilePath)
     })
 
-    test('returns unique path if check function returns true', () => {
-      const checkExists = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false)
+    test('returns a unique path if the custom check function returns true for collisions', () => {
+      // The check function indicates the first path is taken, but the second one isn't
+      const mockExistenceCheck = jest
+        .fn()
+        .mockReturnValueOnce(true) // image.jpg exists
+        .mockReturnValueOnce(false) // image_1.jpg does not exist
 
-      const result = getUniquePathWithCheck(destPath, checkExists)
-      expect(result).toBe('/tmp/dest/image_1.jpg')
+      const resultPath = getUniquePathWithCheck(initialTargetFilePath, mockExistenceCheck)
+      expect(resultPath).toBe('/tmp/dest/image_1.jpg')
     })
   })
 })

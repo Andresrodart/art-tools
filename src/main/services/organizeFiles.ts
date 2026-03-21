@@ -3,88 +3,111 @@ import * as path from 'path'
 import { TaskReporter } from './utils/taskReporter'
 import { FileWalker } from './utils/fileWalker'
 import { getUniquePathWithCheck } from './utils/pathUtils'
-import { resolveFileDate, correctTimestamp, buildDestination } from './utils/organizeUtils'
+import {
+  resolveReliableFileDate,
+  synchronizeTimestampWithExif,
+  buildDateBasedDestination
+} from './utils/organizeUtils'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
+/**
+ * Configuration for the photo and video organization task.
+ */
 export interface OrganizeOptions {
+  /** The absolute path of the root directory containing unsorted files. */
   folderPath: string
-  fileTypes: string[] // e.g. ['.jpg', '.png']
+  /** A list of allowed file extensions (e.g., ['.jpg', '.png']) or ['*'] for all files. */
+  fileTypes: string[]
+  /** If true, simulates the organization without moving files on disk. */
   isDryRun: boolean
 }
 
+/**
+ * Result object for each file moved or corrected during the organization process.
+ */
 export interface OrganizeResult {
+  /** The original source path of the file. */
   source: string
+  /** The final destination path where the file was (or would be) moved. */
   destination: string
+  /** Whether the file move was successful. */
   success: boolean
+  /** Whether the file's filesystem timestamp was corrected using EXIF metadata. */
   timestampCorrected?: boolean
+  /** Descriptive error message if the operation failed. */
   error?: string
 }
 
-// ---------------------------------------------------------------------------
-// Main Task Orchestrator
-// ---------------------------------------------------------------------------
-
+/**
+ * Organizes files within a directory by placing them into subfolders based on their capture date (Year/Month/Day).
+ * This service resolves the best possible date using filename patterns, EXIF metadata, and filesystem stats.
+ *
+ * @param taskId The unique task ID for tracking progress.
+ * @param options Configuration for what and where to organize.
+ * @returns A promise resolving to an array of results for each processed file.
+ */
 export async function organizeFilesTask(
   taskId: string,
   options: OrganizeOptions
 ): Promise<OrganizeResult[]> {
   const { folderPath, fileTypes, isDryRun } = options
   const reporter = new TaskReporter(taskId)
-  const results: OrganizeResult[] = []
+  const organizationResults: OrganizeResult[] = []
 
+  // The folder path must be absolute to ensure correct path resolution
   if (!path.isAbsolute(folderPath)) {
     throw new Error('Folder path must be absolute')
   }
 
-  // --- Phase 1: Scan & filter ---
+  // --- Phase 1: Directory Scanning & Initial Filtering ---
   reporter.setStatus(isDryRun ? 'dry-run' : 'running')
   reporter.updateProgress({ message: 'Scanning directory…' })
 
-  const validFiles: string[] = []
-  const walker = new FileWalker(reporter, {
+  const matchedFilePaths: string[] = []
+  const directoryWalker = new FileWalker(reporter, {
     extensions: fileTypes,
     skipHidden: true,
-    skipYearFolders: true
+    skipYearFolders: true // Avoid re-scanning already organized year folders
   })
 
-  await walker.walk(folderPath, async (fp) => {
-    validFiles.push(fp)
+  // Start the scan and collect all valid file paths
+  await directoryWalker.walk(folderPath, async (fullPath) => {
+    matchedFilePaths.push(fullPath)
   })
 
-  reporter.updateProgress({ total: validFiles.length, current: 0 })
+  reporter.updateProgress({ total: matchedFilePaths.length, current: 0 })
 
-  // --- Phase 2: Organize ---
-  let processed = 0
-  const simulatedExists = new Set<string>()
+  // --- Phase 2: Date Resolution & File Organization ---
+  let processedFileCount = 0
+  const dryRunSimulatedExistsSet = new Set<string>()
 
-  const checkExists = (p: string): boolean => {
-    if (isDryRun) return simulatedExists.has(p) || fs.existsSync(p)
-    return fs.existsSync(p)
+  // Helper function to check for path collisions, considering dry-run simulations
+  const checkFileExistence = (targetPath: string): boolean => {
+    if (isDryRun) return dryRunSimulatedExistsSet.has(targetPath) || fs.existsSync(targetPath)
+    return fs.existsSync(targetPath)
   }
 
-  for (const filePath of validFiles) {
-    const filename = path.basename(filePath)
-    processed++
+  for (const sourceFilePath of matchedFilePaths) {
+    const filename = path.basename(sourceFilePath)
+    processedFileCount++
+
+    // Periodically update progress and check for cancellation during processing
     reporter.updateProgressThrottled({
-      current: processed,
+      current: processedFileCount,
       message: `Processing: ${filename}`
     })
 
-    if (processed % 50 === 0) {
-      await reporter.yieldAndCheck()
+    if (processedFileCount % 50 === 0) {
+      await reporter.yieldAndCheckCancellation()
     } else {
       reporter.checkCancellation()
     }
 
-    // --- Resolve date ---
-    const { date, source } = await resolveFileDate(filePath)
+    // --- Step 2.1: Resolve the most accurate date for the file ---
+    const { resolvedDate, source } = await resolveReliableFileDate(sourceFilePath)
 
-    if (!date || isNaN(date.getTime())) {
-      results.push({
-        source: filePath,
+    if (!resolvedDate || isNaN(resolvedDate.getTime())) {
+      organizationResults.push({
+        source: sourceFilePath,
         destination: '',
         success: false,
         error: 'Could not determine a valid date'
@@ -92,44 +115,62 @@ export async function organizeFilesTask(
       continue
     }
 
-    // --- Correct file timestamp if EXIF differs from fs ---
-    let timestampCorrected = false
+    // --- Step 2.2: Correct filesystem timestamp if using EXIF capture date ---
+    let wasTimestampUpdated = false
     if (source === 'exif' && !isDryRun) {
-      timestampCorrected = correctTimestamp(filePath, date)
+      wasTimestampUpdated = synchronizeTimestampWithExif(sourceFilePath, resolvedDate)
     }
 
-    // --- Compute destination ---
-    const { destDir, destPath } = buildDestination(folderPath, filename, date)
-    if (filePath === destPath) continue // already in place
+    // --- Step 2.3: Build the destination path (Year/Month/Day) ---
+    const { destinationDirectory, destinationFilePath } = buildDateBasedDestination(
+      folderPath,
+      filename,
+      resolvedDate
+    )
 
-    const uniquePath = getUniquePathWithCheck(destPath, checkExists)
+    // Skip if the file is already in the correct destination
+    if (sourceFilePath === destinationFilePath) continue
 
-    // --- Move or simulate ---
+    // Ensure the destination path is unique to prevent overwriting existing files
+    const uniqueDestinationPath = getUniquePathWithCheck(destinationFilePath, checkFileExistence)
+
+    // --- Step 2.4: Execute Move or Simulate in Dry-Run ---
     if (isDryRun) {
-      simulatedExists.add(uniquePath)
-      results.push({
-        source: filePath,
-        destination: uniquePath,
+      dryRunSimulatedExistsSet.add(uniqueDestinationPath)
+      organizationResults.push({
+        source: sourceFilePath,
+        destination: uniqueDestinationPath,
         success: true,
-        timestampCorrected
+        timestampCorrected: wasTimestampUpdated
       })
     } else {
       try {
-        if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true })
-        fs.renameSync(filePath, uniquePath)
-        results.push({
-          source: filePath,
-          destination: uniquePath,
+        // Create the necessary Year/Month/Day directories on the fly
+        if (!fs.existsSync(destinationDirectory)) {
+          fs.mkdirSync(destinationDirectory, { recursive: true })
+        }
+
+        fs.renameSync(sourceFilePath, uniqueDestinationPath)
+
+        organizationResults.push({
+          source: sourceFilePath,
+          destination: uniqueDestinationPath,
           success: true,
-          timestampCorrected
+          timestampCorrected: wasTimestampUpdated
         })
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Unknown error'
-        results.push({ source: filePath, destination: uniquePath, success: false, error: msg })
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        organizationResults.push({
+          source: sourceFilePath,
+          destination: uniqueDestinationPath,
+          success: false,
+          error: message
+        })
       }
     }
   }
 
-  reporter.complete(results)
-  return results
+  // Finalize the task with the complete results array
+  reporter.complete(organizationResults)
+  return organizationResults
 }
