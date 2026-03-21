@@ -57,6 +57,9 @@ jest.mock('../services/TaskManager', () => ({
   }
 }))
 
+// Mock Vite assets that cause TS/Jest resolution issues
+jest.mock('../../resources/icon.png?asset', () => 'icon-stub', { virtual: true })
+
 /**
  * Security test suite for verifying the absence of insecure IPC handlers.
  */
