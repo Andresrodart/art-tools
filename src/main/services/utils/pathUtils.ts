@@ -43,20 +43,20 @@ export async function getUniqueFilePath(
  *
  * @param destinationFilePath The initial target file path to verify.
  * @param existenceCheckFunction A custom function that returns true if the path is considered "taken".
- * @returns A unique version of the target file path.
+ * @returns A promise resolving to a unique version of the target file path.
  */
-export function getUniquePathWithCheck(
+export async function getUniquePathWithCheck(
   destinationFilePath: string,
-  existenceCheckFunction: (filePath: string) => boolean
-): string {
-  if (!existenceCheckFunction(destinationFilePath)) return destinationFilePath
+  existenceCheckFunction: (filePath: string) => boolean | Promise<boolean>
+): Promise<string> {
+  if (!(await existenceCheckFunction(destinationFilePath))) return destinationFilePath
 
   const { dir, ext, name } = parse(destinationFilePath)
 
   let collisionCounter = 1
   let uniquePath = join(dir, `${name}_${collisionCounter}${ext}`)
 
-  while (existenceCheckFunction(uniquePath)) {
+  while (await existenceCheckFunction(uniquePath)) {
     collisionCounter++
     uniquePath = join(dir, `${name}_${collisionCounter}${ext}`)
   }

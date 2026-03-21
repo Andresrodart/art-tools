@@ -56,23 +56,23 @@ describe('pathUtils', () => {
   describe('getUniquePathWithCheck', () => {
     const initialTargetFilePath = '/tmp/dest/image.jpg'
 
-    test('returns the original path if the custom check function returns false', () => {
+    test('returns the original path if the custom check function returns false', async () => {
       // The check function indicates the file is not taken
       const mockExistenceCheck = jest.fn().mockReturnValue(false)
-      const resultPath = getUniquePathWithCheck(initialTargetFilePath, mockExistenceCheck)
+      const resultPath = await getUniquePathWithCheck(initialTargetFilePath, mockExistenceCheck)
       expect(resultPath).toBe(initialTargetFilePath)
       expect(mockExistenceCheck).toHaveBeenCalledWith(initialTargetFilePath)
     })
 
-    test('returns a unique path if the custom check function returns true for collisions', () => {
+    test('returns a unique path if the custom check function returns true for collisions', async () => {
       // The check function indicates the first path is taken, but the second one isn't
       const mockExistenceCheck = jest
         .fn()
         .mockReturnValueOnce(true) // image.jpg exists
         .mockReturnValueOnce(false) // image_1.jpg does not exist
 
-      const resultPath = getUniquePathWithCheck(initialTargetFilePath, mockExistenceCheck)
-      expect(resultPath).toBe('/tmp/dest/image_1.jpg')
+      const resultPath = await getUniquePathWithCheck(initialTargetFilePath, mockExistenceCheck)
+      expect(resultPath).toBe(join('/tmp/dest', 'image_1.jpg'))
     })
   })
 })

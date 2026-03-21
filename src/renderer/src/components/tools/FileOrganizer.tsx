@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
-import { useTaskStore, Task } from '../../store/taskStore'
+import { useTaskStore } from '../../store/taskStore'
 
 interface OrganizeResult {
   source: string
@@ -45,9 +45,10 @@ const COMMON_EXTENSIONS = [
 
 interface FileOrganizerProps {
   onBack: () => void
+  tabId: string
 }
 
-export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element {
+export function FileOrganizer({ onBack, tabId }: FileOrganizerProps): React.JSX.Element {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [selectedExtensions, setSelectedExtensions] = useState<string[]>(['*'])
   const [extensionInput, setExtensionInput] = useState<string>('')
@@ -62,8 +63,9 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const reset = useHeaderStore((state) => state.reset)
   const { t } = useTranslation()
 
-  const { tasks, activeTabId, addTab } = useTaskStore()
-  const taskData = tasks[activeTabId] as Task | undefined
+  const { tasks, tabs, updateTab } = useTaskStore()
+  const currentTab = tabs.find((t) => t.id === tabId)
+  const taskData = currentTab?.taskId ? tasks[currentTab.taskId] : undefined
 
   const addExtension = (ext: string): void => {
     let newExt = ext.trim().toLowerCase()
@@ -159,7 +161,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
       // @ts-ignore: electron api
       const id = await window.api.startOrganizeTask(targetFolder, typesArray, isDryRun)
 
-      addTab({ id, title: `Org: ${targetFolder.split(/[/\\]/).pop()}`, type: 'task' })
+      updateTab(tabId, { taskId: id, title: `Org: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
       alert(`Error starting organize task: ${e instanceof Error ? e.message : String(e)}`)
     }
@@ -197,6 +199,8 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   const failCount = results.filter((r) => !r.success).length
 
   // ==================== SECTIONS ====================
+
+  const isTaskRunning = taskData?.status === 'running' || taskData?.status === 'pending'
 
   const inputSection = (
     <>
@@ -390,7 +394,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
         <button
           className={`brutalist-button ${isDryRun ? 'warning' : 'danger'}`}
           onClick={handleStartOrganize}
-          disabled={!targetFolder}
+          disabled={!targetFolder || isTaskRunning}
         >
           {isDryRun ? t('btn_sim_org') : t('btn_exec_org')}
         </button>
@@ -464,7 +468,7 @@ export function FileOrganizer({ onBack }: FileOrganizerProps): React.JSX.Element
   return (
     <ToolView
       description={t('desc_org')}
-      inputSection={!taskData ? inputSection : undefined}
+      inputSection={inputSection}
       progressSection={progressSection}
       outputSection={outputSection}
     />

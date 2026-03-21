@@ -111,11 +111,11 @@ export async function getExifCaptureDate(filePath: string): Promise<Date | null>
  * It prioritizes the birth (creation) time if valid (>1970), otherwise falls back to modification time.
  *
  * @param filePath The absolute path of the file to check.
- * @returns A Date object representing the file's age.
+ * @returns A promise resolving to a Date object representing the file's age.
  */
-export function getFileStatsResolutionDate(filePath: string): Date | null {
+export async function getFileStatsResolutionDate(filePath: string): Promise<Date | null> {
   try {
-    const fileStats = fs.statSync(filePath)
+    const fileStats = await fs.promises.stat(filePath)
     const birthTime = fileStats.birthtime
     if (!isNaN(birthTime.getTime()) && birthTime.getFullYear() > 1970) return birthTime
 
@@ -133,7 +133,7 @@ export function getFileStatsResolutionDate(filePath: string): Date | null {
  * 3. File-system stats (creation or modification time)
  *
  * @param filePath The absolute path of the file to analyze.
- * @returns An object containing the resolved date and the source used for determination.
+ * @returns A promise resolving to an object containing the resolved date and the source used for determination.
  */
 export async function resolveReliableFileDate(
   filePath: string
@@ -152,7 +152,7 @@ export async function resolveReliableFileDate(
   }
 
   // 3 — Priority: File-system statistics
-  const dateFromStats = getFileStatsResolutionDate(filePath)
+  const dateFromStats = await getFileStatsResolutionDate(filePath)
   if (dateFromStats) return { resolvedDate: dateFromStats, source: 'stats' }
 
   return { resolvedDate: null, source: 'none' }
@@ -164,17 +164,20 @@ export async function resolveReliableFileDate(
  *
  * @param filePath The absolute path of the file to update.
  * @param exifCaptureDate The date extracted from EXIF metadata.
- * @returns True if the file's timestamps were updated, otherwise false.
+ * @returns A promise resolving to true if the file's timestamps were updated, otherwise false.
  */
-export function synchronizeTimestampWithExif(filePath: string, exifCaptureDate: Date): boolean {
+export async function synchronizeTimestampWithExif(
+  filePath: string,
+  exifCaptureDate: Date
+): Promise<boolean> {
   try {
-    const fileStats = fs.statSync(filePath)
+    const fileStats = await fs.promises.stat(filePath)
     const timeDiscrepancyMs = Math.abs(fileStats.mtime.getTime() - exifCaptureDate.getTime())
 
     // Update if the time difference exceeds 60 seconds
     if (timeDiscrepancyMs > 60_000) {
       const epochSeconds = exifCaptureDate.getTime() / 1000
-      fs.utimesSync(filePath, epochSeconds, epochSeconds)
+      await fs.promises.utimes(filePath, epochSeconds, epochSeconds)
       return true
     }
   } catch {
