@@ -1,6 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
-import { readFileSync, writeFileSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -84,6 +84,38 @@ app.whenReady().then(() => {
   // Open a folder or file in the system explorer
   ipcMain.handle('open-path', async (_, targetPath: string) => {
     return shell.openPath(targetPath)
+  })
+
+  // --- PREFERENCES APIs ---
+  const getPrefsPath = (): string => join(app.getPath('userData'), 'preferences.json')
+
+  ipcMain.handle('preferences:get', async () => {
+    const filePath = getPrefsPath()
+    if (!existsSync(filePath)) {
+      return {}
+    }
+    try {
+      const content = readFileSync(filePath, 'utf-8')
+      return JSON.parse(content)
+    } catch (e) {
+      console.error('Failed to read preferences', e)
+      return {}
+    }
+  })
+
+  ipcMain.handle('preferences:set', async (_, prefs: Record<string, unknown>) => {
+    const filePath = getPrefsPath()
+    try {
+      const dir = join(app.getPath('userData'))
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true })
+      }
+      writeFileSync(filePath, JSON.stringify(prefs, null, 2), 'utf-8')
+      return true
+    } catch (e) {
+      console.error('Failed to save preferences', e)
+      return false
+    }
   })
 
   // --- NEW FILE ORGANIZER APIs ---

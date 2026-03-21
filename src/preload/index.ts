@@ -62,7 +62,11 @@ const api = {
   onTaskProgress: (callback: (event: Electron.IpcRendererEvent, task: unknown) => void) =>
     ipcRenderer.on('task-progress', callback),
   removeTaskProgress: () => ipcRenderer.removeAllListeners('task-progress'),
-  openPath: (targetPath: string) => ipcRenderer.invoke('open-path', targetPath)
+  openPath: (targetPath: string) => ipcRenderer.invoke('open-path', targetPath),
+
+  // Preferences
+  getPreferences: () => ipcRenderer.invoke('preferences:get'),
+  setPreferences: (prefs: Record<string, unknown>) => ipcRenderer.invoke('preferences:set', prefs)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

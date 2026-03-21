@@ -108,7 +108,15 @@ const resources = {
       dry_run_completed: 'Dry Run Completed. Pending UI review.',
       completed_success: 'Completed successfully.',
       failed_status: 'Failed',
-      cancelled_by_user: 'Cancelled by user'
+      cancelled_by_user: 'Cancelled by user',
+
+      search_placeholder: 'Search tools...',
+      all_categories: 'All Categories',
+      category_favorites: 'Favorites ❤️',
+      category_file_management: 'File Management',
+      category_media: 'Media',
+      category_utility: 'Utility',
+      category_system: 'System'
     }
   },
   es: {
@@ -218,7 +226,15 @@ const resources = {
       dry_run_completed: 'Simulacro completo. Pendiente de revisión.',
       completed_success: 'Completado con éxito.',
       failed_status: 'Falló',
-      cancelled_by_user: 'Cancelado por el usuario'
+      cancelled_by_user: 'Cancelado por el usuario',
+
+      search_placeholder: 'Buscar herramientas...',
+      all_categories: 'Todas las categorías',
+      category_favorites: 'Favoritos ❤️',
+      category_file_management: 'Gestión de Archivos',
+      category_media: 'Multimedia',
+      category_utility: 'Utilidades',
+      category_system: 'Sistema'
     }
   }
 }

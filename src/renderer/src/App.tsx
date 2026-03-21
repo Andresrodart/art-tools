@@ -1,14 +1,12 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileOrganizer } from './components/tools/FileOrganizer'
-import { FolderMetadata } from './components/tools/FolderMetadata'
-import { ThresholdMerger } from './components/tools/ThresholdMerger'
-import { FileScraper } from './components/tools/FileScraper'
-import { EmptyFolderCleaner } from './components/tools/EmptyFolderCleaner'
 import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
+import { ToolGalleryControls } from './components/layout/ToolGalleryControls'
 import { useHeaderStore } from './store/headerStore'
 import { useTaskStore, TaskTab } from './store/taskStore'
+import { usePreferenceStore } from './store/preferenceStore'
+import { TOOLS } from './config/tools'
 
 interface ToolCardProps {
   title: string
@@ -16,6 +14,8 @@ interface ToolCardProps {
   actionText: string
   onAction: () => void
   isDanger?: boolean
+  isFavorite: boolean
+  onToggleFavorite: () => void
 }
 
 function ToolCard({
@@ -23,10 +23,33 @@ function ToolCard({
   description,
   actionText,
   onAction,
-  isDanger
+  isDanger,
+  isFavorite,
+  onToggleFavorite
 }: ToolCardProps): React.JSX.Element {
   return (
-    <div className="brutalist-card">
+    <div className="brutalist-card" style={{ position: 'relative' }}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleFavorite()
+        }}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: 'none',
+          border: 'none',
+          fontSize: '1.5rem',
+          cursor: 'pointer',
+          padding: 0,
+          zIndex: 2,
+          color: isFavorite ? 'var(--accent-danger, #ff5f5f)' : 'var(--text-secondary, #ccc)'
+        }}
+        title="Toggle Favorite"
+      >
+        {isFavorite ? '❤️' : '🤍'}
+      </button>
       <h2>{title}</h2>
       <p>{description}</p>
       <button className={`brutalist-button ${isDanger ? 'danger' : 'primary'}`} onClick={onAction}>
@@ -41,11 +64,19 @@ function App(): React.JSX.Element {
   const setTitle = useHeaderStore((state) => state.setTitle)
   const setActions = useHeaderStore((state) => state.setActions)
 
-  const { activeTabId, tasks, addTab, initialize } = useTaskStore()
+  const { activeTabId, tasks, addTab, initialize: initializeTasks } = useTaskStore()
+  const {
+    favorites,
+    searchQuery,
+    selectedCategory,
+    toggleFavorite,
+    initialize: initializePrefs
+  } = usePreferenceStore()
 
   useEffect(() => {
-    initialize()
-  }, [initialize])
+    initializeTasks()
+    initializePrefs()
+  }, [initializeTasks, initializePrefs])
 
   const handleCloseTool = useCallback(() => {
     // In the new system, "Back" or "Close" from a tool setup just goes back to home tab
@@ -84,78 +115,61 @@ function App(): React.JSX.Element {
     }
   }, [activeTabId, t, setTitle, setActions, toggleLanguage, toggleTheme])
 
+  const filteredTools = useMemo(() => {
+    return TOOLS.filter((tool) => {
+      const matchesSearch =
+        t(tool.titleKey).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t(tool.descriptionKey).toLowerCase().includes(searchQuery.toLowerCase())
+
+      const matchesCategory =
+        selectedCategory === null ||
+        (selectedCategory === 'favorites'
+          ? favorites.has(tool.id)
+          : (tool.categories as string[]).includes(selectedCategory))
+
+      return matchesSearch && matchesCategory
+    })
+  }, [searchQuery, selectedCategory, favorites, t])
+
   const renderActiveContent = (): React.JSX.Element => {
     if (activeTabId === 'home') {
       return (
-        <div className="gallery-grid">
-          <ToolCard
-            title={t('tool_file_organizer_title')}
-            description={t('tool_file_organizer_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FileOrganizer', t('tool_file_organizer_title'))}
-          />
-          <ToolCard
-            title={t('tool_folder_metadata_title')}
-            description={t('tool_folder_metadata_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FolderMetadata', t('tool_folder_metadata_title'))}
-          />
-          <ToolCard
-            title={t('tool_threshold_merger_title')}
-            description={t('tool_threshold_merger_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('ThresholdMerger', t('tool_threshold_merger_title'))}
-          />
-          <ToolCard
-            title={t('tool_file_scraper_title')}
-            description={t('desc_file_scraper')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FileScraper', t('tool_file_scraper_title'))}
-          />
-          <ToolCard
-            title={t('tool_empty_folder_cleaner_title')}
-            description={t('tool_empty_folder_cleaner_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('EmptyFolderCleaner', t('tool_empty_folder_cleaner_title'))}
-          />
-        </div>
+        <>
+          <ToolGalleryControls />
+          <div className="gallery-grid">
+            {filteredTools.map((tool) => (
+              <ToolCard
+                key={tool.id}
+                title={t(tool.titleKey)}
+                description={t(tool.descriptionKey)}
+                actionText={t('open_tool')}
+                onAction={() => openTool(tool.id, t(tool.titleKey))}
+                isFavorite={favorites.has(tool.id)}
+                onToggleFavorite={() => toggleFavorite(tool.id)}
+              />
+            ))}
+          </div>
+        </>
       )
     }
 
     // Check if it's a setup tab
     if (activeTabId.startsWith('setup-')) {
-      const tool = activeTabId.replace('setup-', '')
-      switch (tool) {
-        case 'fileorganizer':
-          return <FileOrganizer onBack={handleCloseTool} />
-        case 'foldermetadata':
-          return <FolderMetadata onBack={handleCloseTool} />
-        case 'thresholdmerger':
-          return <ThresholdMerger onBack={handleCloseTool} />
-        case 'filescraper':
-          return <FileScraper onBack={handleCloseTool} />
-        case 'emptyfoldercleaner':
-          return <EmptyFolderCleaner onBack={handleCloseTool} />
+      const toolId = activeTabId.replace('setup-', '')
+      const tool = TOOLS.find((t) => t.id === toolId)
+      if (tool) {
+        const ToolComponent = tool.component
+        return <ToolComponent onBack={handleCloseTool} />
       }
     }
 
     // Otherwise it must be a running/completed task tab
     const task = tasks[activeTabId]
     if (task) {
-      // For now, we reuse the tool components but they will need to be updated to "read" the task state
-      // Actually, it might be better to have a dedicated TaskView or make tools accept a taskId
-      switch (task.type) {
-        case 'organize-files':
-          return <FileOrganizer onBack={handleCloseTool} />
-        case 'folder-metadata':
-          return <FolderMetadata onBack={handleCloseTool} />
-        case 'thresholdMerger':
-          return <ThresholdMerger onBack={handleCloseTool} />
-        case 'fileScraper':
-          return <FileScraper onBack={handleCloseTool} />
-        case 'findEmptyFolders':
-        case 'deleteFolders':
-          return <EmptyFolderCleaner onBack={handleCloseTool} />
+      const tool = TOOLS.find((t) => t.taskTypes.includes(task.type))
+      if (tool) {
+        const ToolComponent = tool.component
+        return <ToolComponent onBack={handleCloseTool} />
       }
     }
 
