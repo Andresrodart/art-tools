@@ -1,7 +1,7 @@
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-// @ts-ignore
+// @ts-ignore: Asset only available in Vite/Electron build context
 import icon from '../../resources/icon.png?asset'
 
 import { taskManager } from './services/TaskManager'
@@ -56,7 +56,6 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
-
 
   ipcMain.on('ping', () => console.log('pong'))
 
