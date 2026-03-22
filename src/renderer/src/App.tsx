@@ -5,6 +5,10 @@ import { FolderMetadata } from './components/tools/FolderMetadata'
 import { ThresholdMerger } from './components/tools/ThresholdMerger'
 import { FileScraper } from './components/tools/FileScraper'
 import { EmptyFolderCleaner } from './components/tools/EmptyFolderCleaner'
+import { SatProfileManager } from './components/tools/tax/SatProfileManager'
+import { FacturaOrganizer } from './components/tools/tax/FacturaOrganizer'
+import { FrequentContactsManager } from './components/tools/tax/FrequentContactsManager'
+import { TaxDashboard } from './components/tools/tax/TaxDashboard'
 import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
 import { useHeaderStore } from './store/headerStore'
@@ -85,6 +89,14 @@ function App(): React.JSX.Element {
         return <FileScraper onBack={handleCloseTool} tabId={tab.id} />
       case 'EmptyFolderCleaner':
         return <EmptyFolderCleaner onBack={handleCloseTool} tabId={tab.id} />
+      case 'SatProfileManager':
+        return <SatProfileManager />
+      case 'FacturaOrganizer':
+        return <FacturaOrganizer />
+      case 'FrequentContactsManager':
+        return <FrequentContactsManager />
+      case 'TaxDashboard':
+        return <TaxDashboard />
       default:
         return <div>Unknown tool: {tool}</div>
     }

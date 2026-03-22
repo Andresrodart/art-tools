@@ -9,6 +9,7 @@ import { folderMetadataTask } from './services/folderMetadata'
 import { thresholdMergerTask } from './services/thresholdMerger'
 import { fileScraperTask } from './services/fileScraper'
 import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderCleaner'
+import { getSatProfile, saveSatProfile, SatProfile } from './services/satProfile'
 import fs from 'fs'
 
 function getPreferencesPath(): string {
@@ -84,6 +85,15 @@ app.whenReady().then(() => {
       console.error('Failed to save preferences:', err)
       return false
     }
+  })
+
+  // SAT Profile APIs
+  ipcMain.handle('sat-profile:get', async () => {
+    return getSatProfile()
+  })
+
+  ipcMain.handle('sat-profile:save', async (_, profile: SatProfile) => {
+    return saveSatProfile(profile)
   })
 
   // Open a folder or file in the system explorer

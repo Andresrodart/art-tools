@@ -56,6 +56,17 @@ const resources = {
         'Identify and remove folders that are empty or contain only other empty subfolders. Supports selective deletion and dry runs.',
       desc_empty_folder_cleaner:
         'Scan your directory tree for empty folders. Review the list of found folders and choose which ones to remove safely.',
+      tool_sat_profile_manager_title: 'SAT Profile Manager',
+      tool_sat_profile_manager_desc:
+        'Securely store and manage your RFC, Tax Regime, and SAT credentials.',
+      tool_factura_organizer_title: 'Factura Organizer',
+      tool_factura_organizer_desc:
+        'Organize and view your downloaded XML and PDF invoices (CFDIs).',
+      tool_frequent_contacts_title: 'Frequent Contacts Manager',
+      tool_frequent_contacts_desc: 'Store frequently used RFCs and client/supplier information.',
+      tool_tax_dashboard_title: 'Tax Dashboard',
+      tool_tax_dashboard_desc:
+        'View quick links to relevant SAT portal sections based on your Tax Regime.',
       target_folder: 'Target Folder: ',
       btn_execute_delete: 'Execute Actual Deletion',
       simulation_success_note:
@@ -168,6 +179,17 @@ const resources = {
         'Identifica y elimina carpetas que están vacías o que solo contienen otras subcarpetas vacías. Permite la eliminación selectiva y simulacros.',
       desc_empty_folder_cleaner:
         'Escanea tu árbol de directorios en busca de carpetas vacías. Revisa la lista de carpetas encontradas y elige cuáles eliminar de forma segura.',
+      tool_sat_profile_manager_title: 'Gestor de Perfil SAT',
+      tool_sat_profile_manager_desc:
+        'Almacena y gestiona de forma segura tu RFC, Régimen Fiscal y credenciales del SAT.',
+      tool_factura_organizer_title: 'Organizador de Facturas',
+      tool_factura_organizer_desc:
+        'Organiza y visualiza tus facturas (CFDIs) XML y PDF descargadas.',
+      tool_frequent_contacts_title: 'Contactos Frecuentes',
+      tool_frequent_contacts_desc: 'Almacena RFCs y datos de clientes/proveedores frecuentes.',
+      tool_tax_dashboard_title: 'Panel de Impuestos',
+      tool_tax_dashboard_desc:
+        'Visualiza enlaces rápidos a secciones relevantes del portal SAT según tu Régimen Fiscal.',
       target_folder: 'Carpeta de Destino: ',
       btn_execute_delete: 'Ejecutar Eliminación Real',
       simulation_success_note:
