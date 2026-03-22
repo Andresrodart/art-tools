@@ -57,98 +57,142 @@ export const FrequentContactsManager = (): React.JSX.Element => {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-black uppercase text-text-main">
-          {t('tool_frequent_contacts_title')}
-        </h2>
+    <div className="tool-view">
+      <div className="tool-view-description">
+        <h2>{t('tool_frequent_contacts_title')}</h2>
+        <p>{t('tool_frequent_contacts_desc')}</p>
       </div>
 
-      <p className="text-text-main/80 border-l-4 border-bg-main-accent pl-4">
-        {t('tool_frequent_contacts_desc')}
-      </p>
+      <form onSubmit={handleAddContact} className="tool-view-section">
+        <h3 className="tool-view-section-title">Add New Contact</h3>
+        <div className="tool-view-section-body">
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="control-group" style={{ flex: 1, minWidth: '200px' }}>
+              <label>Name / Razón Social</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="brutalist-input"
+                placeholder="Empresa SA de CV"
+                required
+              />
+            </div>
+            <div className="control-group" style={{ flex: 1, minWidth: '200px' }}>
+              <label>RFC</label>
+              <input
+                type="text"
+                name="rfc"
+                value={formData.rfc}
+                onChange={handleChange}
+                className="brutalist-input uppercase"
+                placeholder="EMP123456XXX"
+                required
+                maxLength={13}
+              />
+            </div>
+            <div className="control-group" style={{ flex: 1, minWidth: '150px' }}>
+              <label>Type</label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                className="brutalist-input"
+                required
+              >
+                <option value="client">Client</option>
+                <option value="supplier">Supplier</option>
+              </select>
+            </div>
+          </div>
 
-      <form onSubmit={handleAddContact} className="neo-brutal-box flex flex-col gap-4 bg-white">
-        <div className="flex gap-4">
-          <div className="flex flex-col gap-2 flex-1">
-            <label className="font-bold text-text-main">Name / Razón Social</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="neo-brutal-input w-full"
-              placeholder="Empresa SA de CV"
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2 flex-1">
-            <label className="font-bold text-text-main">RFC</label>
-            <input
-              type="text"
-              name="rfc"
-              value={formData.rfc}
-              onChange={handleChange}
-              className="neo-brutal-input w-full uppercase"
-              placeholder="EMP123456XXX"
-              required
-              maxLength={13}
-            />
-          </div>
-          <div className="flex flex-col gap-2 flex-1">
-            <label className="font-bold text-text-main">Type</label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              className="neo-brutal-input w-full"
-              required
-            >
-              <option value="client">Client</option>
-              <option value="supplier">Supplier</option>
-            </select>
+          <div className="action-row" style={{ marginTop: '1rem' }}>
+            <button type="submit" className="brutalist-button primary">
+              Add Contact
+            </button>
           </div>
         </div>
-        <button
-          type="submit"
-          className="neo-brutal-btn mt-4 w-full bg-text-main text-white hover:bg-black/90"
-        >
-          Add Contact
-        </button>
       </form>
 
-      <div className="neo-brutal-box flex flex-col gap-4 bg-white mt-4">
-        <h3 className="text-xl font-bold border-b-2 border-black pb-2">Saved Contacts</h3>
-        {contacts.length === 0 ? (
-          <p className="text-text-main/60 italic">No contacts saved yet.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {contacts.map((contact) => (
-              <li
-                key={contact.id}
-                className="flex justify-between items-center p-3 border-2 border-black bg-bg-main/20 rounded-md"
-              >
-                <div>
-                  <p className="font-bold text-lg">{contact.name}</p>
-                  <p className="text-sm font-mono bg-white inline-block px-1 border border-black">
-                    {contact.rfc}
-                  </p>
-                  <span
-                    className={`ml-2 text-xs font-bold px-2 py-1 uppercase border-2 border-black ${contact.type === 'client' ? 'bg-green-300' : 'bg-blue-300'}`}
-                  >
-                    {contact.type}
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleDeleteContact(contact.id)}
-                  className="neo-brutal-btn bg-red-400 text-black hover:bg-red-500 py-1 px-3 text-sm"
+      <div className="tool-view-section">
+        <h3 className="tool-view-section-title">Saved Contacts</h3>
+        <div className="tool-view-section-body">
+          {contacts.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+              No contacts saved yet.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {contacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '12px',
+                    border: '2px solid var(--border-color)',
+                    background: 'var(--bg-tertiary-light, #f8f9fa)'
+                  }}
                 >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <div>
+                    <div
+                      style={{
+                        fontWeight: 'bold',
+                        fontSize: '1.1rem',
+                        color: 'var(--text-primary)'
+                      }}
+                    >
+                      {contact.name}
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginTop: '4px'
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: 'monospace',
+                          background: '#ffffff',
+                          padding: '2px 6px',
+                          border: '1px solid var(--border-color)',
+                          color: 'var(--text-primary)'
+                        }}
+                      >
+                        {contact.rfc}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          padding: '2px 8px',
+                          textTransform: 'uppercase',
+                          border: '2px solid var(--border-color)',
+                          background:
+                            contact.type === 'client' ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                          color: 'var(--text-primary)'
+                        }}
+                      >
+                        {contact.type}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteContact(contact.id)}
+                    className="brutalist-button danger"
+                    style={{ padding: '4px 12px', fontSize: '0.9rem' }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -14,40 +14,38 @@ export const FacturaOrganizer = (): React.JSX.Element => {
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-black uppercase text-text-main">
-          {t('tool_factura_organizer_title')}
-        </h2>
+    <div className="tool-view">
+      <div className="tool-view-description">
+        <h2>{t('tool_factura_organizer_title')}</h2>
+        <p>{t('tool_factura_organizer_desc')}</p>
       </div>
 
-      <p className="text-text-main/80 border-l-4 border-bg-main-accent pl-4">
-        {t('tool_factura_organizer_desc')}
-      </p>
-
-      <div className="neo-brutal-box flex flex-col gap-4 bg-white">
-        <h3 className="text-xl font-bold border-b-2 border-black pb-2">Select Invoice Directory</h3>
-        <div className="flex gap-4">
-          <input
-            type="text"
-            className="neo-brutal-input flex-1 bg-bg-main/20 cursor-not-allowed"
-            placeholder="Select a directory containing .xml and .pdf CFDIs"
-            value={selectedFolder || ''}
-            readOnly
-          />
-          <button
-            onClick={handleSelectFolder}
-            className="neo-brutal-btn bg-bg-main-accent text-white whitespace-nowrap"
-          >
-            Browse Directory
-          </button>
+      <div className="tool-view-section">
+        <h3 className="tool-view-section-title">Select Invoice Directory</h3>
+        <div className="tool-view-section-body">
+          <div className="control-group">
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                className="brutalist-input flex-grow"
+                placeholder="Select a directory containing .xml and .pdf CFDIs"
+                value={selectedFolder || ''}
+                readOnly
+              />
+              <button onClick={handleSelectFolder} className="brutalist-button info">
+                {t('browse')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {selectedFolder && (
-        <div className="p-4 border-2 border-blue-500 bg-blue-100/50 text-blue-900 font-bold flex gap-2 items-center w-full">
-          <span>ℹ️</span> Selected folder: {selectedFolder}. The full viewer and parsing logic will
-          be implemented in future iterations.
+        <div className="tool-view-section" style={{ marginTop: '1.5rem' }}>
+          <div style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>
+            ℹ️ Selected folder: {selectedFolder}. The full viewer and parsing logic will be
+            implemented in future iterations.
+          </div>
         </div>
       )}
     </div>
