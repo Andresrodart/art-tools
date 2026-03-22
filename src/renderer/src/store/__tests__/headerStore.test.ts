@@ -1,75 +1,64 @@
 import { useHeaderStore } from '../headerStore'
 
-/**
- * Resets the header store to its initial state before each test.
- * @returns {void}
- */
-const resetStore = (): void => {
-  useHeaderStore.getState().reset()
-}
-
 describe('headerStore', () => {
-  beforeEach((): void => {
-    resetStore()
+  beforeEach(() => {
+    // Reset store before each test to ensure a clean slate
+    useHeaderStore.getState().reset()
   })
 
-  /**
-   * Tests if the store initializes with the correct default values.
-   */
-  it('should initialize with default values', (): void => {
-    const { title, navigation, snippets, actions } = useHeaderStore.getState()
-    expect(title).toBe('Tool Gallery')
-    expect(navigation).toBeNull()
-    expect(snippets).toBeNull()
-    expect(actions).toEqual([])
+  it('should initialize with the correct default state', () => {
+    const state = useHeaderStore.getState()
+    expect(state.title).toBe('Tool Gallery')
+    expect(state.navigation).toBeNull()
+    expect(state.snippets).toBeNull()
+    expect(state.actions).toEqual([])
   })
 
-  /**
-   * Tests if setTitle correctly updates the title in the store.
-   */
-  it('should update title', (): void => {
-    useHeaderStore.getState().setTitle('New Title')
-    expect(useHeaderStore.getState().title).toBe('New Title')
+  it('should update the title using setTitle', () => {
+    useHeaderStore.getState().setTitle('New Dashboard Title')
+    expect(useHeaderStore.getState().title).toBe('New Dashboard Title')
   })
 
-  /**
-   * Tests if setNavigation correctly updates the navigation element in the store.
-   */
-  it('should update navigation', (): void => {
-    const navigation = 'Nav Content'
-    useHeaderStore.getState().setNavigation(navigation)
-    expect(useHeaderStore.getState().navigation).toBe(navigation)
+  it('should update navigation using setNavigation', () => {
+    const mockNavigation = 'Mock Navigation Component' // strings are valid ReactNodes
+    useHeaderStore.getState().setNavigation(mockNavigation)
+    expect(useHeaderStore.getState().navigation).toBe(mockNavigation)
   })
 
-  /**
-   * Tests if setSnippets correctly updates the snippets element in the store.
-   */
-  it('should update snippets', (): void => {
-    const snippets = 'Snippet Content'
-    useHeaderStore.getState().setSnippets(snippets)
-    expect(useHeaderStore.getState().snippets).toBe(snippets)
+  it('should update snippets using setSnippets', () => {
+    const mockSnippets = 'Mock Snippets Component' // strings are valid ReactNodes
+    useHeaderStore.getState().setSnippets(mockSnippets)
+    expect(useHeaderStore.getState().snippets).toBe(mockSnippets)
   })
 
-  /**
-   * Tests if setActions correctly updates the action buttons in the store.
-   */
-  it('should update actions', (): void => {
-    const actions = [{ label: 'Click Me', onClick: jest.fn() }]
-    useHeaderStore.getState().setActions(actions)
-    expect(useHeaderStore.getState().actions).toEqual(actions)
+  it('should update actions using setActions', () => {
+    const mockActions = [
+      { label: 'Save', onClick: jest.fn(), variant: 'primary' as const },
+      { label: 'Cancel', onClick: jest.fn() }
+    ]
+    useHeaderStore.getState().setActions(mockActions)
+    expect(useHeaderStore.getState().actions).toEqual(mockActions)
   })
 
-  /**
-   * Tests if the reset action correctly returns the store to its initial state.
-   */
-  it('should reset store to initial state', (): void => {
+  it('should clear navigation, snippets, and actions when reset is called', () => {
+    // Setup initial state
+    const mockNavigation = 'Mock Navigation' // strings are valid ReactNodes
+    const mockSnippets = 'Mock Snippets' // strings are valid ReactNodes
+    const mockActions = [{ label: 'Action', onClick: jest.fn() }]
+
     useHeaderStore.getState().setTitle('Modified Title')
-    useHeaderStore.getState().setNavigation('Modified Nav')
-    useHeaderStore.getState().setSnippets('Modified Snippets')
-    useHeaderStore.getState().setActions([{ label: 'Action', onClick: (): void => {} }])
+    useHeaderStore.getState().setNavigation(mockNavigation)
+    useHeaderStore.getState().setSnippets(mockSnippets)
+    useHeaderStore.getState().setActions(mockActions)
 
+    // Verify state was modified
+    expect(useHeaderStore.getState().title).toBe('Modified Title')
+    expect(useHeaderStore.getState().navigation).toBe(mockNavigation)
+
+    // Call reset
     useHeaderStore.getState().reset()
 
+    // Verify state is back to initial
     const state = useHeaderStore.getState()
     expect(state.title).toBe('Tool Gallery')
     expect(state.navigation).toBeNull()
