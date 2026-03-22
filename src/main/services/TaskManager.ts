@@ -80,6 +80,10 @@ class TaskManager extends EventEmitter {
     return Array.from(this.tasks.values()).sort((a, b) => b.createdAt - a.createdAt)
   }
 
+  getTask(id: string): Task | undefined {
+    return this.tasks.get(id)
+  }
+
   cancelTask(id: string): void {
     const task = this.tasks.get(id)
     if (
