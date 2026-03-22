@@ -7,7 +7,7 @@ export const Header: React.FC = () => {
   const { title, navigation, snippets, actions } = useHeaderStore()
   const { activeTabId } = useTaskStore()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isSearchVisible, setIsSearchVisible] = useState(false)
+  const [isSearchVisible, setIsSearchVisible] = useState(true)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
