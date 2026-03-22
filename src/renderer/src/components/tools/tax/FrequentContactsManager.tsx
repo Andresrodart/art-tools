@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import React from 'react'
 
@@ -11,20 +11,23 @@ interface Contact {
 
 export const FrequentContactsManager = (): React.JSX.Element => {
   const { t } = useTranslation()
-  const [contacts, setContacts] = useState<Contact[]>([])
+  const [contacts, setContacts] = useState<Contact[]>(() => {
+    const saved = localStorage.getItem('sat_frequent_contacts')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch (e) {
+        console.error('Failed to parse contacts from local storage:', e)
+      }
+    }
+    return []
+  })
+
   const [formData, setFormData] = useState<Omit<Contact, 'id'>>({
     name: '',
     rfc: '',
     type: 'client'
   })
-
-  // Mock loading contacts from local storage or main process
-  useEffect(() => {
-    const saved = localStorage.getItem('sat_frequent_contacts')
-    if (saved) {
-      setContacts(JSON.parse(saved))
-    }
-  }, [])
 
   const saveContacts = (newContacts: Contact[]): void => {
     setContacts(newContacts)
@@ -65,10 +68,7 @@ export const FrequentContactsManager = (): React.JSX.Element => {
         {t('tool_frequent_contacts_desc')}
       </p>
 
-      <form
-        onSubmit={handleAddContact}
-        className="neo-brutal-box flex flex-col gap-4 bg-white"
-      >
+      <form onSubmit={handleAddContact} className="neo-brutal-box flex flex-col gap-4 bg-white">
         <div className="flex gap-4">
           <div className="flex flex-col gap-2 flex-1">
             <label className="font-bold text-text-main">Name / Razón Social</label>
@@ -130,8 +130,12 @@ export const FrequentContactsManager = (): React.JSX.Element => {
               >
                 <div>
                   <p className="font-bold text-lg">{contact.name}</p>
-                  <p className="text-sm font-mono bg-white inline-block px-1 border border-black">{contact.rfc}</p>
-                  <span className={`ml-2 text-xs font-bold px-2 py-1 uppercase border-2 border-black ${contact.type === 'client' ? 'bg-green-300' : 'bg-blue-300'}`}>
+                  <p className="text-sm font-mono bg-white inline-block px-1 border border-black">
+                    {contact.rfc}
+                  </p>
+                  <span
+                    className={`ml-2 text-xs font-bold px-2 py-1 uppercase border-2 border-black ${contact.type === 'client' ? 'bg-green-300' : 'bg-blue-300'}`}
+                  >
                     {contact.type}
                   </span>
                 </div>

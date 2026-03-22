@@ -46,7 +46,8 @@ export const FacturaOrganizer = (): React.JSX.Element => {
 
       {selectedFolder && (
         <div className="p-4 border-2 border-blue-500 bg-blue-100/50 text-blue-900 font-bold flex gap-2 items-center w-full">
-          <span>ℹ️</span> Selected folder: {selectedFolder}. The full viewer and parsing logic will be implemented in future iterations.
+          <span>ℹ️</span> Selected folder: {selectedFolder}. The full viewer and parsing logic will
+          be implemented in future iterations.
         </div>
       )}
     </div>

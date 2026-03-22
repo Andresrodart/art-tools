@@ -31,7 +31,7 @@ export const TaxDashboard = (): React.JSX.Element => {
       }
     ]
 
-    switch(regime) {
+    switch (regime) {
       case '626': // RESICO
         return [
           ...defaultLinks,
@@ -108,8 +108,18 @@ export const TaxDashboard = (): React.JSX.Element => {
                   <h4 className="font-bold text-lg leading-tight group-hover:text-bg-main-accent transition-colors">
                     {link.label}
                   </h4>
-                  <svg className="w-5 h-5 ml-2 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="square" strokeLinejoin="miter" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <svg
+                    className="w-5 h-5 ml-2 flex-shrink-0 mt-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="square"
+                      strokeLinejoin="miter"
+                      strokeWidth="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                 </div>
                 <p className="text-sm text-text-main/70">{link.description}</p>
@@ -119,7 +129,8 @@ export const TaxDashboard = (): React.JSX.Element => {
         </div>
       ) : (
         <div className="p-4 border-2 border-yellow-500 bg-yellow-100/50 text-yellow-900 font-bold flex gap-2 items-center w-full">
-          <span>⚠️</span> No tax regime found. Please configure your profile in the SAT Profile Manager to see tailored links.
+          <span>⚠️</span> No tax regime found. Please configure your profile in the SAT Profile
+          Manager to see tailored links.
         </div>
       )}
     </div>

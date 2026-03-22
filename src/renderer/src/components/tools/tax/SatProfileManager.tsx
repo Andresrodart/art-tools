@@ -24,6 +24,7 @@ export const SatProfileManager = (): React.JSX.Element => {
 
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData(profile)
     }
   }, [profile])
@@ -75,10 +76,7 @@ export const SatProfileManager = (): React.JSX.Element => {
         </div>
       )}
 
-      <form
-        onSubmit={handleSubmit}
-        className="neo-brutal-box flex flex-col gap-4 bg-white"
-      >
+      <form onSubmit={handleSubmit} className="neo-brutal-box flex flex-col gap-4 bg-white">
         <div className="flex flex-col gap-2">
           <label className="font-bold text-text-main">Name / Razón Social</label>
           <input
@@ -119,7 +117,9 @@ export const SatProfileManager = (): React.JSX.Element => {
             <option value="601">601 - General de Ley Personas Morales</option>
             <option value="605">605 - Sueldos y Salarios e Ingresos Asimilados a Salarios</option>
             <option value="606">606 - Arrendamiento</option>
-            <option value="612">612 - Personas Físicas con Actividades Empresariales y Profesionales</option>
+            <option value="612">
+              612 - Personas Físicas con Actividades Empresariales y Profesionales
+            </option>
             <option value="626">626 - Régimen Simplificado de Confianza (RESICO)</option>
           </select>
         </div>
@@ -134,7 +134,9 @@ export const SatProfileManager = (): React.JSX.Element => {
             className="neo-brutal-input w-full"
             placeholder="Enter CIEC password (will be encrypted)"
           />
-          <p className="text-xs text-text-main/60">This password is encrypted using OS-native secure storage before being saved to disk.</p>
+          <p className="text-xs text-text-main/60">
+            This password is encrypted using OS-native secure storage before being saved to disk.
+          </p>
         </div>
 
         <div className="flex flex-col gap-2">
