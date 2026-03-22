@@ -62,7 +62,11 @@ const api = {
   // Preferences
   getPreferences: () => ipcRenderer.invoke('preferences:get'),
   setPreferences: (preferences: Record<string, unknown>) =>
-    ipcRenderer.invoke('preferences:set', preferences)
+    ipcRenderer.invoke('preferences:set', preferences),
+
+  // SAT Profile
+  getSatProfile: () => ipcRenderer.invoke('sat-profile:get'),
+  saveSatProfile: (profile: unknown) => ipcRenderer.invoke('sat-profile:save', profile)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

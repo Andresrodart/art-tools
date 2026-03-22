@@ -40,6 +40,8 @@ declare global {
       openPath: (targetPath: string) => Promise<string>
       getPreferences: () => Promise<Record<string, unknown>>
       setPreferences: (preferences: Record<string, unknown>) => Promise<boolean>
+      getSatProfile: () => Promise<Record<string, unknown> | null>
+      saveSatProfile: (profile: Record<string, unknown>) => Promise<boolean>
     }
   }
 }

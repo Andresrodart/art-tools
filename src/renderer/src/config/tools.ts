@@ -41,6 +41,34 @@ export const toolsRegistry: ToolDefinition[] = [
     descKey: 'tool_empty_folder_cleaner_desc',
     categories: ['File'],
     componentName: 'EmptyFolderCleaner'
+  },
+  {
+    id: 'SatProfileManager',
+    nameKey: 'tool_sat_profile_manager_title',
+    descKey: 'tool_sat_profile_manager_desc',
+    categories: ['Tax'],
+    componentName: 'SatProfileManager'
+  },
+  {
+    id: 'FacturaOrganizer',
+    nameKey: 'tool_factura_organizer_title',
+    descKey: 'tool_factura_organizer_desc',
+    categories: ['Tax'],
+    componentName: 'FacturaOrganizer'
+  },
+  {
+    id: 'FrequentContactsManager',
+    nameKey: 'tool_frequent_contacts_title',
+    descKey: 'tool_frequent_contacts_desc',
+    categories: ['Tax'],
+    componentName: 'FrequentContactsManager'
+  },
+  {
+    id: 'TaxDashboard',
+    nameKey: 'tool_tax_dashboard_title',
+    descKey: 'tool_tax_dashboard_desc',
+    categories: ['Tax'],
+    componentName: 'TaxDashboard'
   }
 ]
 
