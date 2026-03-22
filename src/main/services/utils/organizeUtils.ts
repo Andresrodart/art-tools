@@ -27,11 +27,20 @@ const MONTH_NAME_LABELS = [
 
 /**
  * Returns the full name of a month for a given index (0-11).
+ * Throws an error if the index is out of bounds or not an integer.
  *
  * @param monthIndex 0-indexed integer (0 for January, 11 for December).
  * @returns The full English label for the month.
  */
-export const getMonthLabelFromIndex = (monthIndex: number): string => MONTH_NAME_LABELS[monthIndex]
+export const getMonthLabelFromIndex = (monthIndex: number): string => {
+  if (!Number.isInteger(monthIndex)) {
+    throw new Error(`Invalid month index: ${monthIndex}. Must be an integer.`)
+  }
+  if (monthIndex < 0 || monthIndex > 11) {
+    throw new Error(`Invalid month index: ${monthIndex}. Must be between 0 and 11.`)
+  }
+  return MONTH_NAME_LABELS[monthIndex]
+}
 
 /**
  * Attempts to parse a Date object from common file naming patterns.
