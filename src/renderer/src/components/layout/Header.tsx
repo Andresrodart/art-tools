@@ -7,6 +7,7 @@ export const Header: React.FC = () => {
   const { title, navigation, snippets, actions } = useHeaderStore()
   const { activeTabId } = useTaskStore()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isSearchVisible, setIsSearchVisible] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -70,12 +71,32 @@ export const Header: React.FC = () => {
                     </button>
                   ))}
                 </div>
-                {activeTabId === 'home' && <ToolSearch />}
+                {activeTabId === 'home' && (
+                  <button
+                    className="brutalist-button"
+                    onClick={() => setIsSearchVisible(!isSearchVisible)}
+                    style={{ width: '100%' }}
+                  >
+                    {isSearchVisible ? 'Hide Search' : 'Search Tools'}
+                  </button>
+                )}
               </div>
             )}
           </div>
         </div>
       </header>
+
+      {activeTabId === 'home' && isSearchVisible && (
+        <div
+          style={{
+            padding: '0 1.5rem 1.5rem 1.5rem',
+            backgroundColor: 'var(--header-bg)',
+            width: '100%'
+          }}
+        >
+          <ToolSearch />
+        </div>
+      )}
     </div>
   )
 }
