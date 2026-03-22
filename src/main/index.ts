@@ -9,6 +9,11 @@ import { folderMetadataTask } from './services/folderMetadata'
 import { thresholdMergerTask } from './services/thresholdMerger'
 import { fileScraperTask } from './services/fileScraper'
 import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderCleaner'
+import fs from 'fs'
+
+function getPreferencesPath(): string {
+  return join(app.getPath('userData'), 'preferences.json')
+}
 
 function createWindow(): void {
   // Create the browser window.
@@ -54,6 +59,31 @@ app.whenReady().then(() => {
   // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
+  })
+
+  // Preferences APIs
+  ipcMain.handle('preferences:get', async () => {
+    try {
+      const prefsPath = getPreferencesPath()
+      if (fs.existsSync(prefsPath)) {
+        const data = fs.readFileSync(prefsPath, 'utf8')
+        return JSON.parse(data)
+      }
+    } catch (err) {
+      console.error('Failed to read preferences:', err)
+    }
+    return {}
+  })
+
+  ipcMain.handle('preferences:set', async (_, preferences: Record<string, unknown>) => {
+    try {
+      const prefsPath = getPreferencesPath()
+      fs.writeFileSync(prefsPath, JSON.stringify(preferences, null, 2), 'utf8')
+      return true
+    } catch (err) {
+      console.error('Failed to save preferences:', err)
+      return false
+    }
   })
 
   // Open a folder or file in the system explorer

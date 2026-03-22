@@ -9,32 +9,25 @@ import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
 import { useHeaderStore } from './store/headerStore'
 import { useTaskStore, TaskTab } from './store/taskStore'
-import { ToolCard } from './components/layout/ToolCard'
+import { usePreferenceStore } from './store/preferenceStore'
+import { HomeView } from './components/layout/HomeView'
 
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const setTitle = useHeaderStore((state) => state.setTitle)
   const setActions = useHeaderStore((state) => state.setActions)
 
-  const { tabs, activeTabId, tasks, addTab, initialize } = useTaskStore()
+  const { tabs, activeTabId, tasks, initialize: initTasks } = useTaskStore()
+  const { initialize: initPrefs } = usePreferenceStore()
 
   useEffect(() => {
-    initialize()
-  }, [initialize])
+    initTasks()
+    initPrefs()
+  }, [initTasks, initPrefs])
 
   const handleCloseTool = useCallback(() => {
     useTaskStore.getState().setActiveTab('home')
   }, [])
-
-  const openTool = (toolName: string, title: string): void => {
-    const tab: TaskTab = {
-      id: `tool-${toolName.toLowerCase()}-${Date.now()}`,
-      title: title,
-      type: 'tool_task',
-      toolName: toolName
-    }
-    addTab(tab)
-  }
 
   const toggleTheme = useCallback((): void => {
     const currentTheme = document.documentElement.getAttribute('data-theme')
@@ -103,37 +96,8 @@ function App(): React.JSX.Element {
       <Tabs />
 
       <main className="main-content">
-        <div style={{ display: activeTabId === 'home' ? 'grid' : 'none' }} className="gallery-grid">
-          <ToolCard
-            title={t('tool_file_organizer_title')}
-            description={t('tool_file_organizer_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FileOrganizer', t('tool_file_organizer_title'))}
-          />
-          <ToolCard
-            title={t('tool_folder_metadata_title')}
-            description={t('tool_folder_metadata_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FolderMetadata', t('tool_folder_metadata_title'))}
-          />
-          <ToolCard
-            title={t('tool_threshold_merger_title')}
-            description={t('tool_threshold_merger_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('ThresholdMerger', t('tool_threshold_merger_title'))}
-          />
-          <ToolCard
-            title={t('tool_file_scraper_title')}
-            description={t('desc_file_scraper')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FileScraper', t('tool_file_scraper_title'))}
-          />
-          <ToolCard
-            title={t('tool_empty_folder_cleaner_title')}
-            description={t('tool_empty_folder_cleaner_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('EmptyFolderCleaner', t('tool_empty_folder_cleaner_title'))}
-          />
+        <div style={{ display: activeTabId === 'home' ? 'block' : 'none' }}>
+          <HomeView />
         </div>
 
         {tabs.map((tab) => {
