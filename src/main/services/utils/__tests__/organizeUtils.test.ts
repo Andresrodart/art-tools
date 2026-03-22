@@ -53,15 +53,12 @@ describe('organizeUtils', () => {
 
       const nonIntegersFixture = [0.5, 3.14, 11.99, NaN, Infinity, -Infinity]
 
-      test.each(nonIntegersFixture)(
-        'throws an error for non-integer number %d',
-        (invalidIndex) => {
-          // Assert
-          expect(() => getMonthLabelFromIndex(invalidIndex)).toThrow(
-            `Invalid month index: ${invalidIndex}. Must be an integer.`
-          )
-        }
-      )
+      test.each(nonIntegersFixture)('throws an error for non-integer number %d', (invalidIndex) => {
+        // Assert
+        expect(() => getMonthLabelFromIndex(invalidIndex)).toThrow(
+          `Invalid month index: ${invalidIndex}. Must be an integer.`
+        )
+      })
     })
   })
 
