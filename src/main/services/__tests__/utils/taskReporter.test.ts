@@ -7,7 +7,8 @@ jest.mock('../../TaskManager', () => ({
     updateTaskStatus: jest.fn(),
     updateTaskProgress: jest.fn(),
     completeTask: jest.fn(),
-    getAllTasks: jest.fn()
+    getAllTasks: jest.fn(),
+    getTask: jest.fn()
   }
 }))
 
@@ -44,14 +45,14 @@ describe('TaskReporter', () => {
 
   test('checkCancellation throws an error if task status is "error"', () => {
     // Mock the TaskManager to return a cancelled task status
-    ;(taskManager.getAllTasks as jest.Mock).mockReturnValue([{ id: taskId, status: 'error' }])
+    ;(taskManager.getTask as jest.Mock).mockReturnValue({ id: taskId, status: 'error' })
 
     expect(() => reporterInstance.checkCancellation()).toThrow('Task cancelled by user')
   })
 
   test('checkCancellation does not throw if task status is not "error"', () => {
     // Mock the TaskManager to return a running task status
-    ;(taskManager.getAllTasks as jest.Mock).mockReturnValue([{ id: taskId, status: 'running' }])
+    ;(taskManager.getTask as jest.Mock).mockReturnValue({ id: taskId, status: 'running' })
 
     expect(() => reporterInstance.checkCancellation()).not.toThrow()
   })

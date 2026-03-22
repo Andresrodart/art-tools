@@ -72,7 +72,7 @@ export class TaskReporter {
    * @throws Error "Task cancelled by user" if the task status is 'error'.
    */
   checkCancellation(): void {
-    const taskDetails = taskManager.getAllTasks().find((t) => t.id === this.taskId)
+    const taskDetails = taskManager.getTask(this.taskId)
     if (taskDetails?.status === 'error') {
       throw new Error('Task cancelled by user')
     }
