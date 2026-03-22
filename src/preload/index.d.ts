@@ -38,6 +38,8 @@ declare global {
       ) => Electron.IpcRenderer
       removeTaskProgress: () => Electron.IpcRenderer
       openPath: (targetPath: string) => Promise<string>
+      getPreferences: () => Promise<Record<string, unknown>>
+      setPreferences: (preferences: Record<string, unknown>) => Promise<boolean>
     }
   }
 }

@@ -9,32 +9,46 @@ import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
 import { useHeaderStore } from './store/headerStore'
 import { useTaskStore, TaskTab } from './store/taskStore'
+import { usePreferenceStore } from './store/preferenceStore'
 import { ToolCard } from './components/layout/ToolCard'
+import { ToolSearch } from './components/common/ToolSearch'
+import { toolsRegistry } from './config/tools'
 
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const setTitle = useHeaderStore((state) => state.setTitle)
   const setActions = useHeaderStore((state) => state.setActions)
 
-  const { tabs, activeTabId, tasks, addTab, initialize } = useTaskStore()
+  const { tabs, activeTabId, tasks, addTab, initialize: initTasks } = useTaskStore()
+  const {
+    searchQuery,
+    activeCategory,
+    favorites,
+    toggleFavorite,
+    initialize: initPrefs
+  } = usePreferenceStore()
 
   useEffect(() => {
-    initialize()
-  }, [initialize])
+    initTasks()
+    initPrefs()
+  }, [initTasks, initPrefs])
 
   const handleCloseTool = useCallback(() => {
     useTaskStore.getState().setActiveTab('home')
   }, [])
 
-  const openTool = (toolName: string, title: string): void => {
-    const tab: TaskTab = {
-      id: `tool-${toolName.toLowerCase()}-${Date.now()}`,
-      title: title,
-      type: 'tool_task',
-      toolName: toolName
-    }
-    addTab(tab)
-  }
+  const openTool = useCallback(
+    (toolName: string, title: string): void => {
+      const tab: TaskTab = {
+        id: `tool-${toolName.toLowerCase()}-${Date.now()}`,
+        title: title,
+        type: 'tool_task',
+        toolName: toolName
+      }
+      addTab(tab)
+    },
+    [addTab]
+  )
 
   const toggleTheme = useCallback((): void => {
     const currentTheme = document.documentElement.getAttribute('data-theme')
@@ -97,43 +111,53 @@ function App(): React.JSX.Element {
     }
   }
 
+  const filteredTools = toolsRegistry.filter((tool) => {
+    // 1. Filter by Category
+    if (activeCategory === 'Favorites') {
+      if (!favorites.includes(tool.id)) return false
+    } else if (activeCategory !== 'All') {
+      if (!tool.categories.includes(activeCategory)) return false
+    }
+
+    // 2. Filter by Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const title = t(tool.nameKey).toLowerCase()
+      const desc = t(tool.descKey).toLowerCase()
+      if (!title.includes(q) && !desc.includes(q)) return false
+    }
+
+    return true
+  })
+
   return (
     <div className="brutalist-container">
       <Header />
       <Tabs />
 
       <main className="main-content">
-        <div style={{ display: activeTabId === 'home' ? 'grid' : 'none' }} className="gallery-grid">
-          <ToolCard
-            title={t('tool_file_organizer_title')}
-            description={t('tool_file_organizer_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FileOrganizer', t('tool_file_organizer_title'))}
-          />
-          <ToolCard
-            title={t('tool_folder_metadata_title')}
-            description={t('tool_folder_metadata_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FolderMetadata', t('tool_folder_metadata_title'))}
-          />
-          <ToolCard
-            title={t('tool_threshold_merger_title')}
-            description={t('tool_threshold_merger_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('ThresholdMerger', t('tool_threshold_merger_title'))}
-          />
-          <ToolCard
-            title={t('tool_file_scraper_title')}
-            description={t('desc_file_scraper')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('FileScraper', t('tool_file_scraper_title'))}
-          />
-          <ToolCard
-            title={t('tool_empty_folder_cleaner_title')}
-            description={t('tool_empty_folder_cleaner_desc')}
-            actionText={t('open_tool')}
-            onAction={() => openTool('EmptyFolderCleaner', t('tool_empty_folder_cleaner_title'))}
-          />
+        <div style={{ display: activeTabId === 'home' ? 'block' : 'none' }}>
+          <ToolSearch />
+          <div className="gallery-grid">
+            {filteredTools.length > 0 ? (
+              filteredTools.map((tool) => (
+                <ToolCard
+                  key={tool.id}
+                  title={t(tool.nameKey)}
+                  description={t(tool.descKey)}
+                  actionText={t('open_tool')}
+                  onAction={() => openTool(tool.id, t(tool.nameKey))}
+                  isFavorite={favorites.includes(tool.id)}
+                  onToggleFavorite={(e) => {
+                    e.stopPropagation()
+                    toggleFavorite(tool.id)
+                  }}
+                />
+              ))
+            ) : (
+              <p>{t('no_tools_found', 'No tools found.')}</p>
+            )}
+          </div>
         </div>
 
         {tabs.map((tab) => {

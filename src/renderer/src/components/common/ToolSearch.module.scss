@@ -1,0 +1,54 @@
+@use '../../assets/styles/variables' as *;
+
+.searchContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-size: 1.25rem;
+  @include brutalist-border;
+  @include brutalist-shadow;
+  background-color: var(--panel-bg);
+  color: var(--text-color);
+  outline: none;
+  transition: transform 0.1s ease;
+
+  &:focus {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px 0px #000;
+  }
+}
+
+.categoryFilters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.categoryButton {
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  @include brutalist-border;
+  background-color: var(--panel-bg);
+  color: var(--text-color);
+  transition: all 0.1s ease;
+
+  &:hover {
+    background-color: var(--primary-color);
+    color: #000;
+  }
+
+  &.active {
+    background-color: var(--primary-color);
+    color: #000;
+    @include brutalist-shadow;
+    transform: translate(-2px, -2px);
+  }
+}

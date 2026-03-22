@@ -41,6 +41,7 @@
 .flipCardFront {
   background-color: var(--panel-bg);
   color: var(--text-color);
+  position: relative; // added for favorite button positioning
 
   h2 {
     margin: 0;
@@ -67,5 +68,29 @@
     -webkit-line-clamp: 5;
     line-clamp: 5;
     -webkit-box-orient: vertical;
+  }
+}
+
+.favoriteButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  color: var(--text-color);
+  opacity: 0.3;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 2;
+
+  &:hover {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+
+  &.isFavorite {
+    color: #ff3b30;
+    opacity: 1;
   }
 }

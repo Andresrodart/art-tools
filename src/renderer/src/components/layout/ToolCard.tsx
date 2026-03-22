@@ -7,6 +7,8 @@ export interface ToolCardProps {
   actionText: string
   onAction: () => void
   isDanger?: boolean
+  isFavorite?: boolean
+  onToggleFavorite?: (e: React.MouseEvent) => void
 }
 
 export function ToolCard({
@@ -14,7 +16,9 @@ export function ToolCard({
   description,
   actionText,
   onAction,
-  isDanger
+  isDanger,
+  isFavorite,
+  onToggleFavorite
 }: ToolCardProps): React.JSX.Element {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -26,13 +30,30 @@ export function ToolCard({
   return (
     <div
       className={styles.flipCard}
-      onClick={onAction}
+      onClick={(e) => {
+        // Only trigger onAction if the click didn't come from the favorite button
+        if (!(e.target as HTMLElement).closest(`.${styles.favoriteButton}`)) {
+          onAction()
+        }
+      }}
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
     >
       <div className={styles.flipCardInner}>
         <div className={styles.flipCardFront}>
+          {onToggleFavorite && (
+            <button
+              className={`${styles.favoriteButton} ${isFavorite ? styles.isFavorite : ''}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleFavorite(e)
+              }}
+              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              ♥
+            </button>
+          )}
           <h2>{title}</h2>
         </div>
         <div className={styles.flipCardBack}>
