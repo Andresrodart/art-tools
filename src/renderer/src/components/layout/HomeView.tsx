@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useTaskStore, TaskTab } from '../../store/taskStore'
 import { usePreferenceStore } from '../../store/preferenceStore'
 import { ToolCard } from './ToolCard'
-import { ToolSearch } from '../common/ToolSearch'
 import { toolsRegistry } from '../../config/tools'
 
 export function HomeView(): React.JSX.Element {
@@ -45,8 +44,7 @@ export function HomeView(): React.JSX.Element {
 
   return (
     <>
-      <ToolSearch />
-      <div className="gallery-grid">
+      <div className="gallery-grid" style={{ marginTop: '1rem' }}>
         {filteredTools.length > 0 ? (
           filteredTools.map((tool) => (
             <ToolCard
