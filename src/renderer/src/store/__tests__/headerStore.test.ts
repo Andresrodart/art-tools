@@ -1,79 +1,80 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { useHeaderStore } from '../headerStore'
 
-/**
- * Resets the header store to its initial state before each test.
- * @returns {void}
- */
-const resetStore = (): void => {
-  useHeaderStore.getState().reset()
-}
-
 describe('headerStore', () => {
-  beforeEach((): void => {
-    resetStore()
+  const initialState = {
+    title: 'Tool Gallery',
+    navigation: null,
+    snippets: null,
+    actions: []
+  }
+
+  beforeEach(() => {
+    // Reset the store before each test
+    useHeaderStore.getState().reset()
   })
 
-  /**
-   * Tests if the store initializes with the correct default values.
-   */
-  it('should initialize with default values', (): void => {
-    const { title, navigation, snippets, actions } = useHeaderStore.getState()
-    expect(title).toBe('Tool Gallery')
-    expect(navigation).toBeNull()
-    expect(snippets).toBeNull()
-    expect(actions).toEqual([])
+  it('should initialize with the correct default state', () => {
+    const state = useHeaderStore.getState()
+    expect(state.title).toBe(initialState.title)
+    expect(state.navigation).toBe(initialState.navigation)
+    expect(state.snippets).toBe(initialState.snippets)
+    expect(state.actions).toEqual(initialState.actions)
   })
 
-  /**
-   * Tests if setTitle correctly updates the title in the store.
-   */
-  it('should update title', (): void => {
-    useHeaderStore.getState().setTitle('New Title')
-    expect(useHeaderStore.getState().title).toBe('New Title')
+  it('should update the title when setTitle is called', () => {
+    const newTitle = 'New Test Title'
+    useHeaderStore.getState().setTitle(newTitle)
+    expect(useHeaderStore.getState().title).toBe(newTitle)
   })
 
-  /**
-   * Tests if setNavigation correctly updates the navigation element in the store.
-   */
-  it('should update navigation', (): void => {
-    const navigation = 'Nav Content'
-    useHeaderStore.getState().setNavigation(navigation)
-    expect(useHeaderStore.getState().navigation).toBe(navigation)
+  it('should update the navigation when setNavigation is called', () => {
+    // Simple dummy ReactNode for testing
+    const dummyNavigation = 'Dummy Navigation'
+    useHeaderStore.getState().setNavigation(dummyNavigation)
+    expect(useHeaderStore.getState().navigation).toBe(dummyNavigation)
+
+    useHeaderStore.getState().setNavigation(null)
+    expect(useHeaderStore.getState().navigation).toBeNull()
   })
 
-  /**
-   * Tests if setSnippets correctly updates the snippets element in the store.
-   */
-  it('should update snippets', (): void => {
-    const snippets = 'Snippet Content'
-    useHeaderStore.getState().setSnippets(snippets)
-    expect(useHeaderStore.getState().snippets).toBe(snippets)
+  it('should update the snippets when setSnippets is called', () => {
+    // Simple dummy ReactNode for testing
+    const dummySnippets = 'Dummy Snippets'
+    useHeaderStore.getState().setSnippets(dummySnippets)
+    expect(useHeaderStore.getState().snippets).toBe(dummySnippets)
+
+    useHeaderStore.getState().setSnippets(null)
+    expect(useHeaderStore.getState().snippets).toBeNull()
   })
 
-  /**
-   * Tests if setActions correctly updates the action buttons in the store.
-   */
-  it('should update actions', (): void => {
-    const actions = [{ label: 'Click Me', onClick: jest.fn() }]
-    useHeaderStore.getState().setActions(actions)
-    expect(useHeaderStore.getState().actions).toEqual(actions)
+  it('should update the actions when setActions is called', () => {
+    const newActions: any[] = [
+      { label: 'Action 1', onClick: jest.fn(), variant: 'primary' },
+      { label: 'Action 2', onClick: jest.fn(), variant: 'danger' }
+    ]
+    useHeaderStore.getState().setActions(newActions)
+    expect(useHeaderStore.getState().actions).toEqual(newActions)
   })
 
-  /**
-   * Tests if the reset action correctly returns the store to its initial state.
-   */
-  it('should reset store to initial state', (): void => {
+  it('should reset the state to initial when reset is called', () => {
+    // Modify the state first
     useHeaderStore.getState().setTitle('Modified Title')
-    useHeaderStore.getState().setNavigation('Modified Nav')
+    useHeaderStore.getState().setNavigation('Modified Navigation')
     useHeaderStore.getState().setSnippets('Modified Snippets')
-    useHeaderStore.getState().setActions([{ label: 'Action', onClick: (): void => {} }])
+    useHeaderStore.getState().setActions([{ label: 'Action', onClick: jest.fn() }])
 
+    // Call reset
     useHeaderStore.getState().reset()
 
+    // Verify it's back to initial state
     const state = useHeaderStore.getState()
-    expect(state.title).toBe('Tool Gallery')
-    expect(state.navigation).toBeNull()
-    expect(state.snippets).toBeNull()
-    expect(state.actions).toEqual([])
+    expect(state.title).toBe(initialState.title)
+    expect(state.navigation).toBe(initialState.navigation)
+    expect(state.snippets).toBe(initialState.snippets)
+    expect(state.actions).toEqual(initialState.actions)
   })
 })
