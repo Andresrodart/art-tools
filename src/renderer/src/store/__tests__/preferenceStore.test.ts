@@ -2,9 +2,9 @@ import { usePreferenceStore } from '../preferenceStore'
 
 // Mock the window.api
 beforeAll(() => {
-  // @ts-ignore
+  // @ts-ignore: global window object mock
   global.window = {
-    // @ts-ignore
+    // @ts-ignore: api object mock
     api: {
       getPreferences: jest.fn().mockResolvedValue({ favorites: ['Tool1'] }),
       setPreferences: jest.fn().mockResolvedValue(true)
@@ -43,13 +43,13 @@ describe('preferenceStore', () => {
     // Add
     await usePreferenceStore.getState().toggleFavorite('Tool2')
     expect(usePreferenceStore.getState().favorites).toEqual(['Tool2'])
-    // @ts-ignore
+    // @ts-ignore: window.api type mock missing
     expect(window.api.setPreferences).toHaveBeenCalledWith({ favorites: ['Tool2'] })
 
     // Remove
     await usePreferenceStore.getState().toggleFavorite('Tool2')
     expect(usePreferenceStore.getState().favorites).toEqual([])
-    // @ts-ignore
+    // @ts-ignore: window.api type mock missing
     expect(window.api.setPreferences).toHaveBeenCalledWith({ favorites: [] })
   })
 })

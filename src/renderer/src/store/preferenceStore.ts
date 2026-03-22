@@ -41,9 +41,9 @@ export const usePreferenceStore = create<PreferenceState>((set, get) => ({
 
     // Persist to main process
     try {
-      // @ts-ignore
+      // @ts-ignore: window.api type not fully defined
       const currentPrefs = await window.api.getPreferences()
-      // @ts-ignore
+      // @ts-ignore: window.api type not fully defined
       await window.api.setPreferences({ ...currentPrefs, favorites: newFavorites })
     } catch (err) {
       console.error('Failed to save favorites preference', err)
@@ -54,7 +54,7 @@ export const usePreferenceStore = create<PreferenceState>((set, get) => ({
     if (get().isInitialized) return
 
     try {
-      // @ts-ignore
+      // @ts-ignore: window.api type not fully defined
       const prefs = await window.api.getPreferences()
       if (prefs && Array.isArray(prefs.favorites)) {
         set({ favorites: prefs.favorites })
