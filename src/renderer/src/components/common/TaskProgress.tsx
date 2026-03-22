@@ -1,19 +1,19 @@
 import React from 'react'
-import { Task } from '../../../store/taskStore'
+import { Task } from '../../store/taskStore'
 
-interface FileScraperProgressProps {
+interface TaskProgressProps {
   taskData: Task | undefined
   pct: number
   logEntries: string[]
   logRef: React.RefObject<HTMLDivElement | null>
 }
 
-export function FileScraperProgress({
+export function TaskProgress({
   taskData,
   pct,
   logEntries,
   logRef
-}: FileScraperProgressProps): React.JSX.Element | null {
+}: TaskProgressProps): React.JSX.Element | null {
   if (!taskData) return null
 
   return (

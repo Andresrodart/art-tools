@@ -4,7 +4,7 @@ import { ToolView } from '../../layout/ToolView'
 import { useHeaderStore } from '../../../store/headerStore'
 import { useFileScraper } from './useFileScraper'
 import { FileScraperInput } from './FileScraperInput'
-import { FileScraperProgress } from './FileScraperProgress'
+import { TaskProgress } from '../../common/TaskProgress'
 import { FileScraperOutput } from './FileScraperOutput'
 
 interface FileScraperProps {
@@ -88,12 +88,7 @@ export function FileScraper({ onBack, tabId }: FileScraperProps): React.JSX.Elem
       }
       progressSection={
         taskData ? (
-          <FileScraperProgress
-            taskData={taskData}
-            pct={pct}
-            logEntries={logEntries}
-            logRef={logRef}
-          />
+          <TaskProgress taskData={taskData} pct={pct} logEntries={logEntries} logRef={logRef} />
         ) : null
       }
       outputSection={
