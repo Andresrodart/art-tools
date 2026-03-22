@@ -52,7 +52,12 @@ describe('headerStore', () => {
   })
 
   it('should update the actions when setActions is called', () => {
-    const newActions: any[] = [
+    // Specify correct type to satisfy linter rule @typescript-eslint/no-explicit-any
+    const newActions: {
+      label: string
+      onClick: () => void
+      variant?: 'primary' | 'danger' | 'success' | 'warning' | 'info'
+    }[] = [
       { label: 'Action 1', onClick: jest.fn(), variant: 'primary' },
       { label: 'Action 2', onClick: jest.fn(), variant: 'danger' }
     ]
