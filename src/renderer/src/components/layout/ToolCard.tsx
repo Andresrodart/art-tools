@@ -49,7 +49,7 @@ export function ToolCard({
 
           <div className={styles.cardActions}>
             <span
-              className={`brutalist-button ${styles.actionButton} ${isDanger ? 'danger' : 'primary'}`}
+              className={`brutalist-button ${styles.actionButton} ${isDanger ? styles.isDanger : ''}`}
             >
               {actionText}
             </span>

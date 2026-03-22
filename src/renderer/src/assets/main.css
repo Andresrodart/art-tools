@@ -10,6 +10,7 @@
   --shadow-offset: 6px;
   --panel-bg: #fff;
   --font-family: 'Inter', system-ui, sans-serif;
+  --light-bg-color: #e0e0e0;
 }
 
 [data-theme='dark'] {
@@ -21,6 +22,7 @@
   --secondary-color: #4dc274;
   --border-color: #fff;
   --panel-bg: #333;
+  --light-bg-color: #555;
 }
 
 * {
