@@ -1,10 +1,10 @@
-import { FileScraperResult, TreeNode } from './types'
+import { TreeNode, BaseTaskResult } from './types'
 
 export function normalizePath(p: string): string {
   return p.replace(/\\/g, '/')
 }
 
-export const buildTree = (results: FileScraperResult[], sourcePath: string | null): TreeNode => {
+export const buildTree = (results: BaseTaskResult[], sourcePath: string | null): TreeNode => {
   const root: TreeNode = {
     name: sourcePath ? sourcePath.split(/[/\\]/).pop() || 'Root' : 'Root',
     fullPath: sourcePath || '',

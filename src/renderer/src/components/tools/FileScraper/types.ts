@@ -1,10 +1,6 @@
-export interface FileScraperResult {
-  originalPath: string
-  newPath: string
-  success: boolean
-  error?: string
-  isDirectoryError?: boolean
-}
+import { BaseTaskResult } from '../../common/types'
+
+export interface FileScraperResult extends BaseTaskResult {}
 
 export const PRESETS = {
   Images: [
@@ -30,12 +26,3 @@ export const PRESETS = {
 }
 
 export type PresetKey = keyof typeof PRESETS | 'Custom' | 'All'
-
-export interface TreeNode {
-  name: string
-  fullPath: string
-  filesCount: number
-  isError: boolean
-  errorMsg?: string
-  children: Record<string, TreeNode>
-}
