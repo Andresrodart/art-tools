@@ -19,7 +19,7 @@ export interface Task {
   updatedAt: number
 }
 
-class TaskManager extends EventEmitter {
+export class TaskManager extends EventEmitter {
   private tasks: Map<string, Task> = new Map()
 
   constructor() {
