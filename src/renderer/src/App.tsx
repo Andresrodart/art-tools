@@ -10,23 +10,15 @@ import { Tabs } from './components/layout/Tabs'
 import { useHeaderStore } from './store/headerStore'
 import { useTaskStore, TaskTab } from './store/taskStore'
 import { usePreferenceStore } from './store/preferenceStore'
-import { ToolCard } from './components/layout/ToolCard'
-import { ToolSearch } from './components/common/ToolSearch'
-import { toolsRegistry } from './config/tools'
+import { HomeView } from './components/layout/HomeView'
 
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
   const setTitle = useHeaderStore((state) => state.setTitle)
   const setActions = useHeaderStore((state) => state.setActions)
 
-  const { tabs, activeTabId, tasks, addTab, initialize: initTasks } = useTaskStore()
-  const {
-    searchQuery,
-    activeCategory,
-    favorites,
-    toggleFavorite,
-    initialize: initPrefs
-  } = usePreferenceStore()
+  const { tabs, activeTabId, tasks, initialize: initTasks } = useTaskStore()
+  const { initialize: initPrefs } = usePreferenceStore()
 
   useEffect(() => {
     initTasks()
@@ -36,19 +28,6 @@ function App(): React.JSX.Element {
   const handleCloseTool = useCallback(() => {
     useTaskStore.getState().setActiveTab('home')
   }, [])
-
-  const openTool = useCallback(
-    (toolName: string, title: string): void => {
-      const tab: TaskTab = {
-        id: `tool-${toolName.toLowerCase()}-${Date.now()}`,
-        title: title,
-        type: 'tool_task',
-        toolName: toolName
-      }
-      addTab(tab)
-    },
-    [addTab]
-  )
 
   const toggleTheme = useCallback((): void => {
     const currentTheme = document.documentElement.getAttribute('data-theme')
@@ -111,25 +90,6 @@ function App(): React.JSX.Element {
     }
   }
 
-  const filteredTools = toolsRegistry.filter((tool) => {
-    // 1. Filter by Category
-    if (activeCategory === 'Favorites') {
-      if (!favorites.includes(tool.id)) return false
-    } else if (activeCategory !== 'All') {
-      if (!tool.categories.includes(activeCategory)) return false
-    }
-
-    // 2. Filter by Search Query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase()
-      const title = t(tool.nameKey).toLowerCase()
-      const desc = t(tool.descKey).toLowerCase()
-      if (!title.includes(q) && !desc.includes(q)) return false
-    }
-
-    return true
-  })
-
   return (
     <div className="brutalist-container">
       <Header />
@@ -137,27 +97,7 @@ function App(): React.JSX.Element {
 
       <main className="main-content">
         <div style={{ display: activeTabId === 'home' ? 'block' : 'none' }}>
-          <ToolSearch />
-          <div className="gallery-grid">
-            {filteredTools.length > 0 ? (
-              filteredTools.map((tool) => (
-                <ToolCard
-                  key={tool.id}
-                  title={t(tool.nameKey)}
-                  description={t(tool.descKey)}
-                  actionText={t('open_tool')}
-                  onAction={() => openTool(tool.id, t(tool.nameKey))}
-                  isFavorite={favorites.includes(tool.id)}
-                  onToggleFavorite={(e) => {
-                    e.stopPropagation()
-                    toggleFavorite(tool.id)
-                  }}
-                />
-              ))
-            ) : (
-              <p>{t('no_tools_found', 'No tools found.')}</p>
-            )}
-          </div>
+          <HomeView />
         </div>
 
         {tabs.map((tab) => {
