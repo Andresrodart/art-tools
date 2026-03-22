@@ -41,7 +41,6 @@
 .flipCardFront {
   background-color: var(--panel-bg);
   color: var(--text-color);
-  position: relative; // added for favorite button positioning
 
   h2 {
     margin: 0;
@@ -56,6 +55,7 @@
   background-color: var(--secondary-color);
   color: #000;
   transform: rotateY(180deg);
+  position: relative; // added for favorite button positioning
 
   p {
     margin-top: 0;
@@ -71,26 +71,55 @@
   }
 }
 
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
 .favoriteButton {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: transparent;
-  border: none;
-  font-size: 2rem;
-  color: var(--text-color);
-  opacity: 0.3;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid transparent;
+  font-size: 1.8rem;
+  color: #fff;
+  opacity: 0.8;
   cursor: pointer;
-  transition: all 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 2;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
   &:hover {
-    opacity: 0.8;
-    transform: scale(1.1);
+    opacity: 1;
+    transform: translateY(-2px) scale(1.1);
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(2px) scale(0.9);
   }
 
   &.isFavorite {
     color: #ff3b30;
+    background: #fff;
+    border-color: #000;
     opacity: 1;
+    animation: heartPulse 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 2px 2px 0px 0px #000;
+
+    &:hover {
+      transform: translateY(-2px) scale(1.1);
+      box-shadow: 4px 4px 0px 0px #000;
+    }
   }
 }

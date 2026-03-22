@@ -42,6 +42,9 @@ export function ToolCard({
     >
       <div className={styles.flipCardInner}>
         <div className={styles.flipCardFront}>
+          <h2>{title}</h2>
+        </div>
+        <div className={styles.flipCardBack}>
           {onToggleFavorite && (
             <button
               className={`${styles.favoriteButton} ${isFavorite ? styles.isFavorite : ''}`}
@@ -54,9 +57,6 @@ export function ToolCard({
               ♥
             </button>
           )}
-          <h2>{title}</h2>
-        </div>
-        <div className={styles.flipCardBack}>
           <p>{description}</p>
           <span className={`brutalist-button ${isDanger ? 'danger' : 'primary'}`}>
             {actionText}
