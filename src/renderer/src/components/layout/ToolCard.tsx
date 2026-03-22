@@ -45,22 +45,28 @@ export function ToolCard({
           <h2>{title}</h2>
         </div>
         <div className={styles.flipCardBack}>
-          {onToggleFavorite && (
-            <button
-              className={`${styles.favoriteButton} ${isFavorite ? styles.isFavorite : ''}`}
-              onClick={(e) => {
-                e.stopPropagation()
-                onToggleFavorite(e)
-              }}
-              aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            >
-              ♥
-            </button>
-          )}
           <p>{description}</p>
-          <span className={`brutalist-button ${isDanger ? 'danger' : 'primary'}`}>
-            {actionText}
-          </span>
+
+          <div className={styles.cardActions}>
+            <span
+              className={`brutalist-button ${styles.actionButton} ${isDanger ? 'danger' : 'primary'}`}
+            >
+              {actionText}
+            </span>
+
+            {onToggleFavorite && (
+              <button
+                className={`${styles.favoriteButton} ${isFavorite ? styles.isFavorite : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onToggleFavorite(e)
+                }}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                ♥
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -55,7 +55,6 @@
   background-color: var(--secondary-color);
   color: #000;
   transform: rotateY(180deg);
-  position: relative; // added for favorite button positioning
 
   p {
     margin-top: 0;
@@ -77,10 +76,28 @@
   100% { transform: scale(1); }
 }
 
+.cardActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: auto;
+  gap: 1rem;
+}
+
+.actionButton {
+  flex: 1;
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #000;
+
+  &:hover {
+    background-color: #222;
+    color: #fff;
+  }
+}
+
 .favoriteButton {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   width: 48px;
   height: 48px;
   border-radius: 50%;
