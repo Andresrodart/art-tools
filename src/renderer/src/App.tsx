@@ -15,6 +15,7 @@ import { useHeaderStore } from './store/headerStore'
 import { useTaskStore, TaskTab } from './store/taskStore'
 import { usePreferenceStore } from './store/preferenceStore'
 import { HomeView } from './components/layout/HomeView'
+import { GlobalAlertModal } from './components/common/GlobalAlertModal'
 
 function App(): React.JSX.Element {
   const { t, i18n } = useTranslation()
@@ -124,6 +125,7 @@ function App(): React.JSX.Element {
           )
         })}
       </main>
+      <GlobalAlertModal />
     </div>
   )
 }

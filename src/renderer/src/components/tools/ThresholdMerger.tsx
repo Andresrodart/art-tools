@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 import { useTaskStore } from '../../store/taskStore'
+import { useAlertStore } from '../../store/alertStore'
 
 interface ThresholdMergerResult {
   originalPaths: string[]
@@ -79,25 +80,37 @@ export function ThresholdMerger({ onBack, tabId }: ThresholdMergerProps): React.
         setTargetFolder(folderPaths)
       }
     } catch (e: unknown) {
-      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error selecting folder: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 
   const handleStartTask = async (): Promise<void> => {
     if (!targetFolder) {
-      alert('Please select a folder first.')
+      await useAlertStore
+        .getState()
+        .showAlert('Warning', 'Please select a folder first.', 'warning')
       return
     }
 
     if (thresholdX < 1 || maxCapacityY < 1) {
-      alert('Thresholds must be at least 1')
+      await useAlertStore.getState().showAlert('Error', 'Thresholds must be at least 1', 'error')
       return
     }
 
     if (thresholdX >= maxCapacityY) {
-      alert(
-        'X (Threshold) must be smaller than Y (Max Capacity). Otherwise groups will exceed your limit on the first merge!'
-      )
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          'X (Threshold) must be smaller than Y (Max Capacity). Otherwise groups will exceed your limit on the first merge!',
+          'error'
+        )
       return
     }
 
@@ -118,7 +131,13 @@ export function ThresholdMerger({ onBack, tabId }: ThresholdMergerProps): React.
 
       updateTab(tabId, { taskId: id, title: `Merge: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
-      alert(`Error starting threshold merger task: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error starting threshold merger task: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 

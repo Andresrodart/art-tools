@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 import { useTaskStore } from '../../store/taskStore'
+import { useAlertStore } from '../../store/alertStore'
 
 interface OrganizeResult {
   source: string
@@ -139,13 +140,21 @@ export function FileOrganizer({ onBack, tabId }: FileOrganizerProps): React.JSX.
         setTargetFolder(folderPaths)
       }
     } catch (e: unknown) {
-      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error selecting folder: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 
   const handleStartOrganize = async (): Promise<void> => {
     if (!targetFolder) {
-      alert('Please select a folder first.')
+      await useAlertStore
+        .getState()
+        .showAlert('Warning', 'Please select a folder first.', 'warning')
       return
     }
 

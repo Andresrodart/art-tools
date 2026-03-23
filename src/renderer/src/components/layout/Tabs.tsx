@@ -1,12 +1,13 @@
 import React from 'react'
 import { useTaskStore } from '../../store/taskStore'
 import { useTranslation } from 'react-i18next'
+import { useAlertStore } from '../../store/alertStore'
 
 export const Tabs: React.FC = () => {
   const { tabs, activeTabId, setActiveTab, removeTab, tasks } = useTaskStore()
   const { t } = useTranslation()
 
-  const handleClose = (e: React.MouseEvent, id: string): void => {
+  const handleClose = async (e: React.MouseEvent, id: string): Promise<void> => {
     e.stopPropagation()
     const tabToClose = tabs.find((t) => t.id === id)
     const taskIdToCancel = tabToClose?.taskId || id
@@ -19,7 +20,11 @@ export const Tabs: React.FC = () => {
         })
       : t('confirm_close_task', { defaultValue: 'Are you sure you want to close this tab?' })
 
-    if (window.confirm(message)) {
+    const confirmed = await useAlertStore
+      .getState()
+      .showAlert(t('common.confirm', 'Confirm'), message, 'warning', 'confirm')
+
+    if (confirmed) {
       if (isRunning && window.api?.cancelTask) {
         window.api.cancelTask(taskIdToCancel).catch(console.error)
       }
