@@ -1,7 +1,3 @@
-/**
- * @jest-environment jsdom
- */
-
 import { useHeaderStore } from '../headerStore'
 
 describe('headerStore', () => {
@@ -32,7 +28,6 @@ describe('headerStore', () => {
   })
 
   it('should update the navigation when setNavigation is called', () => {
-    // Simple dummy ReactNode for testing
     const dummyNavigation = 'Dummy Navigation'
     useHeaderStore.getState().setNavigation(dummyNavigation)
     expect(useHeaderStore.getState().navigation).toBe(dummyNavigation)
@@ -42,7 +37,6 @@ describe('headerStore', () => {
   })
 
   it('should update the snippets when setSnippets is called', () => {
-    // Simple dummy ReactNode for testing
     const dummySnippets = 'Dummy Snippets'
     useHeaderStore.getState().setSnippets(dummySnippets)
     expect(useHeaderStore.getState().snippets).toBe(dummySnippets)
@@ -52,7 +46,6 @@ describe('headerStore', () => {
   })
 
   it('should update the actions when setActions is called', () => {
-    // Specify correct type to satisfy linter rule @typescript-eslint/no-explicit-any
     const newActions: {
       label: string
       onClick: () => void
@@ -75,7 +68,7 @@ describe('headerStore', () => {
     // Call reset
     useHeaderStore.getState().reset()
 
-    // Verify it's back to initial state
+    // Verify state is back to initial
     const state = useHeaderStore.getState()
     expect(state.title).toBe(initialState.title)
     expect(state.navigation).toBe(initialState.navigation)
