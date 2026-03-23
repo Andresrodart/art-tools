@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTaskStore, Task } from '../../../store/taskStore'
 import { PresetKey, PRESETS, FileScraperResult } from './types'
+import { useAlertStore } from '../../../store/alertStore'
 
 export function useFileScraper(tabId: string): {
   sourcePath: string | null
@@ -74,7 +75,13 @@ export function useFileScraper(tabId: string): {
         else setDestinationPath(folderPaths)
       }
     } catch (e: unknown) {
-      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error selecting folder: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 
@@ -88,7 +95,13 @@ export function useFileScraper(tabId: string): {
         setIgnorePaths((prev) => [...prev, folderPath])
       }
     } catch (e: unknown) {
-      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error selecting folder: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 
@@ -98,7 +111,9 @@ export function useFileScraper(tabId: string): {
 
   const handleStartTask = async (): Promise<void> => {
     if (!sourcePath || !destinationPath) {
-      alert('Please select both a source and destination folder.')
+      await useAlertStore
+        .getState()
+        .showAlert('Warning', 'Please select both a source and destination folder.', 'warning')
       return
     }
 
@@ -111,7 +126,13 @@ export function useFileScraper(tabId: string): {
         .map((e) => e.trim())
         .filter((e) => e.length > 0)
       if (extensions.length === 0) {
-        alert('Please enter at least one valid extension for Custom mode.')
+        await useAlertStore
+          .getState()
+          .showAlert(
+            'Warning',
+            'Please enter at least one valid extension for Custom mode.',
+            'warning'
+          )
         return
       }
     } else {
@@ -136,7 +157,13 @@ export function useFileScraper(tabId: string): {
 
       updateTab(tabId, { taskId: id, title: `Scrape: ${sourcePath.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
-      alert(`Error starting file scraper: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error starting file scraper: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 

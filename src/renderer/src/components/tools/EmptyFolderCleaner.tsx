@@ -4,6 +4,7 @@ import { ToolView } from '../layout/ToolView'
 import { useHeaderStore } from '../../store/headerStore'
 import { Checkbox } from '../common/Checkbox'
 import { useTaskStore } from '../../store/taskStore'
+import { useAlertStore } from '../../store/alertStore'
 
 /**
  * Props for the EmptyFolderCleaner component.
@@ -103,7 +104,13 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
         setEmptyFolders([])
       }
     } catch (e: unknown) {
-      alert(`Error selecting folder: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error selecting folder: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 
@@ -120,7 +127,13 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
       const id = await window.api.startFindEmptyFoldersTask(targetFolder)
       updateTab(tabId, { taskId: id, title: `Scan: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
-      alert(`Error starting scan: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error starting scan: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 
@@ -135,7 +148,13 @@ export function EmptyFolderCleaner({ onBack, tabId }: EmptyFolderCleanerProps): 
       const id = await window.api.startDeleteFoldersTask(Array.from(selectedFolders), isDryRun)
       updateTab(tabId, { taskId: id, title: `Delete: ${selectedFolders.size} folders` })
     } catch (e: unknown) {
-      alert(`Error starting deletion: ${e instanceof Error ? e.message : String(e)}`)
+      await useAlertStore
+        .getState()
+        .showAlert(
+          'Error',
+          `Error starting deletion: ${e instanceof Error ? e.message : String(e)}`,
+          'error'
+        )
     }
   }
 
