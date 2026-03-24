@@ -15,12 +15,8 @@ interface UseGPGViewerResult {
   isDecrypting: boolean
   decryptError: string | null
   decryptedFile: DecryptedFile | null
-  selectedExtractedFile: { name: string; path: string; isDirectory: boolean } | null
   handleSelectFolder: () => Promise<void>
   handleSelectFile: (file: string) => void
-  handleSelectExtractedFile: (
-    file: { name: string; path: string; isDirectory: boolean } | null
-  ) => void
   handleDecrypt: (passphrase: string) => Promise<void>
   handleCloseViewer: () => Promise<void>
   handleSaveFile: (customPath?: string, customName?: string) => Promise<void>
@@ -33,11 +29,6 @@ export function useGPGViewer(): UseGPGViewerResult {
   const [isDecrypting, setIsDecrypting] = useState(false)
   const [decryptError, setDecryptError] = useState<string | null>(null)
   const [decryptedFile, setDecryptedFile] = useState<DecryptedFile | null>(null)
-  const [selectedExtractedFile, setSelectedExtractedFile] = useState<{
-    name: string
-    path: string
-    isDirectory: boolean
-  } | null>(null)
 
   const handleSelectFolder = async (): Promise<void> => {
     try {
@@ -60,13 +51,6 @@ export function useGPGViewer(): UseGPGViewerResult {
     setSelectedFile(file)
     setDecryptError(null)
     setDecryptedFile(null) // Close any open viewer
-    setSelectedExtractedFile(null)
-  }
-
-  const handleSelectExtractedFile = (
-    file: { name: string; path: string; isDirectory: boolean } | null
-  ): void => {
-    setSelectedExtractedFile(file)
   }
 
   const handleDecrypt = async (passphrase: string): Promise<void> => {
@@ -77,7 +61,6 @@ export function useGPGViewer(): UseGPGViewerResult {
     try {
       const result = await window.api.decryptGpgFile(selectedFile, passphrase)
       setDecryptedFile(result)
-      setSelectedExtractedFile(null)
     } catch (error) {
       console.error('Decryption failed:', error)
       setDecryptError('gpg_error')
@@ -95,7 +78,6 @@ export function useGPGViewer(): UseGPGViewerResult {
       }
     }
     setDecryptedFile(null)
-    setSelectedExtractedFile(null)
   }
 
   const handleSaveFile = async (customPath?: string, customName?: string): Promise<void> => {
@@ -127,10 +109,8 @@ export function useGPGViewer(): UseGPGViewerResult {
     isDecrypting,
     decryptError,
     decryptedFile,
-    selectedExtractedFile,
     handleSelectFolder,
     handleSelectFile,
-    handleSelectExtractedFile,
     handleDecrypt,
     handleCloseViewer,
     handleSaveFile
