@@ -139,8 +139,7 @@ export async function cleanupGpgTempFile(tempFilePath: string): Promise<void> {
       return
     }
 
-    await fs.promises.unlink(tempFilePath)
-    await fs.promises.rmdir(tempDir)
+    await fs.promises.rm(tempDir, { recursive: true, force: true })
   } catch (error) {
     console.error('Error cleaning up temporary GPG file:', error)
     // Non-fatal, just log it

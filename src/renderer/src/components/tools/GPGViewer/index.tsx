@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FolderTree } from '../../common/FolderTree'
+import { buildArchiveTree } from '../../common/utils'
+import { TreeNode } from '../../common/types'
 import { useGPGViewer } from './useGPGViewer'
 import { ToolView } from '../../layout/ToolView'
 
@@ -28,105 +31,84 @@ export function GPGViewer(): React.JSX.Element {
     setPassphrase('') // Clear immediately for security
   }
 
+  const renderArchiveNodeAction = (node: TreeNode): React.ReactNode => {
+    if (node.isDirectory) return null
+    return (
+      <button
+        onClick={() => handleSaveFile(node.fullPath, node.name)}
+        className="brutalist-button primary small flex-shrink-0"
+        style={{ minWidth: '100px' }}
+      >
+        SAVE AS...
+      </button>
+    )
+  }
+
   const renderViewer = (): React.JSX.Element | null => {
     if (!decryptedFile) return null
 
-    // We use the custom protocol we registered in main/index.ts
-    // Encode the path to handle spaces and special characters correctly.
-    // Ensure we handle Windows paths by replacing backslashes with forward slashes for the URL
     const normalizedPath = decryptedFile.tempFilePath.replace(/\\/g, '/')
     const fileUrl = `gpg-media://${encodeURIComponent(normalizedPath)}`
 
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-        <div className="brutalist-panel w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden bg-[var(--bg-color)]">
-          <div className="flex justify-between items-center p-4 border-b-[var(--border-width)] border-[var(--border-color)] bg-[var(--accent-secondary)]">
-            <h3 className="text-xl font-bold truncate pr-4">{decryptedFile.originalFileName}</h3>
+    const archiveTree = decryptedFile.extractedFiles
+      ? buildArchiveTree(decryptedFile.extractedFiles, decryptedFile.originalFileName)
+      : null
 
-            <div className="flex gap-2">
-              <button onClick={handleCloseViewer} className="brutalist-button danger small">
-                {t('gpg_close_viewer').toUpperCase()}
-              </button>
-            </div>
-          </div>
-          <div
-            className="flex-1 overflow-auto p-4 flex items-center justify-center"
-            style={{ backgroundColor: 'var(--bg-color-alt)' }}
-          >
-            {decryptedFile.extractedFiles ? (
-              <div className="w-full h-full p-4 font-mono overflow-auto flex flex-col">
-                <h4 className="font-bold mb-4 border-b-[var(--border-width)] border-[var(--border-color)] pb-2 uppercase">
-                  Extracted Archive Contents ({decryptedFile.extractedFiles.length})
-                </h4>
-                <ul className="flex-1 overflow-y-auto space-y-3 pr-2 list-none">
-                  {decryptedFile.extractedFiles.map((file) => (
-                    <li
-                      key={file.path}
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 border-[var(--border-width)] border-[var(--border-color)] bg-[var(--bg-color)] shadow-[4px_4px_0_var(--border-color)] gap-3"
-                    >
-                      <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
-                        <span className="text-2xl flex-shrink-0">
-                          {file.isDirectory ? '📁' : '📄'}
-                        </span>
-                        <span className="break-all font-bold text-lg">{file.name}</span>
-                      </div>
-                      {!file.isDirectory && (
-                        <button
-                          onClick={() => handleSaveFile(file.path, file.name.split(/[/\\]/).pop())}
-                          className="brutalist-button primary small flex-shrink-0 w-full sm:w-auto"
-                        >
-                          SAVE AS...
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+    return (
+      <div className="tool-output-summary" style={{ marginTop: 0 }}>
+        <div className="flex justify-between items-center mb-6 pb-4 border-b-[var(--border-width)] border-[var(--border-color)]">
+          <h3 className="text-xl font-bold truncate pr-4">{decryptedFile.originalFileName}</h3>
+          <button onClick={handleCloseViewer} className="brutalist-button danger small px-4">
+            {t('gpg_close_viewer').toUpperCase()}
+          </button>
+        </div>
+
+        <div className="flex-1 min-h-[400px] flex items-center justify-center p-6 border-[var(--border-width)] border-[var(--border-color)] bg-[var(--bg-color)] shadow-[4px_4px_0_var(--border-color)]">
+          {archiveTree ? (
+            <div className="w-full h-full font-mono flex flex-col">
+              <h4 className="font-bold mb-4 border-b-[var(--border-width)] border-[var(--border-color)] pb-2 uppercase text-lg">
+                Archive Explorer ({decryptedFile.extractedFiles?.length || 0} items)
+              </h4>
+              <div className="overflow-y-auto max-h-[60vh] pr-2">
+                <FolderTree node={archiveTree} renderAction={renderArchiveNodeAction} depth={0} />
               </div>
-            ) : (
-              <>
-                {decryptedFile.mimeType.startsWith('image/') && (
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-8 w-full max-w-2xl py-12 p-6">
+              <div className="text-7xl">🔓</div>
+              <div className="text-center">
+                <p className="text-2xl font-bold mb-3 uppercase tracking-wider">
+                  Decryption Successful!
+                </p>
+                <div className="p-4 bg-[var(--bg-color-alt)] border-[var(--border-width)] border-[var(--border-color)] font-mono text-lg break-all">
+                  {decryptedFile.originalFileName}
+                </div>
+              </div>
+
+              {decryptedFile.mimeType.startsWith('image/') && (
+                <div className="w-full flex justify-center border-[var(--border-width)] border-[var(--border-color)] p-2 bg-white">
                   <img
                     src={fileUrl}
                     alt="Decrypted"
-                    className="max-w-full max-h-full object-contain"
+                    className="max-w-full max-h-[400px] object-contain"
                   />
-                )}
-                {decryptedFile.mimeType.startsWith('video/') && (
-                  <video src={fileUrl} controls className="max-w-full max-h-full" />
-                )}
-                {decryptedFile.mimeType.startsWith('text/') ||
-                decryptedFile.mimeType === 'application/json' ? (
-                  <iframe
-                    src={fileUrl}
-                    className="w-full h-full bg-[var(--bg-color)] font-mono p-4"
-                    title="Decrypted Text"
-                  />
-                ) : (
-                  !decryptedFile.mimeType.startsWith('image/') &&
-                  !decryptedFile.mimeType.startsWith('video/') &&
-                  !decryptedFile.mimeType.startsWith('text/') &&
-                  decryptedFile.mimeType !== 'application/json' && (
-                    <div
-                      className="text-center p-8 flex flex-col items-center"
-                      style={{
-                        backgroundColor: 'var(--accent-warning)',
-                        border: 'var(--border-width) solid var(--border-color)',
-                        color: 'black'
-                      }}
-                    >
-                      <p className="font-bold text-xl uppercase">Preview not available</p>
-                      <p className="text-md mt-2 mb-6 font-mono font-bold border-b-[var(--border-width)] border-[var(--border-color)] pb-2">
-                        MIME Type: {decryptedFile.mimeType}
-                      </p>
-                      <button onClick={() => handleSaveFile()} className="brutalist-button info">
-                        SAVE AS...
-                      </button>
-                    </div>
-                  )
-                )}
-              </>
-            )}
-          </div>
+                </div>
+              )}
+
+              {decryptedFile.mimeType.startsWith('video/') && (
+                <div className="w-full flex justify-center border-[var(--border-width)] border-[var(--border-color)] p-2 bg-black">
+                  <video src={fileUrl} controls className="max-w-full max-h-[400px]" />
+                </div>
+              )}
+
+              <button
+                onClick={() => handleSaveFile()}
+                className="brutalist-button success text-xl px-12 py-4"
+              >
+                {t('gpg_save_decrypted').toUpperCase()}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -149,122 +131,136 @@ export function GPGViewer(): React.JSX.Element {
     </div>
   )
 
-  const outputSection = folderPath ? (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* File List */}
-      <div className="brutalist-panel flex flex-col h-[400px]">
-        <div className="p-3 border-b-[var(--border-width)] border-[var(--border-color)] bg-[var(--bg-color)] font-bold uppercase">
-          GPG Files ({files.length})
-        </div>
-        <div className="flex-1 overflow-auto p-2 space-y-2">
-          {files.length === 0 ? (
-            <div className="p-4 text-center italic" style={{ color: 'var(--text-color)' }}>
-              {t('gpg_no_files')}
-            </div>
-          ) : (
-            files.map((file) => {
-              // Extract filename properly considering windows backslashes and posix forward slashes
-              const fileName = file.replace(/\\/g, '/').split('/').pop() || file
-              const isSelected = selectedFile === file
-              return (
-                <button
-                  key={file}
-                  onClick={() => handleSelectFile(file)}
-                  className={`brutalist-button w-full text-left p-3 font-mono truncate transition-all ${
-                    isSelected
-                      ? 'bg-[var(--accent-primary)] font-bold translate-x-2 shadow-[4px_4px_0_var(--border-color)]'
-                      : 'bg-[var(--bg-color)] hover:bg-[var(--accent-secondary)]'
-                  }`}
-                >
-                  {fileName}
-                </button>
-              )
-            })
-          )}
-        </div>
-      </div>
-
-      {/* Decryption Panel */}
-      <div className="brutalist-panel flex flex-col p-6">
-        {!selectedFile ? (
-          <div
-            className="flex-1 flex items-center justify-center italic text-lg text-center"
-            style={{ color: 'var(--text-color)' }}
-          >
-            Select a file from the list to decrypt
-          </div>
-        ) : (
-          <form onSubmit={handleDecryptSubmit} className="flex flex-col h-full">
-            <h3 className="text-xl font-bold mb-4 uppercase pb-2 border-b-[var(--border-width)] border-[var(--border-color)]">
-              Unencrypt File
-            </h3>
-            <div className="mb-4">
-              <p className="font-mono text-sm break-all mb-2">
-                {t('gpg_enter_passphrase')} <br />
-                <strong>{selectedFile.replace(/\\/g, '/').split('/').pop()}</strong>
-              </p>
-              <input
-                type="password"
-                value={passphrase}
-                onChange={(e) => setPassphrase(e.target.value)}
-                placeholder={t('gpg_passphrase_placeholder')}
-                className="brutalist-input w-full font-mono"
-                autoFocus
-              />
-            </div>
-
-            {decryptError && (
-              <div
-                className="mb-4 p-3 font-bold"
-                style={{
-                  backgroundColor: 'var(--accent-danger)',
-                  color: 'white',
-                  border: 'var(--border-width) solid var(--border-color)'
-                }}
-              >
-                {t(decryptError)}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isDecrypting || !passphrase}
-              className={`mt-auto brutalist-button w-full uppercase text-xl py-4 ${
-                isDecrypting || !passphrase ? '' : 'primary'
-              }`}
-              style={{
-                cursor: isDecrypting || !passphrase ? 'not-allowed' : 'pointer',
-                opacity: isDecrypting || !passphrase ? 0.7 : 1
-              }}
-            >
-              {isDecrypting ? t('gpg_decrypting') : 'UNENCRYPT & VIEW'}
-            </button>
-
-            <div
-              className="mt-4 p-3 text-sm"
-              style={{
-                backgroundColor: 'var(--accent-warning)',
-                border: 'var(--border-width) solid var(--border-color)',
-                color: 'black'
-              }}
-            >
-              {t('gpg_passphrase_note')}
-            </div>
-          </form>
-        )}
+  const progressSection = (
+    <div className="p-4 text-center">
+      <div className="mb-4 animate-pulse text-xl font-bold">{t('gpg_decrypting')}...</div>
+      <div className="tool-progress-bar-container">
+        <div className="tool-progress-bar-fill w-full animate-marquee" />
       </div>
     </div>
-  ) : null
+  )
+
+  const outputSection = (
+    <>
+      {decryptedFile ? (
+        renderViewer()
+      ) : folderPath ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* File List */}
+          <div className="brutalist-panel flex flex-col h-[500px]">
+            <div className="p-3 border-b-[var(--border-width)] border-[var(--border-color)] bg-[var(--bg-color)] font-bold uppercase tracking-wide">
+              GPG Files ({files.length})
+            </div>
+            <div className="flex-1 overflow-auto p-3 space-y-2 bg-[var(--bg-color-alt)]">
+              {files.length === 0 ? (
+                <div className="p-8 text-center italic text-[#666]">{t('gpg_no_files')}</div>
+              ) : (
+                files.map((file) => {
+                  const fileName = file.replace(/\\/g, '/').split('/').pop() || file
+                  const isSelected = selectedFile === file
+                  return (
+                    <button
+                      key={file}
+                      onClick={() => handleSelectFile(file)}
+                      className={`brutalist-button w-full text-left p-4 font-mono truncate transition-all ${
+                        isSelected
+                          ? 'bg-[var(--accent-primary)] font-bold translate-x-3 shadow-[6px_6px_0_var(--border-color)] z-10'
+                          : 'bg-[var(--bg-color)] hover:bg-[var(--accent-secondary)]'
+                      }`}
+                    >
+                      {fileName}
+                    </button>
+                  )
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Decryption Panel */}
+          <div className="brutalist-panel flex flex-col p-8 bg-[var(--bg-color)]">
+            {!selectedFile ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50 space-y-4 p-10">
+                <div className="text-6xl">📁</div>
+                <p className="text-xl italic">Select a file from the list to decrypt</p>
+              </div>
+            ) : (
+              <form onSubmit={handleDecryptSubmit} className="flex flex-col h-full">
+                <h3 className="text-2xl font-bold mb-6 uppercase pb-3 border-b-[var(--border-width)] border-[var(--border-color)] tracking-wider">
+                  Unencrypt File
+                </h3>
+                <div className="mb-8">
+                  <p className="font-mono text-sm break-all mb-4 bg-[var(--bg-color-alt)] p-3 border border-[var(--border-color)]">
+                    {t('gpg_enter_passphrase')} <br />
+                    <strong className="text-lg mt-1 block">
+                      {selectedFile.replace(/\\/g, '/').split('/').pop()}
+                    </strong>
+                  </p>
+                  <label className="block mb-2 font-bold uppercase text-xs tracking-widest">
+                    {t('gpg_passphrase_label') || 'Secret Passphrase'}
+                  </label>
+                  <input
+                    type="password"
+                    value={passphrase}
+                    onChange={(e) => setPassphrase(e.target.value)}
+                    placeholder={t('gpg_passphrase_placeholder')}
+                    className="brutalist-input w-full font-mono text-lg py-4"
+                    autoFocus
+                  />
+                </div>
+
+                {decryptError && (
+                  <div
+                    className="mb-6 p-4 font-bold animate-shake"
+                    style={{
+                      backgroundColor: 'var(--accent-danger)',
+                      color: 'white',
+                      border: 'var(--border-width) solid var(--border-color)',
+                      boxShadow: '4px 4px 0 var(--border-color)'
+                    }}
+                  >
+                    ⚠️ {t(decryptError)}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isDecrypting || !passphrase}
+                  className={`mt-auto brutalist-button w-full uppercase text-2xl py-6 ${
+                    isDecrypting || !passphrase ? '' : 'primary'
+                  }`}
+                  style={{
+                    cursor: isDecrypting || !passphrase ? 'not-allowed' : 'pointer',
+                    opacity: isDecrypting || !passphrase ? 0.7 : 1
+                  }}
+                >
+                  {isDecrypting ? t('gpg_decrypting').toUpperCase() : 'UNENCRYPT & VIEW'}
+                </button>
+
+                <div
+                  className="mt-6 p-4 text-sm font-bold italic"
+                  style={{
+                    backgroundColor: 'var(--accent-warning)',
+                    border: 'var(--border-width) solid var(--border-color)',
+                    color: 'black'
+                  }}
+                >
+                  💡 {t('gpg_passphrase_note')}
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </>
+  )
 
   return (
-    <>
-      <ToolView
-        description={t('tool_gpg_viewer_desc')}
-        inputSection={inputSection}
-        outputSection={outputSection}
-      />
-      {renderViewer()}
-    </>
+    <ToolView
+      description={t('tool_gpg_viewer_desc')}
+      inputSection={inputSection}
+      progressSection={isDecrypting ? progressSection : null}
+      outputSection={outputSection}
+    />
   )
 }
 
