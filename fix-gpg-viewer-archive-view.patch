@@ -1,0 +1,77 @@
+--- src/renderer/src/components/tools/GPGViewer/useGPGViewer.ts
++++ src/renderer/src/components/tools/GPGViewer/useGPGViewer.ts
+@@ -14,10 +14,13 @@
+   isDecrypting: boolean
+   decryptError: string | null
+   decryptedFile: DecryptedFile | null
++  selectedExtractedFile: { name: string; path: string; isDirectory: boolean } | null
+   handleSelectFolder: () => Promise<void>
+   handleSelectFile: (file: string) => void
++  handleSelectExtractedFile: (file: { name: string; path: string; isDirectory: boolean } | null) => void
+   handleDecrypt: (passphrase: string) => Promise<void>
+   handleCloseViewer: () => Promise<void>
+-  handleSaveFile: () => Promise<void>
++  handleSaveFile: (path?: string, name?: string) => Promise<void>
+ }
+
+ export function useGPGViewer(): UseGPGViewerResult {
+@@ -27,6 +30,7 @@
+   const [isDecrypting, setIsDecrypting] = useState(false)
+   const [decryptError, setDecryptError] = useState<string | null>(null)
+   const [decryptedFile, setDecryptedFile] = useState<DecryptedFile | null>(null)
++  const [selectedExtractedFile, setSelectedExtractedFile] = useState<{ name: string; path: string; isDirectory: boolean } | null>(null)
+
+   const handleSelectFolder = async (): Promise<void> => {
+@@ -48,6 +52,10 @@
+   const handleSelectFile = (file: string): void => {
+     setSelectedFile(file)
+     setDecryptError(null)
+     setDecryptedFile(null) // Close any open viewer
++    setSelectedExtractedFile(null)
++  }
++
++  const handleSelectExtractedFile = (file: { name: string; path: string; isDirectory: boolean } | null): void => {
++    setSelectedExtractedFile(file)
+   }
+
+   const handleDecrypt = async (passphrase: string): Promise<void> => {
+@@ -63,6 +71,7 @@
+     try {
+       const result = await window.api.decryptGpgFile(selectedFile, passphrase)
+       setDecryptedFile(result)
++      setSelectedExtractedFile(null)
+     } catch (error) {
+       console.error('Decryption failed:', error)
+       setDecryptError('gpg_error')
+@@ -79,15 +88,18 @@
+       }
+     }
+     setDecryptedFile(null)
++    setSelectedExtractedFile(null)
+   }
+
+-  const handleSaveFile = async (): Promise<void> => {
+-    if (decryptedFile?.tempFilePath && decryptedFile?.originalFileName) {
++  const handleSaveFile = async (customPath?: string, customName?: string): Promise<void> => {
++    const pathToSave = customPath || decryptedFile?.tempFilePath
++    const nameToSave = customName || decryptedFile?.originalFileName
++    if (pathToSave && nameToSave) {
+       try {
+-        await window.api.saveGpgFile(decryptedFile.tempFilePath, decryptedFile.originalFileName)
++        await window.api.saveGpgFile(pathToSave, nameToSave)
+       } catch (error) {
+         console.error('Error saving file:', error)
+       }
+     }
+   }
+
+@@ -109,7 +121,9 @@
+     decryptError,
+     decryptedFile,
++    selectedExtractedFile,
+     handleSelectFolder,
+     handleSelectFile,
++    handleSelectExtractedFile,
+     handleDecrypt,
+     handleCloseViewer,
+     handleSaveFile

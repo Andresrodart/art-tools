@@ -12,8 +12,10 @@ export function GPGViewer(): React.JSX.Element {
     isDecrypting,
     decryptError,
     decryptedFile,
+    selectedExtractedFile,
     handleSelectFolder,
     handleSelectFile,
+    handleSelectExtractedFile,
     handleDecrypt,
     handleCloseViewer,
     handleSaveFile
@@ -41,10 +43,34 @@ export function GPGViewer(): React.JSX.Element {
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
         <div className="bg-white dark:bg-zinc-900 border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
           <div className="flex justify-between items-center p-4 border-b-4 border-black dark:border-white bg-blue-100 dark:bg-blue-900">
-            <h3 className="text-xl font-bold truncate pr-4">{decryptedFile.originalFileName}</h3>
+            <div className="flex items-center gap-2">
+              {selectedExtractedFile && (
+                <button
+                  onClick={() => handleSelectExtractedFile(null)}
+                  className="brutalist-button small"
+                  style={{ padding: '4px 8px' }}
+                >
+                  &larr; Back
+                </button>
+              )}
+              <h3 className="text-xl font-bold truncate pr-4">
+                {selectedExtractedFile
+                  ? selectedExtractedFile.name.split(/[/\\]/).pop()
+                  : decryptedFile.originalFileName}
+              </h3>
+            </div>
+
             <div className="flex gap-2">
-              {!decryptedFile.extractedFiles && (
-                <button onClick={handleSaveFile} className="brutalist-button info small">
+              {(!decryptedFile.extractedFiles || selectedExtractedFile) && (
+                <button
+                  onClick={() =>
+                    handleSaveFile(
+                      selectedExtractedFile?.path,
+                      selectedExtractedFile?.name.split(/[/\\]/).pop()
+                    )
+                  }
+                  className="brutalist-button info small"
+                >
                   Save As...
                 </button>
               )}
@@ -54,19 +80,26 @@ export function GPGViewer(): React.JSX.Element {
             </div>
           </div>
           <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-100 dark:bg-zinc-800">
-            {decryptedFile.extractedFiles ? (
-              <div className="w-full h-full bg-white dark:bg-black p-4 font-mono overflow-auto border-2 border-black dark:border-white">
+            {decryptedFile.extractedFiles && !selectedExtractedFile ? (
+              <div className="w-full h-full bg-white dark:bg-black p-4 font-mono overflow-auto border-2 border-black dark:border-white flex flex-col">
                 <h4 className="font-bold mb-4 border-b-2 border-black dark:border-white pb-2 uppercase">
                   Extracted Archive Contents ({decryptedFile.extractedFiles.length})
                 </h4>
-                <ul className="space-y-2">
+                <ul className="flex-1 overflow-y-auto space-y-2 pr-2">
                   {decryptedFile.extractedFiles.map((file) => (
-                    <li
-                      key={file.path}
-                      className={`flex items-center gap-3 ${file.isDirectory ? 'font-bold' : ''}`}
-                    >
-                      <span className="text-xl">{file.isDirectory ? '📁' : '📄'}</span>
-                      <span className="break-all">{file.name}</span>
+                    <li key={file.path}>
+                      <button
+                        onClick={() => !file.isDirectory && handleSelectExtractedFile(file)}
+                        disabled={file.isDirectory}
+                        className={`w-full flex items-center gap-3 p-2 text-left border-[var(--border-width)] border-[var(--border-color)] transition-all ${
+                          file.isDirectory
+                            ? 'bg-[var(--bg-color)] opacity-70 cursor-not-allowed'
+                            : 'bg-white hover:bg-blue-100 dark:bg-zinc-800 dark:hover:bg-blue-900 active:translate-y-0.5 shadow-[2px_2px_0px_var(--border-color)]'
+                        }`}
+                      >
+                        <span className="text-xl">{file.isDirectory ? '📁' : '📄'}</span>
+                        <span className="break-all font-bold">{file.name}</span>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -98,7 +131,7 @@ export function GPGViewer(): React.JSX.Element {
                     <div className="text-center p-8 bg-yellow-100 dark:bg-yellow-900 border-2 border-yellow-500 flex flex-col items-center">
                       <p className="font-bold">Preview not available for this file type.</p>
                       <p className="text-sm mt-2 mb-4">MIME Type: {decryptedFile.mimeType}</p>
-                      <button onClick={handleSaveFile} className="brutalist-button info">
+                      <button onClick={() => handleSaveFile()} className="brutalist-button info">
                         Save As...
                       </button>
                     </div>
