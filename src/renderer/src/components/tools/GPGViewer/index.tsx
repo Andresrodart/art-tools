@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGPGViewer } from './useGPGViewer'
+import { ToolView } from '../../layout/ToolView'
 
 export function GPGViewer(): React.JSX.Element {
   const { t } = useTranslation()
@@ -40,10 +41,7 @@ export function GPGViewer(): React.JSX.Element {
         <div className="bg-white dark:bg-zinc-900 border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
           <div className="flex justify-between items-center p-4 border-b-4 border-black dark:border-white bg-blue-100 dark:bg-blue-900">
             <h3 className="text-xl font-bold truncate pr-4">{decryptedFile.originalFileName}</h3>
-            <button
-              onClick={handleCloseViewer}
-              className="px-4 py-2 bg-red-500 text-white font-bold border-2 border-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all"
-            >
+            <button onClick={handleCloseViewer} className="brutalist-button danger small">
               {t('gpg_close_viewer')}
             </button>
           </div>
@@ -78,115 +76,139 @@ export function GPGViewer(): React.JSX.Element {
     )
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="p-6 bg-white dark:bg-zinc-900 border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]">
-        <h2 className="text-3xl font-black mb-2 uppercase">{t('tool_gpg_viewer_title')}</h2>
-        <p className="text-lg font-medium text-zinc-600 dark:text-zinc-400 mb-6 border-l-4 border-black dark:border-white pl-4">
-          {t('tool_gpg_viewer_desc')}
-        </p>
+  const inputSection = (
+    <div className="control-group">
+      <label>{t('gpg_select_folder')}</label>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <input
+          type="text"
+          readOnly
+          value={folderPath || t('no_folder_selected')}
+          className="brutalist-input flex-grow"
+        />
+        <button className="brutalist-button info" onClick={handleSelectFolder}>
+          {t('browse')}
+        </button>
+      </div>
+    </div>
+  )
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <button
-            onClick={handleSelectFolder}
-            className="px-6 py-3 bg-blue-400 text-black font-bold text-lg border-4 border-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all"
-          >
-            {t('browse')}
-          </button>
-          <div className="flex-1 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border-4 border-black dark:border-white font-mono flex items-center overflow-x-auto whitespace-nowrap">
-            {folderPath || t('no_folder_selected')}
-          </div>
+  const outputSection = folderPath ? (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* File List */}
+      <div className="brutalist-panel flex flex-col h-[400px]">
+        <div className="p-3 border-b-[var(--border-width)] border-[var(--border-color)] bg-[var(--bg-color)] font-bold uppercase">
+          GPG Files ({files.length})
         </div>
-
-        {folderPath && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* File List */}
-            <div className="border-4 border-black dark:border-white bg-white dark:bg-zinc-900 flex flex-col h-[400px]">
-              <div className="p-3 border-b-4 border-black dark:border-white bg-zinc-100 dark:bg-zinc-800 font-bold uppercase">
-                GPG Files ({files.length})
-              </div>
-              <div className="flex-1 overflow-auto p-2 space-y-2">
-                {files.length === 0 ? (
-                  <div className="p-4 text-center italic text-zinc-500">{t('gpg_no_files')}</div>
-                ) : (
-                  files.map((file) => {
-                    // Extract filename properly considering windows backslashes and posix forward slashes
-                    const fileName = file.replace(/\\/g, '/').split('/').pop() || file
-                    const isSelected = selectedFile === file
-                    return (
-                      <button
-                        key={file}
-                        onClick={() => handleSelectFile(file)}
-                        className={`w-full text-left p-3 border-2 border-black dark:border-white font-mono truncate transition-all ${
-                          isSelected
-                            ? 'bg-blue-300 dark:bg-blue-700 font-bold translate-x-2'
-                            : 'bg-white dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900'
-                        }`}
-                      >
-                        {fileName}
-                      </button>
-                    )
-                  })
-                )}
-              </div>
+        <div className="flex-1 overflow-auto p-2 space-y-2">
+          {files.length === 0 ? (
+            <div className="p-4 text-center italic" style={{ color: 'var(--text-color)' }}>
+              {t('gpg_no_files')}
             </div>
-
-            {/* Decryption Panel */}
-            <div className="border-4 border-black dark:border-white bg-white dark:bg-zinc-900 flex flex-col p-6">
-              {!selectedFile ? (
-                <div className="flex-1 flex items-center justify-center text-zinc-500 italic text-lg text-center">
-                  Select a file from the list to decrypt
-                </div>
-              ) : (
-                <form onSubmit={handleDecryptSubmit} className="flex flex-col h-full">
-                  <h3 className="text-xl font-bold mb-4 uppercase pb-2 border-b-2 border-black dark:border-white">
-                    Decrypt File
-                  </h3>
-                  <div className="mb-4">
-                    <p className="font-mono text-sm break-all mb-2">
-                      {t('gpg_enter_passphrase')} <br />
-                      <strong>{selectedFile.replace(/\\/g, '/').split('/').pop()}</strong>
-                    </p>
-                    <input
-                      type="password"
-                      value={passphrase}
-                      onChange={(e) => setPassphrase(e.target.value)}
-                      placeholder={t('gpg_passphrase_placeholder')}
-                      className="w-full p-3 bg-zinc-100 dark:bg-zinc-800 border-4 border-black dark:border-white focus:outline-none focus:bg-yellow-50 dark:focus:bg-yellow-900/30 transition-colors font-mono"
-                      autoFocus
-                    />
-                  </div>
-
-                  {decryptError && (
-                    <div className="mb-4 p-3 bg-red-200 dark:bg-red-900 border-2 border-red-500 text-red-900 dark:text-red-100 font-bold">
-                      {t(decryptError)}
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={isDecrypting || !passphrase}
-                    className={`mt-auto w-full py-4 font-black uppercase text-xl border-4 border-black dark:border-white transition-all ${
-                      isDecrypting || !passphrase
-                        ? 'bg-zinc-300 dark:bg-zinc-700 text-zinc-500 cursor-not-allowed'
-                        : 'bg-green-400 hover:bg-green-300 text-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none'
-                    }`}
-                  >
-                    {isDecrypting ? t('gpg_decrypting') : t('gpg_decrypt_btn')}
-                  </button>
-
-                  <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/50 border-2 border-yellow-500 text-sm">
-                    {t('gpg_passphrase_note')}
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-        )}
+          ) : (
+            files.map((file) => {
+              // Extract filename properly considering windows backslashes and posix forward slashes
+              const fileName = file.replace(/\\/g, '/').split('/').pop() || file
+              const isSelected = selectedFile === file
+              return (
+                <button
+                  key={file}
+                  onClick={() => handleSelectFile(file)}
+                  className={`w-full text-left p-3 border-[var(--border-width)] border-[var(--border-color)] font-mono truncate transition-all ${
+                    isSelected
+                      ? 'bg-[var(--accent-primary)] font-bold translate-x-2 shadow-[4px_4px_0_var(--border-color)]'
+                      : 'bg-[var(--bg-color)] hover:bg-[var(--accent-secondary)]'
+                  }`}
+                >
+                  {fileName}
+                </button>
+              )
+            })
+          )}
+        </div>
       </div>
 
-      {renderViewer()}
+      {/* Decryption Panel */}
+      <div className="brutalist-panel flex flex-col p-6">
+        {!selectedFile ? (
+          <div
+            className="flex-1 flex items-center justify-center italic text-lg text-center"
+            style={{ color: 'var(--text-color)' }}
+          >
+            Select a file from the list to decrypt
+          </div>
+        ) : (
+          <form onSubmit={handleDecryptSubmit} className="flex flex-col h-full">
+            <h3 className="text-xl font-bold mb-4 uppercase pb-2 border-b-[var(--border-width)] border-[var(--border-color)]">
+              Decrypt File
+            </h3>
+            <div className="mb-4">
+              <p className="font-mono text-sm break-all mb-2">
+                {t('gpg_enter_passphrase')} <br />
+                <strong>{selectedFile.replace(/\\/g, '/').split('/').pop()}</strong>
+              </p>
+              <input
+                type="password"
+                value={passphrase}
+                onChange={(e) => setPassphrase(e.target.value)}
+                placeholder={t('gpg_passphrase_placeholder')}
+                className="brutalist-input w-full font-mono"
+                autoFocus
+              />
+            </div>
+
+            {decryptError && (
+              <div
+                className="mb-4 p-3 font-bold"
+                style={{
+                  backgroundColor: 'var(--accent-danger)',
+                  color: 'white',
+                  border: 'var(--border-width) solid var(--border-color)'
+                }}
+              >
+                {t(decryptError)}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isDecrypting || !passphrase}
+              className={`mt-auto brutalist-button w-full uppercase text-xl py-4 ${
+                isDecrypting || !passphrase ? '' : 'primary'
+              }`}
+              style={{
+                cursor: isDecrypting || !passphrase ? 'not-allowed' : 'pointer',
+                opacity: isDecrypting || !passphrase ? 0.7 : 1
+              }}
+            >
+              {isDecrypting ? t('gpg_decrypting') : t('gpg_decrypt_btn')}
+            </button>
+
+            <div
+              className="mt-4 p-3 text-sm"
+              style={{
+                backgroundColor: 'var(--accent-warning)',
+                border: 'var(--border-width) solid var(--border-color)',
+                color: 'black'
+              }}
+            >
+              {t('gpg_passphrase_note')}
+            </div>
+          </form>
+        )}
+      </div>
     </div>
+  ) : null
+
+  return (
+    <>
+      <ToolView
+        description={t('tool_gpg_viewer_desc')}
+        inputSection={inputSection}
+        outputSection={outputSection}
+      />
+      {renderViewer()}
+    </>
   )
 }
 
