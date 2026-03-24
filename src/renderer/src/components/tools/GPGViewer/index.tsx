@@ -15,7 +15,8 @@ export function GPGViewer(): React.JSX.Element {
     handleSelectFolder,
     handleSelectFile,
     handleDecrypt,
-    handleCloseViewer
+    handleCloseViewer,
+    handleSaveFile
   } = useGPGViewer()
 
   const [passphrase, setPassphrase] = useState('')
@@ -41,34 +42,69 @@ export function GPGViewer(): React.JSX.Element {
         <div className="bg-white dark:bg-zinc-900 border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
           <div className="flex justify-between items-center p-4 border-b-4 border-black dark:border-white bg-blue-100 dark:bg-blue-900">
             <h3 className="text-xl font-bold truncate pr-4">{decryptedFile.originalFileName}</h3>
-            <button onClick={handleCloseViewer} className="brutalist-button danger small">
-              {t('gpg_close_viewer')}
-            </button>
+            <div className="flex gap-2">
+              {!decryptedFile.extractedFiles && (
+                <button onClick={handleSaveFile} className="brutalist-button info small">
+                  Save As...
+                </button>
+              )}
+              <button onClick={handleCloseViewer} className="brutalist-button danger small">
+                {t('gpg_close_viewer')}
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-100 dark:bg-zinc-800">
-            {decryptedFile.mimeType.startsWith('image/') && (
-              <img src={fileUrl} alt="Decrypted" className="max-w-full max-h-full object-contain" />
-            )}
-            {decryptedFile.mimeType.startsWith('video/') && (
-              <video src={fileUrl} controls className="max-w-full max-h-full" />
-            )}
-            {decryptedFile.mimeType.startsWith('text/') ||
-            decryptedFile.mimeType === 'application/json' ? (
-              <iframe
-                src={fileUrl}
-                className="w-full h-full bg-white dark:bg-black font-mono p-4"
-                title="Decrypted Text"
-              />
+            {decryptedFile.extractedFiles ? (
+              <div className="w-full h-full bg-white dark:bg-black p-4 font-mono overflow-auto border-2 border-black dark:border-white">
+                <h4 className="font-bold mb-4 border-b-2 border-black dark:border-white pb-2 uppercase">
+                  Extracted Archive Contents ({decryptedFile.extractedFiles.length})
+                </h4>
+                <ul className="space-y-2">
+                  {decryptedFile.extractedFiles.map((file) => (
+                    <li
+                      key={file.path}
+                      className={`flex items-center gap-3 ${file.isDirectory ? 'font-bold' : ''}`}
+                    >
+                      <span className="text-xl">{file.isDirectory ? '📁' : '📄'}</span>
+                      <span className="break-all">{file.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : (
-              !decryptedFile.mimeType.startsWith('image/') &&
-              !decryptedFile.mimeType.startsWith('video/') &&
-              !decryptedFile.mimeType.startsWith('text/') &&
-              decryptedFile.mimeType !== 'application/json' && (
-                <div className="text-center p-8 bg-yellow-100 dark:bg-yellow-900 border-2 border-yellow-500">
-                  <p className="font-bold">Preview not available for this file type.</p>
-                  <p className="text-sm mt-2">MIME Type: {decryptedFile.mimeType}</p>
-                </div>
-              )
+              <>
+                {decryptedFile.mimeType.startsWith('image/') && (
+                  <img
+                    src={fileUrl}
+                    alt="Decrypted"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                )}
+                {decryptedFile.mimeType.startsWith('video/') && (
+                  <video src={fileUrl} controls className="max-w-full max-h-full" />
+                )}
+                {decryptedFile.mimeType.startsWith('text/') ||
+                decryptedFile.mimeType === 'application/json' ? (
+                  <iframe
+                    src={fileUrl}
+                    className="w-full h-full bg-white dark:bg-black font-mono p-4"
+                    title="Decrypted Text"
+                  />
+                ) : (
+                  !decryptedFile.mimeType.startsWith('image/') &&
+                  !decryptedFile.mimeType.startsWith('video/') &&
+                  !decryptedFile.mimeType.startsWith('text/') &&
+                  decryptedFile.mimeType !== 'application/json' && (
+                    <div className="text-center p-8 bg-yellow-100 dark:bg-yellow-900 border-2 border-yellow-500 flex flex-col items-center">
+                      <p className="font-bold">Preview not available for this file type.</p>
+                      <p className="text-sm mt-2 mb-4">MIME Type: {decryptedFile.mimeType}</p>
+                      <button onClick={handleSaveFile} className="brutalist-button info">
+                        Save As...
+                      </button>
+                    </div>
+                  )
+                )}
+              </>
             )}
           </div>
         </div>
@@ -114,7 +150,7 @@ export function GPGViewer(): React.JSX.Element {
                 <button
                   key={file}
                   onClick={() => handleSelectFile(file)}
-                  className={`w-full text-left p-3 border-[var(--border-width)] border-[var(--border-color)] font-mono truncate transition-all ${
+                  className={`brutalist-button w-full text-left p-3 font-mono truncate transition-all ${
                     isSelected
                       ? 'bg-[var(--accent-primary)] font-bold translate-x-2 shadow-[4px_4px_0_var(--border-color)]'
                       : 'bg-[var(--bg-color)] hover:bg-[var(--accent-secondary)]'
@@ -140,7 +176,7 @@ export function GPGViewer(): React.JSX.Element {
         ) : (
           <form onSubmit={handleDecryptSubmit} className="flex flex-col h-full">
             <h3 className="text-xl font-bold mb-4 uppercase pb-2 border-b-[var(--border-width)] border-[var(--border-color)]">
-              Decrypt File
+              Unencrypt File
             </h3>
             <div className="mb-4">
               <p className="font-mono text-sm break-all mb-2">
@@ -181,7 +217,7 @@ export function GPGViewer(): React.JSX.Element {
                 opacity: isDecrypting || !passphrase ? 0.7 : 1
               }}
             >
-              {isDecrypting ? t('gpg_decrypting') : t('gpg_decrypt_btn')}
+              {isDecrypting ? t('gpg_decrypting') : 'UNENCRYPT & VIEW'}
             </button>
 
             <div

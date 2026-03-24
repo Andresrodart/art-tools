@@ -73,7 +73,9 @@ const api = {
   decryptGpgFile: (filePath: string, passphrase: string) =>
     ipcRenderer.invoke('gpg:decrypt-file', filePath, passphrase),
   cleanupGpgTempFile: (tempFilePath: string) =>
-    ipcRenderer.invoke('gpg:cleanup-temp-file', tempFilePath)
+    ipcRenderer.invoke('gpg:cleanup-temp-file', tempFilePath),
+  saveGpgFile: (tempFilePath: string, defaultName: string) =>
+    ipcRenderer.invoke('gpg:save-file', tempFilePath, defaultName)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

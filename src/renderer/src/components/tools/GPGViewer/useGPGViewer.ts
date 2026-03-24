@@ -4,6 +4,8 @@ export interface DecryptedFile {
   tempFilePath: string
   mimeType: string
   originalFileName: string
+  extractedFiles?: { name: string; path: string; isDirectory: boolean }[]
+  extractedDir?: string
 }
 
 interface UseGPGViewerResult {
@@ -17,6 +19,7 @@ interface UseGPGViewerResult {
   handleSelectFile: (file: string) => void
   handleDecrypt: (passphrase: string) => Promise<void>
   handleCloseViewer: () => Promise<void>
+  handleSaveFile: () => Promise<void>
 }
 
 export function useGPGViewer(): UseGPGViewerResult {
@@ -77,6 +80,16 @@ export function useGPGViewer(): UseGPGViewerResult {
     setDecryptedFile(null)
   }
 
+  const handleSaveFile = async (): Promise<void> => {
+    if (decryptedFile?.tempFilePath && decryptedFile?.originalFileName) {
+      try {
+        await window.api.saveGpgFile(decryptedFile.tempFilePath, decryptedFile.originalFileName)
+      } catch (error) {
+        console.error('Error saving file:', error)
+      }
+    }
+  }
+
   // Cleanup on unmount or when selecting a different file/folder
   useEffect(() => {
     const currentDecryptedFile = decryptedFile
@@ -97,6 +110,7 @@ export function useGPGViewer(): UseGPGViewerResult {
     handleSelectFolder,
     handleSelectFile,
     handleDecrypt,
-    handleCloseViewer
+    handleCloseViewer,
+    handleSaveFile
   }
 }

@@ -297,6 +297,22 @@ app.whenReady().then(() => {
     return true
   })
 
+  ipcMain.handle('gpg:save-file', async (_event, tempFilePath: string, defaultName: string) => {
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath: defaultName
+    })
+
+    if (canceled || !filePath) return false
+
+    try {
+      await fs.promises.copyFile(tempFilePath, filePath)
+      return true
+    } catch (err) {
+      console.error('Failed to save decrypted file:', err)
+      return false
+    }
+  })
+
   createWindow()
 
   app.on('activate', function () {

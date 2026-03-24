@@ -46,8 +46,15 @@ declare global {
       decryptGpgFile: (
         filePath: string,
         passphrase: string
-      ) => Promise<{ tempFilePath: string; mimeType: string; originalFileName: string }>
+      ) => Promise<{
+        tempFilePath: string
+        mimeType: string
+        originalFileName: string
+        extractedFiles?: { name: string; path: string; isDirectory: boolean }[]
+        extractedDir?: string
+      }>
       cleanupGpgTempFile: (tempFilePath: string) => Promise<boolean>
+      saveGpgFile: (tempFilePath: string, defaultName: string) => Promise<boolean>
     }
   }
 }
