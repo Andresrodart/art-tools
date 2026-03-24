@@ -73,7 +73,12 @@ export async function decryptGpgFile(filePath: string, passphrase: string): Prom
     else if (decryptedExt === '.txt') mimeType = 'text/plain'
     else if (decryptedExt === '.md') mimeType = 'text/markdown'
     else if (decryptedExt === '.json') mimeType = 'application/json'
-    else if (decryptedExt === '.tar' || decryptedExt === '.gz') mimeType = 'application/x-tar'
+    else if (
+      originalFileName.toLowerCase().endsWith('.tar.gz') ||
+      originalFileName.toLowerCase().endsWith('.tgz') ||
+      decryptedExt === '.tar'
+    )
+      mimeType = 'application/x-tar'
     else if (decryptedExt === '.zip') mimeType = 'application/zip'
 
     let extractedFiles: ExtractedFile[] | undefined
