@@ -9,6 +9,7 @@ import { SatProfileManager } from './components/tools/tax/SatProfileManager'
 import { FacturaOrganizer } from './components/tools/tax/FacturaOrganizer'
 import { FrequentContactsManager } from './components/tools/tax/FrequentContactsManager'
 import { TaxDashboard } from './components/tools/tax/TaxDashboard'
+import { GPGViewer } from './components/tools/GPGViewer'
 import { Header } from './components/layout/Header'
 import { Tabs } from './components/layout/Tabs'
 import { useHeaderStore } from './store/headerStore'
@@ -98,6 +99,8 @@ function App(): React.JSX.Element {
         return <FrequentContactsManager />
       case 'TaxDashboard':
         return <TaxDashboard />
+      case 'GPGViewer':
+        return <GPGViewer />
       default:
         return <div>Unknown tool: {tool}</div>
     }
