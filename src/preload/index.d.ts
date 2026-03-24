@@ -42,6 +42,12 @@ declare global {
       setPreferences: (preferences: Record<string, unknown>) => Promise<boolean>
       getSatProfile: () => Promise<Record<string, unknown> | null>
       saveSatProfile: (profile: Record<string, unknown>) => Promise<boolean>
+      listGpgFiles: (folderPath: string) => Promise<string[]>
+      decryptGpgFile: (
+        filePath: string,
+        passphrase: string
+      ) => Promise<{ tempFilePath: string; mimeType: string; originalFileName: string }>
+      cleanupGpgTempFile: (tempFilePath: string) => Promise<boolean>
     }
   }
 }

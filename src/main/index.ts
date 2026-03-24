@@ -10,7 +10,11 @@ import { thresholdMergerTask } from './services/thresholdMerger'
 import { fileScraperTask } from './services/fileScraper'
 import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderCleaner'
 import { getSatProfile, saveSatProfile, SatProfile } from './services/satProfile'
+import { listGpgFiles, decryptGpgFile, cleanupGpgTempFile } from './services/gpgViewer'
+import { protocol } from 'electron'
+import { net } from 'electron'
 import fs from 'fs'
+import { pathToFileURL } from 'url'
 
 function getPreferencesPath(): string {
   return join(app.getPath('userData'), 'preferences.json')
@@ -54,6 +58,25 @@ function createWindow(): void {
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
+
+  // Register custom protocol for GPG media files
+  protocol.handle('gpg-media', (request) => {
+    let filePath = request.url.slice('gpg-media://'.length)
+    if (process.platform === 'win32') {
+      // Handle windows paths
+      filePath = filePath.replace(/^\//, '')
+    } else {
+      filePath = '/' + filePath
+    }
+    filePath = decodeURIComponent(filePath)
+
+    // Security check: ensure the file is from our specific temp prefix
+    if (!filePath.includes('art-tools-gpg-')) {
+      return new Response('Access Denied', { status: 403 })
+    }
+
+    return net.fetch(pathToFileURL(filePath).toString())
+  })
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -259,6 +282,20 @@ app.whenReady().then(() => {
       return task.id
     }
   )
+
+  // --------------- GPG Viewer ----------------
+  ipcMain.handle('gpg:list-files', async (_event, folderPath: string) => {
+    return await listGpgFiles(folderPath)
+  })
+
+  ipcMain.handle('gpg:decrypt-file', async (_event, filePath: string, passphrase: string) => {
+    return await decryptGpgFile(filePath, passphrase)
+  })
+
+  ipcMain.handle('gpg:cleanup-temp-file', async (_event, tempFilePath: string) => {
+    await cleanupGpgTempFile(tempFilePath)
+    return true
+  })
 
   createWindow()
 
