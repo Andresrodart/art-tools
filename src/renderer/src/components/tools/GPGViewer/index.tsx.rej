@@ -1,0 +1,14 @@
+--- index.tsx
++++ index.tsx
+@@ -43,10 +44,10 @@
+       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+         <div className="bg-white dark:bg-zinc-900 border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+           <div className="flex justify-between items-center p-4 border-b-4 border-black dark:border-white bg-blue-100 dark:bg-blue-900">
+             <h3 className="text-xl font-bold truncate pr-4">{decryptedFile.originalFileName}</h3>
+             <button
+               onClick={handleCloseViewer}
+-              className="px-4 py-2 bg-red-500 text-white font-bold border-2 border-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all"
++              className="brutalist-button danger small"
+             >
+               {t('gpg_close_viewer')}
+             </button>

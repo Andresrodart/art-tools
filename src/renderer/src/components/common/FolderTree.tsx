@@ -3,21 +3,26 @@ import { TreeNode } from './types'
 
 export const FolderTree = ({
   node,
-  ignorePaths,
-  toggleIgnore,
+  ignorePaths = [],
+  toggleIgnore = () => {},
   depth = 0,
-  isParentIgnored = false
+  isParentIgnored = false,
+  renderAction
 }: {
   node: TreeNode
-  ignorePaths: string[]
-  toggleIgnore: (path: string) => void
+  ignorePaths?: string[]
+  toggleIgnore?: (path: string) => void
   depth?: number
   isParentIgnored?: boolean
+  renderAction?: (node: TreeNode) => React.ReactNode
 }): React.JSX.Element | null => {
   const [expanded, setExpanded] = useState(depth < 2)
   const hasChildren = Object.keys(node.children).length > 0
 
-  if (node.filesCount === 0 && !node.isError && depth > 0 && !hasChildren) return null
+  // For standard folder scanning, we skip empty/no-error folders.
+  // For archive trees, we want to show everything.
+  // We'll rely on hasChildren and isDirectory to decide.
+  if (!node.isDirectory && depth === 0 && !hasChildren) return null
 
   const isDirectlyIgnored = ignorePaths.includes(node.fullPath)
   const isEffectivelyIgnored = isDirectlyIgnored || isParentIgnored
@@ -74,14 +79,15 @@ export const FolderTree = ({
           style={{
             color: node.isError && !isParentIgnored ? '#ff8787' : 'inherit',
             fontWeight: node.isError && !isParentIgnored ? 'bold' : 'normal',
-            textDecoration: isParentIgnored ? 'line-through' : 'none'
+            textDecoration: isParentIgnored ? 'line-through' : 'none',
+            fontSize: node.isDirectory ? '1rem' : '0.9rem'
           }}
         >
-          {node.isError ? '⚠️ ' : '📁 '}
+          {node.isError ? '⚠️ ' : node.isDirectory ? '📁 ' : '📄 '}
           {node.name}
         </span>
 
-        {!node.isError && (
+        {!node.isError && node.isDirectory && node.filesCount > 0 && (
           <span style={{ color: '#888', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
             ({node.filesCount} files)
           </span>
@@ -93,64 +99,65 @@ export const FolderTree = ({
         )}
 
         {/* Dotted Leader Line */}
-        {depth > 0 && (
-          <div
-            style={{
-              flexGrow: 1,
-              borderBottom: '1px dotted #555',
-              margin: '0 8px',
-              position: 'relative',
-              top: '-4px'
-            }}
-          />
-        )}
+        <div
+          style={{
+            flexGrow: 1,
+            borderBottom: '1px dotted #555',
+            margin: '0 8px',
+            position: 'relative',
+            top: '-4px',
+            minWidth: '20px'
+          }}
+        />
 
-        {depth > 0 &&
-          (() => {
-            if (isParentIgnored) {
+        {renderAction
+          ? renderAction(node)
+          : depth > 0 &&
+            (() => {
+              if (isParentIgnored) {
+                return (
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      color: '#666',
+                      textTransform: 'uppercase',
+                      fontWeight: 'bold',
+                      minWidth: '85px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    Skipped
+                  </span>
+                )
+              }
+
               return (
-                <span
+                <button
+                  onClick={() => toggleIgnore(node.fullPath)}
+                  title={isDirectlyIgnored ? 'Remove from Skip List' : 'Add to Skip List'}
+                  onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(1.5)')}
+                  onMouseOut={(e) => (e.currentTarget.style.filter = 'none')}
                   style={{
+                    background: isDirectlyIgnored ? '#495057' : 'var(--bg-tertiary, #e03131)',
+                    border: isDirectlyIgnored ? '1px solid #777' : 'none',
+                    borderRadius: '6px',
+                    color: isDirectlyIgnored ? '#aaa' : 'white',
                     fontSize: '0.7rem',
-                    color: '#666',
+                    padding: '4px 10px',
+                    cursor: 'pointer',
+                    marginLeft: 'auto',
                     textTransform: 'uppercase',
                     fontWeight: 'bold',
                     minWidth: '85px',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    transition: 'all 0.2s',
+                    opacity: isDirectlyIgnored ? 0.7 : 1
                   }}
                 >
-                  Skipped
-                </span>
+                  {isDirectlyIgnored ? '✔ Ignored' : '🚫 Ignore'}
+                </button>
               )
-            }
-
-            return (
-              <button
-                onClick={() => toggleIgnore(node.fullPath)}
-                title={isDirectlyIgnored ? 'Remove from Skip List' : 'Add to Skip List'}
-                onMouseOver={(e) => (e.currentTarget.style.filter = 'brightness(1.5)')}
-                onMouseOut={(e) => (e.currentTarget.style.filter = 'none')}
-                style={{
-                  background: isDirectlyIgnored ? '#495057' : 'var(--bg-tertiary, #e03131)',
-                  border: isDirectlyIgnored ? '1px solid #777' : 'none',
-                  borderRadius: '6px',
-                  color: isDirectlyIgnored ? '#aaa' : 'white',
-                  fontSize: '0.7rem',
-                  padding: '4px 10px',
-                  cursor: 'pointer',
-                  marginLeft: 'auto',
-                  textTransform: 'uppercase',
-                  fontWeight: 'bold',
-                  minWidth: '85px',
-                  textAlign: 'center',
-                  transition: 'all 0.2s',
-                  opacity: isDirectlyIgnored ? 0.7 : 1
-                }}
-              >
-                {isDirectlyIgnored ? '✔ Ignored' : '🚫 Ignore'}
-              </button>
-            )
-          })()}
+            })()}
       </div>
 
       {expanded && hasChildren && (
@@ -163,6 +170,7 @@ export const FolderTree = ({
               toggleIgnore={toggleIgnore}
               depth={depth + 1}
               isParentIgnored={isEffectivelyIgnored}
+              renderAction={renderAction}
             />
           ))}
         </div>

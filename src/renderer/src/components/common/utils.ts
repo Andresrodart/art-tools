@@ -10,6 +10,7 @@ export const buildTree = (results: BaseTaskResult[], sourcePath: string | null):
     fullPath: sourcePath || '',
     filesCount: 0,
     isError: false,
+    isDirectory: true,
     children: {}
   }
 
@@ -42,6 +43,7 @@ export const buildTree = (results: BaseTaskResult[], sourcePath: string | null):
           fullPath: builtPath.replace(/\//g, '\\'), // Revert to Windows path formatting natively
           filesCount: 0,
           isError: false,
+          isDirectory: true,
           children: {}
         }
       }
@@ -66,6 +68,42 @@ export const buildTree = (results: BaseTaskResult[], sourcePath: string | null):
     return sum
   }
   computeCounts(root)
+
+  return root
+}
+
+export const buildArchiveTree = (
+  files: { name: string; path: string; isDirectory: boolean }[],
+  rootName: string
+): TreeNode => {
+  const root: TreeNode = {
+    name: rootName,
+    fullPath: rootName,
+    filesCount: 0,
+    isError: false,
+    isDirectory: true,
+    children: {}
+  }
+
+  files.forEach((file) => {
+    const parts = file.name.replace(/\\/g, '/').split('/')
+    let current = root
+
+    parts.forEach((part, index) => {
+      const isLast = index === parts.length - 1
+      if (!current.children[part]) {
+        current.children[part] = {
+          name: part,
+          fullPath: isLast ? file.path : part, // Store full temp path for leaves
+          filesCount: 0,
+          isError: false,
+          isDirectory: isLast ? file.isDirectory : true,
+          children: {}
+        }
+      }
+      current = current.children[part]
+    })
+  })
 
   return root
 }

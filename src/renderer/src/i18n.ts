@@ -110,6 +110,20 @@ const resources = {
         'Organize files in a directory into Year/Month/Day folder structure based on their creation dates. Supports EXIF metadata, filename patterns, and file-system timestamps.',
       open_folder: 'Open Folder',
 
+      tool_gpg_viewer_title: 'GPG Secure Viewer',
+      tool_gpg_viewer_desc:
+        'Decrypt and view .gpg, .pgp, and .asc files securely without leaving a permanent trace.',
+      gpg_select_folder: 'Select a folder to view GPG files',
+      gpg_no_files: 'No GPG files found in this folder.',
+      gpg_enter_passphrase: 'Enter passphrase for: ',
+      gpg_passphrase_placeholder: 'Passphrase...',
+      gpg_decrypt_btn: 'Decrypt & View',
+      gpg_decrypting: 'Decrypting...',
+      gpg_error: 'Error decrypting file. Please check your passphrase.',
+      gpg_close_viewer: 'Close Viewer',
+      gpg_passphrase_note:
+        'Note: Passphrases are NOT stored or cached. Decrypted files are kept in a secure temporary location and deleted when the viewer is closed.',
+
       input: 'Input',
       progress: 'Progress',
       output: 'Output',
@@ -232,6 +246,20 @@ const resources = {
       desc_org:
         'Organice los archivos de un directorio en una estructura de carpetas de Año/Mes/Día según sus fechas de creación. Soporta metadatos EXIF, patrones de nombre de archivo y marcas de tiempo del sistema de archivos.',
       open_folder: 'Abrir Carpeta',
+
+      tool_gpg_viewer_title: 'Visor Seguro GPG',
+      tool_gpg_viewer_desc:
+        'Descifra y visualiza archivos .gpg, .pgp y .asc de forma segura sin dejar un rastro permanente.',
+      gpg_select_folder: 'Selecciona una carpeta para ver archivos GPG',
+      gpg_no_files: 'No se encontraron archivos GPG en esta carpeta.',
+      gpg_enter_passphrase: 'Introduce la contraseña para: ',
+      gpg_passphrase_placeholder: 'Contraseña...',
+      gpg_decrypt_btn: 'Descifrar y Ver',
+      gpg_decrypting: 'Descifrando...',
+      gpg_error: 'Error al descifrar el archivo. Por favor verifica tu contraseña.',
+      gpg_close_viewer: 'Cerrar Visor',
+      gpg_passphrase_note:
+        'Nota: Las contraseñas NO se almacenan ni se guardan en caché. Los archivos descifrados se mantienen en una ubicación temporal segura y se eliminan al cerrar el visor.',
 
       input: 'Entrada',
       progress: 'Progreso',

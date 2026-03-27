@@ -3,6 +3,7 @@ export interface TreeNode {
   fullPath: string
   filesCount: number
   isError: boolean
+  isDirectory: boolean
   errorMsg?: string
   children: Record<string, TreeNode>
 }
