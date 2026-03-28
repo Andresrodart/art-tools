@@ -76,6 +76,14 @@ export const toolsRegistry: ToolDefinition[] = [
     descKey: 'tool_gpg_viewer_desc',
     categories: ['File', 'Security'],
     componentName: 'GPGViewer'
+  },
+  {
+    id: 'TaxScanner',
+    nameKey: 'Tax Sheet Creator',
+    descKey:
+      'Scans directories to extract financial data and generate global income tracking on Google Sheets.',
+    categories: ['Tax', 'Finance'],
+    componentName: 'TaxScanner'
   }
 ]
 
