@@ -18,7 +18,7 @@ describe('Threshold Merger Performance Benchmark', () => {
     const filesPerFolder = 50
 
     // Create many files
-    const createPromises = []
+    const createPromises: Promise<string>[] = []
     for (let i = 0; i < numFolders; i++) {
       const folderName = `folder_${i}`
       for (let j = 0; j < filesPerFolder; j++) {
@@ -38,7 +38,7 @@ describe('Threshold Merger Performance Benchmark', () => {
       // but since the task deletes them, we must.
       // Re-creating them...
       if (k > 0) {
-        const recreatePromises = []
+        const recreatePromises: Promise<string>[] = []
         for (let i = 0; i < numFolders; i++) {
           const folderName = `folder_${i}`
           for (let j = 0; j < filesPerFolder; j++) {
