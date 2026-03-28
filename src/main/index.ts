@@ -12,6 +12,13 @@ import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderC
 import { getSatProfile, saveSatProfile, SatProfile } from './services/satProfile'
 import { getSafePathInfo } from './services/utils/pathUtils'
 import { listGpgFiles, decryptGpgFile, cleanupGpgTempFile } from './services/gpgViewer'
+import { initTaxDirectories, scanTaxDirectories } from './services/tax/taxScanner'
+import {
+  getGoogleOAuthClient,
+  getGoogleAuthUrl,
+  setGoogleCredentials,
+  updateGoogleSheet
+} from './services/tax/googleSheets'
 import { protocol } from 'electron'
 import { net } from 'electron'
 import fs from 'fs'
@@ -298,6 +305,78 @@ app.whenReady().then(() => {
       return task.id
     }
   )
+
+  // --------------- Tax Scanner ----------------
+  ipcMain.handle('tax:init-directories', async (_event, basePath: string) => {
+    try {
+      await initTaxDirectories(basePath)
+      return { success: true }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle(
+    'tax:scan-and-update',
+    async (
+      _event,
+      basePath: string,
+      geminiApiKey: string,
+      spreadsheetId: string,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      oauthTokens: any
+    ) => {
+      const task = taskManager.createTask('tax-scanner')
+
+      // Run async
+      ;(async () => {
+        try {
+          taskManager.updateTaskStatus(task.id, 'running', 'Scanning files...')
+          const result = await scanTaxDirectories(basePath, geminiApiKey, (msg) => {
+            taskManager.updateTaskStatus(task.id, 'running', msg)
+          })
+
+          if (result.entries.length === 0 && result.errors.length === 0) {
+            taskManager.updateTaskStatus(task.id, 'completed', 'No new files found to process.')
+            return
+          }
+
+          taskManager.updateTaskStatus(task.id, 'running', 'Connecting to Google Sheets...')
+
+          // Note: using placeholder client/secret for the standalone app.
+          // In production, user would provide or embed securely.
+          const oauthClient = getGoogleOAuthClient('YOUR_CLIENT_ID', 'YOUR_CLIENT_SECRET')
+          setGoogleCredentials(oauthClient, oauthTokens)
+
+          taskManager.updateTaskStatus(task.id, 'running', 'Updating Google Sheets...')
+          await updateGoogleSheet(oauthClient, spreadsheetId, result)
+
+          taskManager.updateTaskStatus(
+            task.id,
+            'completed',
+            `Successfully updated sheets with ${result.entries.length} entries.`
+          )
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+          taskManager.updateTaskStatus(task.id, 'error', err.message || 'Unknown error occurred')
+        }
+      })()
+
+      return task.id
+    }
+  )
+
+  ipcMain.handle('tax:get-google-auth-url', async () => {
+    const oauthClient = getGoogleOAuthClient('YOUR_CLIENT_ID', 'YOUR_CLIENT_SECRET')
+    return getGoogleAuthUrl(oauthClient)
+  })
+
+  ipcMain.handle('tax:exchange-google-code', async (_event, code: string) => {
+    const oauthClient = getGoogleOAuthClient('YOUR_CLIENT_ID', 'YOUR_CLIENT_SECRET')
+    const { tokens } = await oauthClient.getToken(code)
+    return tokens
+  })
 
   // --------------- GPG Viewer ----------------
   ipcMain.handle('gpg:list-files', async (_event, folderPath: string) => {

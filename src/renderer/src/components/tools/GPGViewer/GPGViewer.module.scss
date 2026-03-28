@@ -252,17 +252,17 @@
   }
 
   .submitButton {
-  margin-top: auto;
-  width: 100%;
-  text-transform: uppercase;
-  font-size: 1.5rem;
-  padding: 1.5rem 0;
+    margin-top: auto;
+    width: 100%;
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    padding: 1.5rem 0;
 
-  &.primary {
-    background-color: var(--accent-primary);
-    color: black;
+    &.primary {
+      background-color: var(--accent-primary);
+      color: black;
+    }
   }
-}
 
   .passphraseNote {
     margin-top: 1.5rem;
