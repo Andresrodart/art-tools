@@ -10,6 +10,7 @@ import { thresholdMergerTask } from './services/thresholdMerger'
 import { fileScraperTask } from './services/fileScraper'
 import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderCleaner'
 import { getSatProfile, saveSatProfile, SatProfile } from './services/satProfile'
+import { getSafePathInfo } from './services/utils/pathUtils'
 import { listGpgFiles, decryptGpgFile, cleanupGpgTempFile } from './services/gpgViewer'
 import { protocol } from 'electron'
 import { net } from 'electron'
@@ -119,9 +120,24 @@ app.whenReady().then(() => {
     return saveSatProfile(profile)
   })
 
-  // Open a folder or file in the system explorer
+  // Open a folder or show a file in the system explorer with validation.
+  // Using showItemInFolder for files to prevent arbitrary execution while
+  // still providing a way for users to "reach" the result of their operations.
   ipcMain.handle('open-path', async (_, targetPath: string) => {
-    return shell.openPath(targetPath)
+    const pathInfo = await getSafePathInfo(targetPath)
+
+    if (!pathInfo) {
+      return 'Path does not exist or is invalid'
+    }
+
+    if (pathInfo.isDirectory) {
+      return shell.openPath(targetPath)
+    } else {
+      // For files, we show them in the explorer instead of executing them.
+      // This is a much safer default for arbitrary paths.
+      shell.showItemInFolder(targetPath)
+      return ''
+    }
   })
 
   // --- NEW FILE ORGANIZER APIs ---

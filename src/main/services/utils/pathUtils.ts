@@ -37,6 +37,44 @@ export async function getUniqueFilePath(
 }
 
 /**
+ * Validates if the provided path is safe to open.
+ * Returns information about the path if it exists and is valid.
+ *
+ * @param targetPath The path to validate.
+ * @returns A promise resolving to an object with safety info, or null if invalid.
+ */
+export async function getSafePathInfo(
+  targetPath: string
+): Promise<{ exists: boolean; isDirectory: boolean } | null> {
+  if (typeof targetPath !== 'string' || !targetPath) {
+    return null
+  }
+
+  try {
+    const stats = await fs.stat(targetPath)
+    return {
+      exists: true,
+      isDirectory: stats.isDirectory()
+    }
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Validates if the provided path is a string, exists, and is a directory.
+ * This is used to ensure that shell.openPath is only called on directories,
+ * preventing arbitrary file execution of malicious scripts or binaries.
+ *
+ * @param targetPath The path to validate.
+ * @returns A promise resolving to true if valid, false otherwise.
+ */
+export async function isSafeDirectory(targetPath: string): Promise<boolean> {
+  const info = await getSafePathInfo(targetPath)
+  return !!info && info.isDirectory
+}
+
+/**
  * Returns a unique path by checking existence using a custom verification function.
  * This is particularly useful for simulating file operations during a 'dry-run'
  * without actually creating files on disk.
