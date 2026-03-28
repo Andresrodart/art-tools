@@ -105,19 +105,25 @@ async function executeMergeOperation(
       await fs.mkdir(mergedFolderFullPath, { recursive: true })
 
       // 2. Move contents of each source folder into the new target directory
-      for (const folder of folderGroup) {
-        const directoryEntries = await fs.readdir(folder.path)
-        for (const entryName of directoryEntries) {
+      const allEntries = await Promise.all(
+        folderGroup.map(async (folder) => {
+          const entries = await fs.readdir(folder.path)
+          return { folder, entries }
+        })
+      )
+
+      const renamePromises: Promise<void>[] = []
+      for (const { folder, entries } of allEntries) {
+        for (const entryName of entries) {
           const oldEntryPath = join(folder.path, entryName)
           const newEntryPath = join(mergedFolderFullPath, entryName)
-          await fs.rename(oldEntryPath, newEntryPath)
+          renamePromises.push(fs.rename(oldEntryPath, newEntryPath))
         }
       }
+      await Promise.all(renamePromises)
 
       // 3. Delete the now-empty source folders
-      for (const folder of folderGroup) {
-        await fs.rmdir(folder.path)
-      }
+      await Promise.all(folderGroup.map((folder) => fs.rmdir(folder.path)))
     } catch (error: unknown) {
       mergeSuccess = false
       mergeErrorMessage = error instanceof Error ? error.message : String(error)
@@ -153,26 +159,30 @@ export async function mergeSiblingFoldersRecursively(
 
   // 1. Traverse all children first (bottom-up approach)
   const initialSubdirectoryPaths = await getImmediateSubdirectoryPaths(currentDirectoryPath)
-  for (const path of initialSubdirectoryPaths) {
-    await mergeSiblingFoldersRecursively(path, mergeOptions, mergeResults, reporter)
-  }
+  await Promise.all(
+    initialSubdirectoryPaths.map((path) =>
+      mergeSiblingFoldersRecursively(path, mergeOptions, mergeResults, reporter)
+    )
+  )
 
   // 2. Re-fetch children after recursion as sibling merges might have changed them!
   const currentSubdirectoryPaths = await getImmediateSubdirectoryPaths(currentDirectoryPath)
 
   // 3. Identify all subfolders that are candidates for merging based on their element count
-  const mergeCandidates: MergableFolderMetadata[] = []
+  const itemsWithCounts = await Promise.all(
+    currentSubdirectoryPaths.map(async (path) => ({
+      path,
+      elementCount: await getImmediateElementCount(path)
+    }))
+  )
 
-  for (const path of currentSubdirectoryPaths) {
-    const itemVolume = await getImmediateElementCount(path)
-    if (itemVolume < mergeOptions.thresholdX) {
-      mergeCandidates.push({
-        path: path,
-        name: parse(path).name,
-        elementCount: itemVolume
-      })
-    }
-  }
+  const mergeCandidates: MergableFolderMetadata[] = itemsWithCounts
+    .filter((item) => item.elementCount < mergeOptions.thresholdX)
+    .map((item) => ({
+      path: item.path,
+      name: parse(item.path).name,
+      elementCount: item.elementCount
+    }))
 
   // 4. Group candidate subfolders into batches and perform the merges
   let candidateIndex = 0
