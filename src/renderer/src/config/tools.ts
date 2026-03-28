@@ -79,8 +79,9 @@ export const toolsRegistry: ToolDefinition[] = [
   },
   {
     id: 'TaxScanner',
-    nameKey: 'tool_tax_scanner_title',
-    descKey: 'tool_tax_scanner_desc',
+    nameKey: 'Tax Sheet Creator',
+    descKey:
+      'Scans directories to extract financial data and generate global income tracking on Google Sheets.',
     categories: ['Tax', 'Finance'],
     componentName: 'TaxScanner'
   }

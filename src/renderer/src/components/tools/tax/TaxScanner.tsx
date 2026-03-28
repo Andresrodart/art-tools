@@ -77,7 +77,7 @@ export const TaxScanner: React.FC = () => {
 
   return (
     <ToolView
-      description="Scans Mexico/Poland directories for tax files and updates a Google Sheet."
+      description="Scans Mexico/Poland directories for tax files and generates a comprehensive Google Sheet tracking your income and taxes."
       inputSection={
         <>
           <div className="control-group">
