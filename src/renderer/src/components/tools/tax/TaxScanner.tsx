@@ -83,76 +83,76 @@ export const TaxScanner: React.FC = () => {
           <div className="control-group">
             <label>Base Directory (contains Mexico_Tax and Poland_Tax folders):</label>
             <div style={{ display: 'flex', gap: '10px' }}>
-          <input
-            type="text"
-            readOnly
-            value={baseFolder || 'No folder selected'}
-            className="brutalist-input flex-grow"
-          />
-          <button
-             className="brutalist-button info"
-             onClick={async () => {
-               // @ts-ignore
-               const path = await window.api.invoke('select-folder')
-               if (path) setBaseFolder(path)
-             }}
-             disabled={!!activeTask}
-          >
-            Browse
-          </button>
-        </div>
-        <div className="action-row" style={{ marginTop: '0.5rem' }}>
-          <button
-            className="brutalist-button"
-            onClick={handleInitDirs}
-            disabled={!baseFolder || !!activeTask}
-          >
-            Init Directories
-          </button>
-          {initMsg && <span style={{ marginLeft: '1rem' }}>{initMsg}</span>}
-        </div>
-      </div>
+              <input
+                type="text"
+                readOnly
+                value={baseFolder || 'No folder selected'}
+                className="brutalist-input flex-grow"
+              />
+              <button
+                className="brutalist-button info"
+                onClick={async () => {
+                  // @ts-ignore Fallback for IPC interface missing electron definition
+                  const path = await window.api.invoke('select-folder')
+                  if (path) setBaseFolder(path)
+                }}
+                disabled={!!activeTask}
+              >
+                Browse
+              </button>
+            </div>
+            <div className="action-row" style={{ marginTop: '0.5rem' }}>
+              <button
+                className="brutalist-button"
+                onClick={handleInitDirs}
+                disabled={!baseFolder || !!activeTask}
+              >
+                Init Directories
+              </button>
+              {initMsg && <span style={{ marginLeft: '1rem' }}>{initMsg}</span>}
+            </div>
+          </div>
 
-      <div className="control-group" style={{ marginTop: '2rem' }}>
-        <label>Google Spreadsheet ID:</label>
-        <input
-          type="text"
-          className="brutalist-input"
-          value={spreadsheetId}
-          onChange={(e) => setSpreadsheetId(e.target.value)}
-          placeholder="e.g. 1BxiMVs0XRYFgwnTEn..."
-          disabled={!!activeTask}
-        />
-      </div>
-
-      <div className="control-group">
-        <label>Google Authentication:</label>
-        <div>
-          {oauthTokens ? (
-            <span style={{ color: 'green', fontWeight: 'bold' }}>✓ Authenticated</span>
-          ) : (
-            <button
-              className="brutalist-button"
-              onClick={handleGoogleLogin}
+          <div className="control-group" style={{ marginTop: '2rem' }}>
+            <label>Google Spreadsheet ID:</label>
+            <input
+              type="text"
+              className="brutalist-input"
+              value={spreadsheetId}
+              onChange={(e) => setSpreadsheetId(e.target.value)}
+              placeholder="e.g. 1BxiMVs0XRYFgwnTEn..."
               disabled={!!activeTask}
-            >
-              Login to Google
-            </button>
-          )}
-        </div>
-      </div>
+            />
+          </div>
 
-      <div className="control-group">
-        <label>Gemini API Key (Optional fallback for complex PDFs):</label>
-        <input
-          type="password"
-          className="brutalist-input"
-          value={geminiKey}
-          onChange={(e) => setGeminiKey(e.target.value)}
-          placeholder="AIzaSy..."
-          disabled={!!activeTask}
-        />
-      </div>
+          <div className="control-group">
+            <label>Google Authentication:</label>
+            <div>
+              {oauthTokens ? (
+                <span style={{ color: 'green', fontWeight: 'bold' }}>✓ Authenticated</span>
+              ) : (
+                <button
+                  className="brutalist-button"
+                  onClick={handleGoogleLogin}
+                  disabled={!!activeTask}
+                >
+                  Login to Google
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="control-group">
+            <label>Gemini API Key (Optional fallback for complex PDFs):</label>
+            <input
+              type="password"
+              className="brutalist-input"
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              placeholder="AIzaSy..."
+              disabled={!!activeTask}
+            />
+          </div>
 
           <div className="action-row" style={{ marginTop: '2rem' }}>
             <button
@@ -169,7 +169,11 @@ export const TaxScanner: React.FC = () => {
         activeTask && (
           <div style={{ padding: '1rem', border: '2px solid black' }}>
             <strong>Status:</strong> {activeTask.status} <br />
-            {activeTask.error && <span><strong>Error:</strong> {activeTask.error} <br /></span>}
+            {activeTask.error && (
+              <span>
+                <strong>Error:</strong> {activeTask.error} <br />
+              </span>
+            )}
           </div>
         )
       }
@@ -183,7 +187,11 @@ export const TaxScanner: React.FC = () => {
             }}
           >
             <strong>Result:</strong> {completedTask.status} <br />
-            {completedTask.error && <span><strong>Error:</strong> {completedTask.error} <br /></span>}
+            {completedTask.error && (
+              <span>
+                <strong>Error:</strong> {completedTask.error} <br />
+              </span>
+            )}
           </div>
         )
       }
