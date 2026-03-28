@@ -69,6 +69,13 @@ export const toolsRegistry: ToolDefinition[] = [
     descKey: 'tool_tax_dashboard_desc',
     categories: ['Tax'],
     componentName: 'TaxDashboard'
+  },
+  {
+    id: 'GPGViewer',
+    nameKey: 'tool_gpg_viewer_title',
+    descKey: 'tool_gpg_viewer_desc',
+    categories: ['File', 'Security'],
+    componentName: 'GPGViewer'
   }
 ]
 

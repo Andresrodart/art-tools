@@ -1,0 +1,32 @@
+--- src/renderer/src/components/tools/GPGViewer/index.tsx
++++ src/renderer/src/components/tools/GPGViewer/index.tsx
+@@ -51,6 +51,20 @@
+             </button>
+           </div>
+           <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-gray-100 dark:bg-zinc-800">
++            {decryptedFile.extractedFiles && (
++              <div className="w-full h-full bg-white dark:bg-black p-4 font-mono overflow-auto">
++                <h4 className="font-bold mb-4 border-b-2 border-black dark:border-white pb-2">Extracted Contents ({decryptedFile.extractedFiles.length})</h4>
++                <ul className="space-y-1">
++                  {decryptedFile.extractedFiles.map(file => (
++                    <li key={file.path} className={`flex items-center gap-2 ${file.isDirectory ? 'font-bold' : ''}`}>
++                      <span>{file.isDirectory ? '📁' : '📄'}</span>
++                      <span>{file.name}</span>
++                    </li>
++                  ))}
++                </ul>
++              </div>
++            )}
++            {!decryptedFile.extractedFiles && (
++              <>
+             {decryptedFile.mimeType.startsWith('image/') && (
+               <img src={fileUrl} alt="Decrypted" className="max-w-full max-h-full object-contain" />
+             )}
+@@ -74,6 +88,8 @@
+               )
+             )}
++              </>
++            )}
+           </div>
+         </div>
+       </div>

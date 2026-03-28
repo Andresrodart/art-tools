@@ -66,7 +66,16 @@ const api = {
 
   // SAT Profile
   getSatProfile: () => ipcRenderer.invoke('sat-profile:get'),
-  saveSatProfile: (profile: unknown) => ipcRenderer.invoke('sat-profile:save', profile)
+  saveSatProfile: (profile: unknown) => ipcRenderer.invoke('sat-profile:save', profile),
+
+  // GPG Viewer
+  listGpgFiles: (folderPath: string) => ipcRenderer.invoke('gpg:list-files', folderPath),
+  decryptGpgFile: (filePath: string, passphrase: string) =>
+    ipcRenderer.invoke('gpg:decrypt-file', filePath, passphrase),
+  cleanupGpgTempFile: (tempFilePath: string) =>
+    ipcRenderer.invoke('gpg:cleanup-temp-file', tempFilePath),
+  saveGpgFile: (tempFilePath: string, defaultName: string) =>
+    ipcRenderer.invoke('gpg:save-file', tempFilePath, defaultName)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

@@ -1,0 +1,11 @@
+--- src/renderer/src/components/tools/GPGViewer/index.tsx
++++ src/renderer/src/components/tools/GPGViewer/index.tsx
+@@ -42,7 +42,7 @@
+             <h3 className="text-xl font-bold truncate pr-4">{decryptedFile.originalFileName}</h3>
+             <button
+               onClick={handleCloseViewer}
+-              className="px-4 py-2 bg-red-500 text-white font-bold border-2 border-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-none transition-all"
++              className="brutalist-button danger small"
+             >
+               {t('gpg_close_viewer')}
+             </button>

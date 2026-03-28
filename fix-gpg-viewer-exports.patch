@@ -1,0 +1,42 @@
+--- src/main/services/gpgViewer.ts
++++ src/main/services/gpgViewer.ts
+@@ -19,7 +19,7 @@
+   }
+ }
+
+-export async function decryptGpgFile(filePath: string, passphrase: string): Promise<{ tempFilePath: string; mimeType: string }> {
++export async function decryptGpgFile(filePath: string, passphrase: string): Promise<{ tempFilePath: string; mimeType: string; originalFileName: string }> {
+   try {
+     const encryptedData = await fs.promises.readFile(filePath)
+     const message = await openpgp.readMessage({ binaryMessage: encryptedData })
+@@ -35,26 +35,27 @@
+
+     // Attempt to guess original filename by removing .gpg/.pgp/.asc extension
+     let originalFileName = path.basename(filePath)
+     const ext = path.extname(originalFileName).toLowerCase()
+     if (ext === '.gpg' || ext === '.pgp' || ext === '.asc') {
+       originalFileName = originalFileName.slice(0, -ext.length)
+     } else {
+       originalFileName = 'decrypted_file'
+     }
+
+     const tempFilePath = path.join(tempDir, originalFileName)
+     await fs.promises.writeFile(tempFilePath, Buffer.from(decryptedData))
+
+     let mimeType = 'application/octet-stream'
+     const decryptedExt = path.extname(tempFilePath).toLowerCase()
+     if (['.jpg', '.jpeg'].includes(decryptedExt)) mimeType = 'image/jpeg'
+     else if (decryptedExt === '.png') mimeType = 'image/png'
+     else if (decryptedExt === '.gif') mimeType = 'image/gif'
+     else if (decryptedExt === '.webp') mimeType = 'image/webp'
+     else if (decryptedExt === '.mp4') mimeType = 'video/mp4'
+     else if (decryptedExt === '.webm') mimeType = 'video/webm'
+     else if (decryptedExt === '.txt') mimeType = 'text/plain'
+     else if (decryptedExt === '.md') mimeType = 'text/markdown'
+     else if (decryptedExt === '.json') mimeType = 'application/json'
+
+-    return { tempFilePath, mimeType }
++    return { tempFilePath, mimeType, originalFileName }
+   } catch (error) {
+     console.error('Error decrypting GPG file:', error)
+     throw error
