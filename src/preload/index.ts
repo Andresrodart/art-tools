@@ -75,7 +75,25 @@ const api = {
   cleanupGpgTempFile: (tempFilePath: string) =>
     ipcRenderer.invoke('gpg:cleanup-temp-file', tempFilePath),
   saveGpgFile: (tempFilePath: string, defaultName: string) =>
-    ipcRenderer.invoke('gpg:save-file', tempFilePath, defaultName)
+    ipcRenderer.invoke('gpg:save-file', tempFilePath, defaultName),
+
+  // Tax Scanner
+  initTaxDirectories: (basePath: string) => ipcRenderer.invoke('tax:init-directories', basePath),
+  scanAndSyncTax: (
+    basePath: string,
+    geminiApiKey: string,
+    spreadsheetId: string,
+    oauthTokens: unknown
+  ) =>
+    ipcRenderer.invoke('tax:scan-and-update', basePath, geminiApiKey, spreadsheetId, oauthTokens),
+  getGoogleAuthUrl: () => ipcRenderer.invoke('tax:get-google-auth-url'),
+  exchangeGoogleCode: (code: string) => ipcRenderer.invoke('tax:exchange-google-code', code),
+  checkTaxDirectories: (basePath: string) => ipcRenderer.invoke('tax:check-directories', basePath),
+  createSpreadsheet: (oauthTokens: unknown) =>
+    ipcRenderer.invoke('tax:create-spreadsheet', oauthTokens),
+
+  // Generic invoke for un-typed fallback
+  invoke: (channel: string, ...args: unknown[]) => ipcRenderer.invoke(channel, ...args)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

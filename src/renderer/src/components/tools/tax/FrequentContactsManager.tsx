@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import React from 'react'
+import { TaxProfileCheck } from './TaxProfileCheck'
 
 interface Contact {
   id: string
@@ -62,6 +63,8 @@ export const FrequentContactsManager = (): React.JSX.Element => {
         <h2>{t('tool_frequent_contacts_title')}</h2>
         <p>{t('tool_frequent_contacts_desc')}</p>
       </div>
+
+      <TaxProfileCheck />
 
       <form onSubmit={handleAddContact} className="tool-view-section">
         <h3 className="tool-view-section-title">Add New Contact</h3>

@@ -135,7 +135,10 @@ const resources = {
       dry_run_completed: 'Dry Run Completed. Pending UI review.',
       completed_success: 'Completed successfully.',
       failed_status: 'Failed',
-      cancelled_by_user: 'Cancelled by user'
+      cancelled_by_user: 'Cancelled by user',
+      tool_tax_scanner_title: 'Tax Sheet Creator',
+      tool_tax_scanner_desc:
+        'Scans directories to extract financial data and generate global income tracking on Google Sheets.'
     }
   },
   es: {
@@ -272,7 +275,10 @@ const resources = {
       dry_run_completed: 'Simulacro completo. Pendiente de revisión.',
       completed_success: 'Completado con éxito.',
       failed_status: 'Falló',
-      cancelled_by_user: 'Cancelado por el usuario'
+      cancelled_by_user: 'Cancelado por el usuario',
+      tool_tax_scanner_title: 'Creador de Hojas de Impuestos',
+      tool_tax_scanner_desc:
+        'Escanea directorios para extraer datos financieros y generar un seguimiento de ingresos en Google Sheets.'
     }
   }
 }

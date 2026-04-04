@@ -8,7 +8,7 @@ import { EmptyFolderCleaner } from './components/tools/EmptyFolderCleaner'
 import { SatProfileManager } from './components/tools/tax/SatProfileManager'
 import { FacturaOrganizer } from './components/tools/tax/FacturaOrganizer'
 import { FrequentContactsManager } from './components/tools/tax/FrequentContactsManager'
-import { TaxDashboard } from './components/tools/tax/TaxDashboard'
+import { SatLinks } from './components/tools/tax/SatLinks'
 import { TaxScanner } from './components/tools/tax/TaxScanner'
 import { GPGViewer } from './components/tools/GPGViewer'
 import { Header } from './components/layout/Header'
@@ -98,8 +98,8 @@ function App(): React.JSX.Element {
         return <FacturaOrganizer />
       case 'FrequentContactsManager':
         return <FrequentContactsManager />
-      case 'TaxDashboard':
-        return <TaxDashboard />
+      case 'SatLinks':
+        return <SatLinks />
       case 'TaxScanner':
         return <TaxScanner />
       case 'GPGViewer':

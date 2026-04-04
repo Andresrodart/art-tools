@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import React from 'react'
+import { TaxProfileCheck } from './TaxProfileCheck'
 
 export const FacturaOrganizer = (): React.JSX.Element => {
   const { t } = useTranslation()
@@ -19,6 +20,8 @@ export const FacturaOrganizer = (): React.JSX.Element => {
         <h2>{t('tool_factura_organizer_title')}</h2>
         <p>{t('tool_factura_organizer_desc')}</p>
       </div>
+
+      <TaxProfileCheck />
 
       <div className="tool-view-section">
         <h3 className="tool-view-section-title">Select Invoice Directory</h3>

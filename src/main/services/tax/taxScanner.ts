@@ -60,6 +60,21 @@ export async function initTaxDirectories(basePath: string): Promise<void> {
 }
 
 /**
+ * Checks if the required tax directories (Mexico_Tax, Poland_Tax) already exist.
+ */
+export async function checkTaxDirectories(basePath: string): Promise<boolean> {
+  try {
+    for (const country of COUNTRIES) {
+      const countryPath = path.join(basePath, country)
+      await fs.access(countryPath)
+    }
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
  * Scans directories recursively for files.
  */
 async function walkDir(dir: string): Promise<string[]> {

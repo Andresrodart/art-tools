@@ -13,6 +13,24 @@ export function getGoogleOAuthClient(
 }
 
 /**
+ * Creates a new Google Spreadsheet and returns its ID.
+ */
+export async function createSpreadsheet(
+  oauth2Client: InstanceType<typeof google.auth.OAuth2>,
+  title: string
+): Promise<string> {
+  const sheets = google.sheets({ version: 'v4', auth: oauth2Client })
+  const spreadsheet = await sheets.spreadsheets.create({
+    requestBody: {
+      properties: {
+        title
+      }
+    }
+  })
+  return spreadsheet.data.spreadsheetId || ''
+}
+
+/**
  * Generates the Auth URL to prompt the user.
  */
 export function getGoogleAuthUrl(oauth2Client: InstanceType<typeof google.auth.OAuth2>): string {

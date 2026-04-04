@@ -64,11 +64,11 @@ export const toolsRegistry: ToolDefinition[] = [
     componentName: 'FrequentContactsManager'
   },
   {
-    id: 'TaxDashboard',
-    nameKey: 'tool_tax_dashboard_title',
-    descKey: 'tool_tax_dashboard_desc',
+    id: 'SatLinks',
+    nameKey: 'SAT Portal Links',
+    descKey: 'Direct access to relevant SAT portal sections based on your Tax Regime.',
     categories: ['Tax'],
-    componentName: 'TaxDashboard'
+    componentName: 'SatLinks'
   },
   {
     id: 'GPGViewer',
@@ -79,9 +79,8 @@ export const toolsRegistry: ToolDefinition[] = [
   },
   {
     id: 'TaxScanner',
-    nameKey: 'Tax Sheet Creator',
-    descKey:
-      'Scans directories to extract financial data and generate global income tracking on Google Sheets.',
+    nameKey: 'tool_tax_scanner_title',
+    descKey: 'tool_tax_scanner_desc',
     categories: ['Tax', 'Finance'],
     componentName: 'TaxScanner'
   }

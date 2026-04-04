@@ -1,7 +1,6 @@
-import { useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useEffect } from 'react'
 import { useTaxProfileStore } from '../../../store/taxProfileStore'
-import React from 'react'
+import { TaxProfileCheck } from './TaxProfileCheck'
 
 interface DashboardLink {
   label: string
@@ -9,8 +8,7 @@ interface DashboardLink {
   description: string
 }
 
-export const TaxDashboard = (): React.JSX.Element => {
-  const { t } = useTranslation()
+export const SatLinks = (): React.JSX.Element => {
   const { profile, fetchProfile, isLoading } = useTaxProfileStore()
 
   useEffect(() => {
@@ -76,9 +74,11 @@ export const TaxDashboard = (): React.JSX.Element => {
   return (
     <div className="tool-view">
       <div className="tool-view-description">
-        <h2>{t('tool_tax_dashboard_title')}</h2>
-        <p>{t('tool_tax_dashboard_desc')}</p>
+        <h2>SAT Portal Links</h2>
+        <p>Direct access to relevant SAT portal sections based on your Tax Regime.</p>
       </div>
+
+      <TaxProfileCheck />
 
       {isLoading ? (
         <div style={{ color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '1rem' }}>

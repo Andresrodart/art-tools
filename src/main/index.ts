@@ -12,13 +12,19 @@ import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderC
 import { getSatProfile, saveSatProfile, SatProfile } from './services/satProfile'
 import { getSafePathInfo } from './services/utils/pathUtils'
 import { listGpgFiles, decryptGpgFile, cleanupGpgTempFile } from './services/gpgViewer'
-import { initTaxDirectories, scanTaxDirectories } from './services/tax/taxScanner'
+import {
+  initTaxDirectories,
+  scanTaxDirectories,
+  checkTaxDirectories
+} from './services/tax/taxScanner'
 import {
   getGoogleOAuthClient,
   getGoogleAuthUrl,
   setGoogleCredentials,
-  updateGoogleSheet
+  updateGoogleSheet,
+  createSpreadsheet
 } from './services/tax/googleSheets'
+import { DateTime } from 'luxon'
 import { protocol } from 'electron'
 import { net } from 'electron'
 import fs from 'fs'
@@ -376,6 +382,17 @@ app.whenReady().then(() => {
     const oauthClient = getGoogleOAuthClient('YOUR_CLIENT_ID', 'YOUR_CLIENT_SECRET')
     const { tokens } = await oauthClient.getToken(code)
     return tokens
+  })
+
+  ipcMain.handle('tax:check-directories', async (_event, basePath: string) => {
+    return await checkTaxDirectories(basePath)
+  })
+
+  ipcMain.handle('tax:create-spreadsheet', async (_event, oauthTokens: unknown) => {
+    const oauthClient = getGoogleOAuthClient('YOUR_CLIENT_ID', 'YOUR_CLIENT_SECRET')
+    setGoogleCredentials(oauthClient, oauthTokens)
+    const title = `Tax_Report_${DateTime.now().toFormat('yyyy_MM_dd_HHmm')}`
+    return await createSpreadsheet(oauthClient, title)
   })
 
   // --------------- GPG Viewer ----------------
