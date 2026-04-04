@@ -22,6 +22,10 @@ export function FileOrganizer({ onBack, tabId }: FileOrganizerProps): React.JSX.
     setShowExtDropdown,
     isDryRun,
     setIsDryRun,
+    skipYearFolders,
+    setSkipYearFolders,
+    cleanupEmptyFolders,
+    setCleanupEmptyFolders,
     logEntries,
     logRef,
     taskData,
@@ -50,6 +54,10 @@ export function FileOrganizer({ onBack, tabId }: FileOrganizerProps): React.JSX.
           setShowExtDropdown={setShowExtDropdown}
           isDryRun={isDryRun}
           setIsDryRun={setIsDryRun}
+          skipYearFolders={skipYearFolders}
+          setSkipYearFolders={setSkipYearFolders}
+          cleanupEmptyFolders={cleanupEmptyFolders}
+          setCleanupEmptyFolders={setCleanupEmptyFolders}
           taskData={taskData}
           addExtension={addExtension}
           removeExtension={removeExtension}

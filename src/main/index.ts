@@ -172,9 +172,22 @@ app.whenReady().then(() => {
 
   ipcMain.handle(
     'task:start-organize',
-    async (_, folderPath: string, fileTypes: string[], isDryRun: boolean) => {
+    async (
+      _,
+      folderPath: string,
+      fileTypes: string[],
+      isDryRun: boolean,
+      skipYearFolders?: boolean,
+      cleanupEmptyFolders?: boolean
+    ) => {
       const task = taskManager.createTask('organize-files')
-      const options: OrganizeOptions = { folderPath, fileTypes, isDryRun }
+      const options: OrganizeOptions = {
+        folderPath,
+        fileTypes,
+        isDryRun,
+        skipYearFolders,
+        cleanupEmptyFolders
+      }
 
       // Fire and forget, TaskManager handles background progress output
       organizeFilesTask(task.id, options).catch((err) => {

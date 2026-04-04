@@ -19,6 +19,10 @@ export interface OrganizeOptions {
   fileTypes: string[]
   /** If true, simulates the organization without moving files on disk. */
   isDryRun: boolean
+  /** If true, avoids re-scanning folders that already look like year folders (e.g., "2024"). */
+  skipYearFolders?: boolean
+  /** If true, deletes all empty folders after the organization is complete. */
+  cleanupEmptyFolders?: boolean
 }
 
 /**
@@ -51,7 +55,7 @@ export async function organizeFilesTask(
   taskId: string,
   options: OrganizeOptions
 ): Promise<OrganizeResult[]> {
-  const { folderPath, fileTypes, isDryRun } = options
+  const { folderPath, fileTypes, isDryRun, skipYearFolders, cleanupEmptyFolders } = options
   const reporter = new TaskReporter(taskId)
   const organizationResults: OrganizeResult[] = []
 
@@ -68,15 +72,25 @@ export async function organizeFilesTask(
   const directoryWalker = new FileWalker(reporter, {
     extensions: fileTypes,
     skipHidden: true,
-    skipYearFolders: true // Avoid re-scanning already organized year folders
+    skipYearFolders: skipYearFolders ?? true // Default to true if not specified for backward compatibility
   })
 
   // Start the scan and collect all valid file paths
   await directoryWalker.walk(folderPath, async (fullPath) => {
     matchedFilePaths.push(fullPath)
+    reporter.updateProgressThrottled({
+      message: `Scanning... Found ${matchedFilePaths.length} files to organize. Last seen: ${path.basename(fullPath)}`
+    })
   })
 
-  reporter.updateProgress({ total: matchedFilePaths.length, current: 0 })
+  const totalSeen = directoryWalker.getTotalFilesSeen()
+  const totalMatched = directoryWalker.getMatchedFilesCount()
+
+  reporter.updateProgress({
+    total: totalMatched,
+    current: 0,
+    message: `Found ${totalMatched} files to organize out of ${totalSeen} total files.`
+  })
 
   // --- Phase 2: Date Resolution & File Organization ---
   let processedFileCount = 0
@@ -103,7 +117,7 @@ export async function organizeFilesTask(
     // Periodically update progress and check for cancellation during processing
     reporter.updateProgressThrottled({
       current: processedFileCount,
-      message: `Processing: ${filename}`
+      message: `Processing matched file ${processedFileCount}/${totalMatched}: ${filename}`
     })
 
     if (processedFileCount % 50 === 0) {
@@ -194,7 +208,80 @@ export async function organizeFilesTask(
   }
 
   // Force final progress update to flush any throttled states and ensure UI reaches 100%
-  reporter.updateProgress({ current: processedFileCount, message: 'Done' })
+  reporter.updateProgress({
+    current: processedFileCount,
+    message: `Finished processing ${processedFileCount} matched files out of ${totalSeen} total files.`
+  })
+
+  // --- Phase 3: Optional Empty Folder Cleanup ---
+  if (cleanupEmptyFolders && !isDryRun) {
+    reporter.updateProgress({ message: 'Cleaning up empty folders...' })
+    try {
+      const emptyFolders: string[] = []
+
+      async function scanForEmpty(currentPath: string): Promise<boolean> {
+        await reporter.yieldAndCheckCancellation()
+
+        let entries: string[] = []
+        try {
+          entries = await fs.promises.readdir(currentPath)
+        } catch {
+          return false
+        }
+
+        let isEmpty = true
+        for (const entry of entries) {
+          const entryPath = path.join(currentPath, entry)
+          const stats = await fs.promises.stat(entryPath)
+
+          if (stats.isDirectory()) {
+            const isSubfolderEmpty = await scanForEmpty(entryPath)
+            if (!isSubfolderEmpty) isEmpty = false
+          } else {
+            isEmpty = false
+          }
+        }
+
+        if (isEmpty && currentPath !== folderPath) {
+          emptyFolders.push(currentPath)
+        }
+        return isEmpty
+      }
+
+      await scanForEmpty(folderPath)
+
+      if (emptyFolders.length > 0) {
+        reporter.updateProgress({
+          total: emptyFolders.length,
+          current: 0,
+          message: `Deleting ${emptyFolders.length} empty folders...`
+        })
+
+        // Sort folders by depth (deepest first) to ensure clean recursive deletion
+        const sortedFolders = [...emptyFolders].sort(
+          (a, b) => b.split(/[\\/]/).length - a.split(/[\\/]/).length
+        )
+
+        let deletedCount = 0
+        for (const folderToDelete of sortedFolders) {
+          await reporter.yieldAndCheckCancellation()
+          try {
+            await fs.promises.rmdir(folderToDelete)
+            deletedCount++
+            reporter.updateProgress({
+              current: deletedCount,
+              total: sortedFolders.length,
+              message: `Deleted empty folder: ${path.basename(folderToDelete)}`
+            })
+          } catch (err) {
+            console.error(`Failed to delete empty folder ${folderToDelete}:`, err)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Empty folder cleanup failed:', error)
+    }
+  }
 
   // Finalize the task with the complete results array
   if (isDryRun) {

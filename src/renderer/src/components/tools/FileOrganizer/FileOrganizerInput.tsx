@@ -12,6 +12,10 @@ interface FileOrganizerInputProps {
   setShowExtDropdown: (val: boolean) => void
   isDryRun: boolean
   setIsDryRun: (val: boolean) => void
+  skipYearFolders: boolean
+  setSkipYearFolders: (val: boolean) => void
+  cleanupEmptyFolders: boolean
+  setCleanupEmptyFolders: (val: boolean) => void
   taskData?: Task
   addExtension: (ext: string) => void
   removeExtension: (ext: string) => void
@@ -29,6 +33,10 @@ export function FileOrganizerInput({
   setShowExtDropdown,
   isDryRun,
   setIsDryRun,
+  skipYearFolders,
+  setSkipYearFolders,
+  cleanupEmptyFolders,
+  setCleanupEmptyFolders,
   taskData,
   addExtension,
   removeExtension,
@@ -214,6 +222,35 @@ export function FileOrganizerInput({
           <span className="checkbox-label">{t('dry_run')}</span>
         </label>
         <small className="help-text">{t('dry_run_help_org')}</small>
+      </div>
+
+      <div className="control-group check-group">
+        <label>
+          <input
+            type="checkbox"
+            checked={skipYearFolders}
+            onChange={(e) => setSkipYearFolders(e.target.checked)}
+          />
+          <span className="checkbox-label">Skip already organized folders</span>
+        </label>
+        <small className="help-text">
+          If checked, folders that look like years (e.g. 2024) will be skipped to speed up the
+          process.
+        </small>
+      </div>
+
+      <div className="control-group check-group">
+        <label>
+          <input
+            type="checkbox"
+            checked={cleanupEmptyFolders}
+            onChange={(e) => setCleanupEmptyFolders(e.target.checked)}
+          />
+          <span className="checkbox-label">Clean up empty folders</span>
+        </label>
+        <small className="help-text">
+          If checked, any folders that are empty after organization will be deleted.
+        </small>
       </div>
 
       <div className="action-row">

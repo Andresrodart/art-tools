@@ -14,6 +14,8 @@ export interface WalkerOptions {
   skipYearFolders?: boolean
   /** If true, files or folders starting with a dot ('.') will be ignored. */
   skipHidden?: boolean
+  /** Maximum recursion depth. */
+  maxDepth?: number
 }
 
 /**
@@ -26,6 +28,11 @@ export type WalkCallback = (filePath: string, entry: import('fs').Dirent) => Pro
  * filtering results based on options, and reporting progress via a TaskReporter.
  */
 export class FileWalker {
+  private totalFilesSeen: number = 0
+  private matchedFilesCount: number = 0
+  private directoriesScanned: number = 0
+  private entriesProcessedSinceLastYield: number = 0
+
   /**
    * Initializes a FileWalker instance.
    * @param reporter Optional TaskReporter for progress updates and cancellation checks.
@@ -37,14 +44,35 @@ export class FileWalker {
   ) {}
 
   /**
+   * Returns the total number of files encountered during the walk.
+   */
+  getTotalFilesSeen(): number {
+    return this.totalFilesSeen
+  }
+
+  /**
+   * Returns the number of files that matched the walker's criteria.
+   */
+  getMatchedFilesCount(): number {
+    return this.matchedFilesCount
+  }
+
+  /**
    * Recursively walks the directory tree starting from the root directory.
    * Calls the provided callback for every file matching the specified criteria.
    *
    * @param directoryPath The root directory to start the walk from.
    * @param fileFoundCallback The function called whenever a matching file is found.
+   * @param currentDepth The current recursion depth (internal use).
    */
-  async walk(directoryPath: string, fileFoundCallback: WalkCallback): Promise<void> {
-    const { ignorePaths, extensions, skipYearFolders, skipHidden } = this.options
+  async walk(
+    directoryPath: string,
+    fileFoundCallback: WalkCallback,
+    currentDepth: number = 0
+  ): Promise<void> {
+    const { ignorePaths, extensions, skipYearFolders, skipHidden, maxDepth = 10 } = this.options
+
+    if (currentDepth > maxDepth) return
 
     // Check if the current directory is in the ignore list
     if (ignorePaths && ignorePaths.length > 0) {
@@ -68,24 +96,41 @@ export class FileWalker {
       return
     }
 
+    this.directoriesScanned++
+    if (this.reporter) {
+      this.reporter.updateProgressThrottled({
+        message: `Scanning [${this.directoriesScanned} dirs]: ${directoryPath}`
+      })
+    }
+
     try {
       const directoryEntries = await fs.readdir(directoryPath, { withFileTypes: true })
       for (const entry of directoryEntries) {
-        // Yield to the event loop and check for cancellation if a reporter is available
+        // Yield to the event loop and check for cancellation periodically (every 100 entries)
+        // to balance performance with responsiveness.
         if (this.reporter) {
-          await this.reporter.yieldAndCheckCancellation()
+          this.entriesProcessedSinceLastYield++
+          if (this.entriesProcessedSinceLastYield >= 100) {
+            this.entriesProcessedSinceLastYield = 0
+            await this.reporter.yieldAndCheckCancellation()
+          } else {
+            this.reporter.checkCancellation()
+          }
         }
 
         const fullEntryPath = join(directoryPath, entry.name)
 
         if (entry.isDirectory()) {
           // Recursively traverse subdirectories
-          await this.walk(fullEntryPath, fileFoundCallback)
+          await this.walk(fullEntryPath, fileFoundCallback, currentDepth + 1)
         } else if (entry.isFile()) {
+          this.totalFilesSeen++
+
           // Process files in the current directory
           if (skipHidden && entry.name.startsWith('.')) continue
 
           if (this.isMatchingExtension(entry.name, extensions)) {
+            this.matchedFilesCount++
             await fileFoundCallback(fullEntryPath, entry)
           }
         }

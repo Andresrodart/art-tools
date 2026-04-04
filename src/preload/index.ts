@@ -5,8 +5,12 @@ import { electronAPI } from '@electron-toolkit/preload'
 const api = {
   // File Organizer & Tasks
   selectFolder: () => ipcRenderer.invoke('select-folder'),
-  startOrganizeTask: (folderPath: string, fileTypes: string[], isDryRun: boolean) =>
-    ipcRenderer.invoke('task:start-organize', folderPath, fileTypes, isDryRun),
+  startOrganizeTask: (
+    folderPath: string,
+    fileTypes: string[],
+    isDryRun: boolean,
+    skipYearFolders?: boolean
+  ) => ipcRenderer.invoke('task:start-organize', folderPath, fileTypes, isDryRun, skipYearFolders),
   startFolderMetadataTask: (
     folderPath: string,
     includeSize: boolean,

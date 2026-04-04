@@ -112,7 +112,7 @@ describe('useFileOrganizer', () => {
       await result.current.handleStartOrganize()
     })
 
-    expect(mockApi.startOrganizeTask).toHaveBeenCalledWith('C:\\Photos', ['*'], true)
+    expect(mockApi.startOrganizeTask).toHaveBeenCalledWith('C:\\Photos', ['*'], true, true, false)
 
     // Check if task store was updated with the new task ID
     const tabs = useTaskStore.getState().tabs

@@ -11,7 +11,9 @@ interface ElectronWindow {
     startOrganizeTask?: (
       folderPath: string,
       fileTypes: string[],
-      isDryRun: boolean
+      isDryRun: boolean,
+      skipYearFolders: boolean,
+      cleanupEmptyFolders: boolean
     ) => Promise<string>
     openPath?: (targetFolder: string) => Promise<void>
   }
@@ -24,6 +26,8 @@ export function useFileOrganizer(tabId: string, onBack: () => void) {
   const [extensionInput, setExtensionInput] = useState<string>('')
   const [showExtDropdown, setShowExtDropdown] = useState<boolean>(false)
   const [isDryRun, setIsDryRun] = useState<boolean>(true)
+  const [skipYearFolders, setSkipYearFolders] = useState<boolean>(true)
+  const [cleanupEmptyFolders, setCleanupEmptyFolders] = useState<boolean>(false)
 
   const [logEntries, setLogEntries] = useState<string[]>([])
   const logRef = useRef<HTMLDivElement>(null)
@@ -147,7 +151,9 @@ export function useFileOrganizer(tabId: string, onBack: () => void) {
       const id = await (window as unknown as ElectronWindow).api!.startOrganizeTask!(
         targetFolder,
         typesArray,
-        isDryRun
+        isDryRun,
+        skipYearFolders,
+        cleanupEmptyFolders
       )
 
       updateTab(tabId, { taskId: id, title: `Org: ${targetFolder.split(/[/\\]/).pop()}` })
@@ -194,6 +200,10 @@ export function useFileOrganizer(tabId: string, onBack: () => void) {
     setShowExtDropdown,
     isDryRun,
     setIsDryRun,
+    skipYearFolders,
+    setSkipYearFolders,
+    cleanupEmptyFolders,
+    setCleanupEmptyFolders,
     logEntries,
     logRef,
     taskData,
