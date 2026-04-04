@@ -1,6 +1,7 @@
 import {
   extractDateFromFilenamePattern,
   getMonthLabelFromIndex,
+  getDayOrdinal,
   buildDateBasedDestination
 } from '../organizeUtils'
 import * as path from 'path'
@@ -90,24 +91,62 @@ describe('organizeUtils', () => {
   })
 
   // -----------------------------------------------------------------------
+  // getDayOrdinal
+  // -----------------------------------------------------------------------
+  describe('getDayOrdinal', () => {
+    const ordinalFixture = [
+      { day: 1, expected: 'st' },
+      { day: 2, expected: 'nd' },
+      { day: 3, expected: 'rd' },
+      { day: 4, expected: 'th' },
+      { day: 11, expected: 'th' },
+      { day: 12, expected: 'th' },
+      { day: 13, expected: 'th' },
+      { day: 21, expected: 'st' },
+      { day: 22, expected: 'nd' },
+      { day: 23, expected: 'rd' },
+      { day: 30, expected: 'th' },
+      { day: 31, expected: 'st' }
+    ]
+
+    test.each(ordinalFixture)('returns correct ordinal "$expected" for day $day', ({ day, expected }) => {
+      expect(getDayOrdinal(day)).toBe(expected)
+    })
+  })
+
+  // -----------------------------------------------------------------------
   // buildDateBasedDestination
   // -----------------------------------------------------------------------
   describe('buildDateBasedDestination', () => {
-    test('correctly constructs a Year/Month/Day destination path', () => {
+    test('correctly constructs a descriptive Year/Month/Day folder structure', () => {
       const sourceDate = new Date('2023-06-15T12:00:00')
       const { destinationDirectory, destinationFilePath } = buildDateBasedDestination(
         '/root',
         'photo.jpg',
         sourceDate
       )
-      expect(destinationDirectory).toBe(path.join('/root', '2023', 'June', '15'))
-      expect(destinationFilePath).toBe(path.join('/root', '2023', 'June', '15', 'photo.jpg'))
+      // 2023/June/Thursday June 15th
+      const expectedDayFolder = 'Thursday June 15th'
+      expect(destinationDirectory).toBe(path.join('/root', '2023', 'June', expectedDayFolder))
+      expect(destinationFilePath).toBe(
+        path.join('/root', '2023', 'June', expectedDayFolder, 'photo.jpg')
+      )
     })
 
-    test('properly zero-pads single-digit days in the folder name', () => {
-      const sourceDate = new Date('2024-01-03T12:00:00')
+    test('correctly handles first day of month with st suffix', () => {
+      const sourceDate = new Date('2024-01-01T12:00:00')
       const { destinationDirectory } = buildDateBasedDestination('/root', 'img.png', sourceDate)
-      expect(destinationDirectory).toBe(path.join('/root', '2024', 'January', '03'))
+      // 2024/January/Monday January 1st
+      const expectedDayFolder = 'Monday January 1st'
+      expect(destinationDirectory).toBe(path.join('/root', '2024', 'January', expectedDayFolder))
+    })
+
+    test('correctly handles 22nd with nd suffix', () => {
+      const sourceDate = new Date('2024-03-22T12:00:00')
+      const { destinationDirectory } = buildDateBasedDestination('/root', 'img.png', sourceDate)
+      // 2024/March/Friday March 22nd
+      const expectedDayFolder = 'Friday March 22nd'
+      expect(destinationDirectory).toBe(path.join('/root', '2024', 'March', expectedDayFolder))
     })
   })
 

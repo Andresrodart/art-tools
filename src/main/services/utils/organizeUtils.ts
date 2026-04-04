@@ -70,7 +70,29 @@ export function extractDateFromFilenamePattern(filename: string): Date | null {
 }
 
 /**
+ * Returns the English ordinal suffix for a given day of the month (e.g., 'st', 'nd', 'rd', 'th').
+ *
+ * @param day The day of the month (1-31).
+ * @returns The ordinal suffix.
+ */
+export function getDayOrdinal(day: number): string {
+  if (day > 3 && day < 21) return 'th'
+  switch (day % 10) {
+    case 1:
+      return 'st'
+    case 2:
+      return 'nd'
+    case 3:
+      return 'rd'
+    default:
+      return 'th'
+  }
+}
+
+/**
  * Constructs a target directory and file path based on a Year/Month/Day folder structure.
+ * Target pattern: Year/Month Name/FullDayOfWeek MonthName DayOrdinal
+ * Example: 2026/January/Monday January 30th
  *
  * @param rootDirectoryPath The top-level folder for the organization.
  * @param filename The name of the file being moved.
@@ -84,14 +106,17 @@ export function buildDateBasedDestination(
 ): { destinationDirectory: string; destinationFilePath: string } {
   const yearString = sourceDate.getFullYear().toString()
   const monthLabel = getMonthLabelFromIndex(sourceDate.getMonth())
-  const dayOfMonthString = sourceDate.getDate().toString().padStart(2, '0')
+  const dayOfMonth = sourceDate.getDate()
+  const dayOrdinal = getDayOrdinal(dayOfMonth)
 
-  const destinationDirectory = path.join(
-    rootDirectoryPath,
-    yearString,
-    monthLabel,
-    dayOfMonthString
-  )
+  // Get full day of week (e.g., "Monday")
+  const dayOfWeek = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(sourceDate)
+
+  // Target: Year/Month Name/FullDayOfWeek MonthName DayOrdinal
+  // Example: 2026/January/Monday January 30th
+  const dayFolderName = `${dayOfWeek} ${monthLabel} ${dayOfMonth}${dayOrdinal}`
+
+  const destinationDirectory = path.join(rootDirectoryPath, yearString, monthLabel, dayFolderName)
   const destinationFilePath = path.join(destinationDirectory, filename)
 
   return { destinationDirectory, destinationFilePath }
