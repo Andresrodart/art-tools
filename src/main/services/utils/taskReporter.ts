@@ -9,7 +9,7 @@ export class TaskReporter {
   /** The timestamp of the last time progress was updated, used for throttling. */
   private lastProgressUpdateTime: number = 0
   /** The minimum interval in milliseconds between progress updates. */
-  private readonly PROGRESS_UPDATE_THROTTLE_INTERVAL_MS: number = 150
+  private readonly PROGRESS_UPDATE_THROTTLE_INTERVAL_MS: number = 200
 
   /**
    * Creates an instance of TaskReporter.
@@ -31,6 +31,8 @@ export class TaskReporter {
    * @param progress Partial task progress object containing current, total, and/or message.
    */
   updateProgress(progress: Partial<TaskProgress>): void {
+    // Reset throttle timer to ensure the next update can be sent immediately if needed
+    this.lastProgressUpdateTime = 0
     taskManager.updateTaskProgress(this.taskId, progress)
   }
 

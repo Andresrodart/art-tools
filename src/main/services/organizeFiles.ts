@@ -194,7 +194,7 @@ export async function organizeFilesTask(
   }
 
   // Force final progress update to flush any throttled states and ensure UI reaches 100%
-  reporter.updateProgress({ current: processedFileCount })
+  reporter.updateProgress({ current: processedFileCount, message: 'Done' })
 
   // Finalize the task with the complete results array
   if (isDryRun) {
