@@ -31,8 +31,6 @@ export class TaskReporter {
    * @param progress Partial task progress object containing current, total, and/or message.
    */
   updateProgress(progress: Partial<TaskProgress>): void {
-    // Reset throttle timer to ensure the next update can be sent immediately if needed
-    this.lastProgressUpdateTime = 0
     taskManager.updateTaskProgress(this.taskId, progress)
   }
 
