@@ -2,6 +2,7 @@ export interface OrganizeResult {
   source: string
   destination: string
   success: boolean
+  alreadyOrganized?: boolean
   timestampCorrected?: boolean
   error?: string
 }

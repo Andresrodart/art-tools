@@ -59,6 +59,14 @@ export class TaskReporter {
   }
 
   /**
+   * Marks the task as completed as a dry-run and optionally stores the result.
+   * @param finalResult The output data produced by the task.
+   */
+  completeDryRun(finalResult?: unknown): void {
+    taskManager.completeDryRunTask(this.taskId, finalResult)
+  }
+
+  /**
    * Marks the task as failed with a specific error message.
    * @param errorMessage Descriptive text explaining the failure.
    */

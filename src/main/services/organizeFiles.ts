@@ -31,6 +31,8 @@ export interface OrganizeResult {
   destination: string
   /** Whether the file move was successful. */
   success: boolean
+  /** Whether the file was already in the correct destination. */
+  alreadyOrganized?: boolean
   /** Whether the file's filesystem timestamp was corrected using EXIF metadata. */
   timestampCorrected?: boolean
   /** Descriptive error message if the operation failed. */
@@ -137,7 +139,15 @@ export async function organizeFilesTask(
     )
 
     // Skip if the file is already in the correct destination
-    if (sourceFilePath === destinationFilePath) continue
+    if (sourceFilePath === destinationFilePath) {
+      organizationResults.push({
+        source: sourceFilePath,
+        destination: destinationFilePath,
+        success: true,
+        alreadyOrganized: true
+      })
+      continue
+    }
 
     // Ensure the destination path is unique to prevent overwriting existing files
     const uniqueDestinationPath = await getUniquePathWithCheck(
@@ -183,7 +193,14 @@ export async function organizeFilesTask(
     }
   }
 
+  // Force final progress update to flush any throttled states and ensure UI reaches 100%
+  reporter.updateProgress({ current: processedFileCount })
+
   // Finalize the task with the complete results array
-  reporter.complete(organizationResults)
+  if (isDryRun) {
+    reporter.completeDryRun(organizationResults)
+  } else {
+    reporter.complete(organizationResults)
+  }
   return organizationResults
 }

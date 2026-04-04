@@ -70,6 +70,16 @@ export class TaskManager extends EventEmitter {
     }
   }
 
+  completeDryRunTask(id: string, result?: unknown): void {
+    const task = this.tasks.get(id)
+    if (task) {
+      task.status = 'dry-run'
+      task.result = result
+      task.updatedAt = Date.now()
+      this.emit('task-updated', task)
+    }
+  }
+
   getActiveTasks(): Task[] {
     return Array.from(this.tasks.values()).filter(
       (task) => task.status === 'running' || task.status === 'pending' || task.status === 'dry-run'

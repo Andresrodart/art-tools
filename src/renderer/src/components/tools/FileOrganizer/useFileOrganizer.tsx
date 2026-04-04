@@ -5,6 +5,19 @@ import { useTaskStore } from '../../../store/taskStore'
 import { useAlertStore } from '../../../store/alertStore'
 import { OrganizeResult } from './types'
 
+interface ElectronWindow {
+  api?: {
+    selectFolder?: () => Promise<string | null>
+    startOrganizeTask?: (
+      folderPath: string,
+      fileTypes: string[],
+      isDryRun: boolean
+    ) => Promise<string>
+    openPath?: (targetFolder: string) => Promise<void>
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function useFileOrganizer(tabId: string, onBack: () => void) {
   const [targetFolder, setTargetFolder] = useState<string | null>(null)
   const [selectedExtensions, setSelectedExtensions] = useState<string[]>(['*'])
@@ -63,7 +76,7 @@ export function useFileOrganizer(tabId: string, onBack: () => void) {
 
   useEffect(() => {
     setTitle(t('tool_file_organizer_title'))
-    // @ts-ignore: ReactNode for navigation
+
     setNavigation(
       <button className="brutalist-button small" onClick={onBack}>
         &larr; Back
@@ -98,12 +111,11 @@ export function useFileOrganizer(tabId: string, onBack: () => void) {
 
   const handleSelectFolder = async (): Promise<void> => {
     try {
-      // @ts-ignore: electron api
-      if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore: electron api
-      const folderPaths = await window.api.selectFolder()
-      if (folderPaths) {
-        setTargetFolder(folderPaths)
+      if (!(window as unknown as ElectronWindow).api?.selectFolder)
+        throw new Error('API not available')
+      const folderPath = await (window as unknown as ElectronWindow).api!.selectFolder!()
+      if (folderPath) {
+        setTargetFolder(folderPath)
       }
     } catch (e: unknown) {
       await useAlertStore
@@ -130,11 +142,13 @@ export function useFileOrganizer(tabId: string, onBack: () => void) {
     try {
       const typesArray = selectedExtensions.length > 0 ? selectedExtensions : ['*']
 
-      // @ts-ignore: electron api
-      if (!window.api?.startOrganizeTask) throw new Error('API not available')
-
-      // @ts-ignore: electron api
-      const id = await window.api.startOrganizeTask(targetFolder, typesArray, isDryRun)
+      if (!(window as unknown as ElectronWindow).api?.startOrganizeTask)
+        throw new Error('API not available')
+      const id = await (window as unknown as ElectronWindow).api!.startOrganizeTask!(
+        targetFolder,
+        typesArray,
+        isDryRun
+      )
 
       updateTab(tabId, { taskId: id, title: `Org: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
@@ -145,10 +159,8 @@ export function useFileOrganizer(tabId: string, onBack: () => void) {
   const handleOpenFolder = async (): Promise<void> => {
     if (targetFolder) {
       try {
-        // @ts-ignore: electron api
-        if (window.api?.openPath) {
-          // @ts-ignore: electron api
-          await window.api.openPath(targetFolder)
+        if ((window as unknown as ElectronWindow).api?.openPath) {
+          await (window as unknown as ElectronWindow).api!.openPath!(targetFolder)
         }
       } catch (e: unknown) {
         console.error('Failed to open folder', e)

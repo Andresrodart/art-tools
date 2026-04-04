@@ -122,11 +122,7 @@ export function FileOrganizerInput({
                 }
               }}
             />
-            <button
-              className="brutalist-button"
-              onClick={handleExtensionButtonClick}
-              type="button"
-            >
+            <button className="brutalist-button" onClick={handleExtensionButtonClick} type="button">
               {extensionInput ? t('btn_add') : showExtDropdown ? '▴' : '▾'}
             </button>
           </div>
