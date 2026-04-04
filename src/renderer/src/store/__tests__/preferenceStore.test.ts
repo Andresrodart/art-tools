@@ -2,14 +2,13 @@ import { usePreferenceStore } from '../preferenceStore'
 
 // Mock the window.api
 beforeAll(() => {
-  // @ts-ignore: global window object mock
-  global.window = {
-    // @ts-ignore: api object mock
-    api: {
+  Object.defineProperty(window, 'api', {
+    value: {
       getPreferences: jest.fn().mockResolvedValue({ favorites: ['Tool1'] }),
       setPreferences: jest.fn().mockResolvedValue(true)
-    }
-  }
+    },
+    writable: true
+  })
 })
 
 describe('preferenceStore', () => {

@@ -91,7 +91,7 @@ export class TaskReporter {
    * This is essential for keeping the application responsive during heavy I/O tasks.
    */
   async yieldAndCheckCancellation(): Promise<void> {
-    await new Promise((resolve) => setImmediate(resolve))
+    await new Promise((resolve) => setTimeout(resolve, 0))
     this.checkCancellation()
   }
 }
