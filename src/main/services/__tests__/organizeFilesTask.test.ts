@@ -57,15 +57,51 @@ describe('organizeFilesTask integration', () => {
       const lastProgress = progressUpdates[progressUpdates.length - 1]
       expect(lastProgress).toBe(3)
 
-      // Ensure that files were actually moved out of the root directory
+      // 5. Verify the full Year/Month/Day folder structure
       const rootFiles = await fs.promises.readdir(tempDir)
-      // The only items remaining in root should be the newly created year directories (e.g. "2024" or "2025")
-      for (const item of rootFiles) {
-        const itemPath = path.join(tempDir, item)
-        const stats = await fs.promises.stat(itemPath)
-        expect(stats.isDirectory()).toBe(true)
+      expect(rootFiles.length).toBeGreaterThan(0)
+
+      for (const yearDir of rootFiles) {
+        const yearPath = path.join(tempDir, yearDir)
+        const yearStats = await fs.promises.stat(yearPath)
+        expect(yearStats.isDirectory()).toBe(true)
         // Ensure year pattern for the generated directory
-        expect(/^\d{4}$/.test(item)).toBe(true)
+        expect(/^\d{4}$/.test(yearDir)).toBe(true)
+
+        const monthFiles = await fs.promises.readdir(yearPath)
+        expect(monthFiles.length).toBeGreaterThan(0)
+
+        for (const monthDir of monthFiles) {
+          const monthPath = path.join(yearPath, monthDir)
+          const monthStats = await fs.promises.stat(monthPath)
+          expect(monthStats.isDirectory()).toBe(true)
+          // Month should be a full month name
+          expect(
+            /^(January|February|March|April|May|June|July|August|September|October|November|December)$/.test(
+              monthDir
+            )
+          ).toBe(true)
+
+          const dayFiles = await fs.promises.readdir(monthPath)
+          expect(dayFiles.length).toBeGreaterThan(0)
+
+          for (const dayDir of dayFiles) {
+            const dayPath = path.join(monthPath, dayDir)
+            const dayStats = await fs.promises.stat(dayPath)
+            expect(dayStats.isDirectory()).toBe(true)
+
+            // Day folder format: FullDayOfWeek MonthName DayOrdinal
+            // e.g., "Monday January 1st" or "Monday January 01st"
+            // Based on organizeUtils.ts: `${dayOfWeek} ${monthLabel} ${dayOfMonth}${dayOrdinal}`
+            expect(/^[A-Z][a-z]+ [A-Z][a-z]+ \d{1,2}(st|nd|rd|th)$/.test(dayDir)).toBe(true)
+
+            const finalFiles = await fs.promises.readdir(dayPath)
+            expect(finalFiles.length).toBeGreaterThan(0)
+            for (const file of finalFiles) {
+              expect(['test1.jpg', 'test2.png', 'test3.txt']).toContain(file)
+            }
+          }
+        }
       }
     } finally {
       taskManager.off('task-updated', onTaskUpdated)
