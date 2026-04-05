@@ -52,9 +52,9 @@ export async function findEmptyFoldersTask(
     async function scan(currentPath: string): Promise<boolean> {
       await reporter.yieldAndCheckCancellation()
 
-      let entries: string[] = []
+      let entries: import('fs').Dirent[] = []
       try {
-        entries = await fs.readdir(currentPath)
+        entries = await fs.readdir(currentPath, { withFileTypes: true })
       } catch {
         // Skip inaccessible folders
         return false
@@ -63,10 +63,8 @@ export async function findEmptyFoldersTask(
       let isEmpty = true
 
       for (const entry of entries) {
-        const entryPath = join(currentPath, entry)
-        const stats = await fs.stat(entryPath)
-
-        if (stats.isDirectory()) {
+        if (entry.isDirectory()) {
+          const entryPath = join(currentPath, entry.name)
           const isSubfolderEmpty = await scan(entryPath)
           if (!isSubfolderEmpty) {
             isEmpty = false
