@@ -37,6 +37,23 @@ export async function getUniqueFilePath(
 }
 
 /**
+ * Validates that a URL uses a safe protocol for external opening.
+ * Only 'http:' and 'https:' are considered safe to prevent
+ * potential security risks like 'file:' access or 'javascript:' execution.
+ *
+ * @param urlString The URL to validate.
+ * @returns True if the protocol is http or https, false otherwise.
+ */
+export function isValidExternalProtocol(urlString: string): boolean {
+  try {
+    const url = new URL(urlString)
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+/**
  * Validates if the provided path is safe to open.
  * Returns information about the path if it exists and is valid.
  *

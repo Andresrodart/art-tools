@@ -10,7 +10,7 @@ import { thresholdMergerTask } from './services/thresholdMerger'
 import { fileScraperTask } from './services/fileScraper'
 import { findEmptyFoldersTask, deleteFoldersTask } from './services/emptyFolderCleaner'
 import { getSatProfile, saveSatProfile, SatProfile } from './services/satProfile'
-import { getSafePathInfo } from './services/utils/pathUtils'
+import { getSafePathInfo, isValidExternalProtocol } from './services/utils/pathUtils'
 import { listGpgFiles, decryptGpgFile, cleanupGpgTempFile } from './services/gpgViewer'
 import {
   initTaxDirectories,
@@ -52,7 +52,9 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    if (isValidExternalProtocol(details.url)) {
+      shell.openExternal(details.url)
+    }
     return { action: 'deny' }
   })
 
