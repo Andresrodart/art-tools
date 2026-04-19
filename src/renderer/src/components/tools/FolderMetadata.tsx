@@ -55,6 +55,7 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
   // Sync log entries from global task store
   useEffect(() => {
     if (taskData?.progress?.message) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLogEntries((prev) => {
         const last = prev[prev.length - 1]
         if (last !== taskData.progress.message) {
