@@ -331,9 +331,11 @@ app.whenReady().then(() => {
     try {
       await initTaxDirectories(basePath)
       return { success: true }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      return { success: false, error: err.message }
+    } catch (err: unknown) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Unknown error occurred'
+      }
     }
   })
 
@@ -344,8 +346,7 @@ app.whenReady().then(() => {
       basePath: string,
       geminiApiKey: string,
       spreadsheetId: string,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      oauthTokens: any
+      oauthTokens: unknown
     ) => {
       const task = taskManager.createTask('tax-scanner')
 
@@ -377,9 +378,12 @@ app.whenReady().then(() => {
             'completed',
             `Successfully updated sheets with ${result.entries.length} entries.`
           )
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          taskManager.updateTaskStatus(task.id, 'error', err.message || 'Unknown error occurred')
+        } catch (err: unknown) {
+          taskManager.updateTaskStatus(
+            task.id,
+            'error',
+            err instanceof Error ? err.message : 'Unknown error occurred'
+          )
         }
       })()
 

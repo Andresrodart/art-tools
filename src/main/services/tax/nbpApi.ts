@@ -27,22 +27,26 @@ export async function getNBPRateForDate(
         if (response.data && response.data.rates && response.data.rates.length > 0) {
           return response.data.rates[0].mid
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (err: any) {
-        if (err.response && err.response.status === 404) {
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response && err.response.status === 404) {
           // 404 means no rate published on this day (weekend/holiday). Step back one day and retry.
           targetDate = targetDate.minus({ days: 1 })
         } else {
           // Other network error
-          console.error(`Error fetching NBP rate for ${currencyCode} on ${dateStr}:`, err.message)
+          console.error(
+            `Error fetching NBP rate for ${currencyCode} on ${dateStr}:`,
+            err instanceof Error ? err.message : String(err)
+          )
           return null
         }
       }
     }
     return null // If we couldn't find a rate in 5 days, something is wrong.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    console.error('Error calculating NBP date:', err)
+  } catch (err: unknown) {
+    console.error(
+      'Error calculating NBP date:',
+      err instanceof Error ? err.message : String(err)
+    )
     return null
   }
 }

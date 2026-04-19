@@ -9,8 +9,7 @@ export const TaxScanner: React.FC = () => {
   const [spreadsheetId, setSpreadsheetId] = useState<string>('')
 
   // Track Google Auth Tokens
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [oauthTokens, setOauthTokens] = useState<any>(null)
+  const [oauthTokens, setOauthTokens] = useState<unknown>(null)
   const [dirsExist, setDirsExist] = useState<boolean>(false)
   const [initMsg, setInitMsg] = useState<string>('')
 
@@ -62,9 +61,8 @@ export const TaxScanner: React.FC = () => {
       window.open(url, '_blank')
       // Show the integrated code input field
       setIsPromptingAuth(true)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      alert(`Login failed: ${err.message}`)
+    } catch (err: unknown) {
+      alert(`Login failed: ${err instanceof Error ? err.message : 'Unknown error occurred'}`)
     }
   }
 
@@ -80,9 +78,10 @@ export const TaxScanner: React.FC = () => {
       setIsPromptingAuth(false)
       setAuthCode('')
       alert('Successfully authenticated with Google Sheets!')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      alert(`Authentication failed: ${err.message}`)
+    } catch (err: unknown) {
+      alert(
+        `Authentication failed: ${err instanceof Error ? err.message : 'Unknown error occurred'}`
+      )
     }
   }
 
@@ -94,9 +93,8 @@ export const TaxScanner: React.FC = () => {
         setSpreadsheetId(sid)
         alert('New Spreadsheet created!')
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      alert(`Creation failed: ${err.message}`)
+    } catch (err: unknown) {
+      alert(`Creation failed: ${err instanceof Error ? err.message : 'Unknown error occurred'}`)
     }
   }
 
