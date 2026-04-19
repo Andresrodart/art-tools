@@ -67,9 +67,12 @@ export function useFileScraper(tabId: string): {
   const handleSelectFolder = async (isSource: boolean): Promise<void> => {
     try {
       // @ts-ignore: electron api
-      if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore: electron api
-      const folderPaths = await window.api.selectFolder()
+      const folderPaths = window.api?.selectFolder
+        ? await window.api.selectFolder()
+        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+            'select-folder'
+          )
+      if (!folderPaths) throw new Error('Failed to select folder, API unavailable')
       if (folderPaths) {
         if (isSource) setSourcePath(folderPaths)
         else setDestinationPath(folderPaths)
@@ -88,9 +91,12 @@ export function useFileScraper(tabId: string): {
   const handleAddIgnorePath = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
-      if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore: electron api
-      const folderPath = await window.api.selectFolder()
+      const folderPath = window.api?.selectFolder
+        ? await window.api.selectFolder()
+        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+            'select-folder'
+          )
+      if (!folderPath) throw new Error('Failed to select folder, API unavailable')
       if (folderPath && !ignorePaths.includes(folderPath)) {
         setIgnorePaths((prev) => [...prev, folderPath])
       }
@@ -144,16 +150,24 @@ export function useFileScraper(tabId: string): {
 
     try {
       // @ts-ignore: electron api
-      if (!window.api?.startFileScraperTask) throw new Error('API not available')
+      const id = window.api?.startFileScraperTask
+        ? await window.api.startFileScraperTask(
+            sourcePath,
+            destinationPath,
+            extensions,
+            isDryRun,
+            ignorePaths
+          )
+        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+            'task:start-file-scraper',
+            sourcePath,
+            destinationPath,
+            extensions,
+            isDryRun,
+            ignorePaths
+          )
 
-      // @ts-ignore: electron api
-      const id = await window.api.startFileScraperTask(
-        sourcePath,
-        destinationPath,
-        extensions,
-        isDryRun,
-        ignorePaths
-      )
+      if (!id) throw new Error('Failed to start task, API unavailable')
 
       updateTab(tabId, { taskId: id, title: `Scrape: ${sourcePath.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {

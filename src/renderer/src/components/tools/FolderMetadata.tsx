@@ -75,9 +75,12 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
   const handleSelectFolder = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
-      if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore: electron api
-      const folderPaths = await window.api.selectFolder()
+      const folderPaths = window.api?.selectFolder
+        ? await window.api.selectFolder()
+        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+            'select-folder'
+          )
+      if (!folderPaths) throw new Error('Failed to select folder, API unavailable')
       if (folderPaths) {
         setTargetFolder(folderPaths)
       }
@@ -105,15 +108,21 @@ export function FolderMetadata({ onBack, tabId }: FolderMetadataProps): React.JS
 
     try {
       // @ts-ignore: electron api
-      if (!window.api?.startFolderMetadataTask) throw new Error('API not available')
-
-      // @ts-ignore: electron api
-      const id = await window.api.startFolderMetadataTask(
-        targetFolder,
-        includeSize,
-        includeElements,
-        isDryRun
-      )
+      const id = window.api?.startFolderMetadataTask
+        ? await window.api.startFolderMetadataTask(
+            targetFolder,
+            includeSize,
+            includeElements,
+            isDryRun
+          )
+        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+            'task:start-folder-metadata',
+            targetFolder,
+            includeSize,
+            includeElements,
+            isDryRun
+          )
+      if (!id) throw new Error('Failed to start task, API unavailable')
 
       updateTab(tabId, { taskId: id, title: `Meta: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {

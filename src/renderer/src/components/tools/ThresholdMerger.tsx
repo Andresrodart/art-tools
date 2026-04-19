@@ -73,9 +73,12 @@ export function ThresholdMerger({ onBack, tabId }: ThresholdMergerProps): React.
   const handleSelectFolder = async (): Promise<void> => {
     try {
       // @ts-ignore: electron api
-      if (!window.api?.selectFolder) throw new Error('API not available')
-      // @ts-ignore: electron api
-      const folderPaths = await window.api.selectFolder()
+      const folderPaths = window.api?.selectFolder
+        ? await window.api.selectFolder()
+        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+            'select-folder'
+          )
+      if (!folderPaths) throw new Error('Failed to select folder, API unavailable')
       if (folderPaths) {
         setTargetFolder(folderPaths)
       }
@@ -119,15 +122,21 @@ export function ThresholdMerger({ onBack, tabId }: ThresholdMergerProps): React.
 
     try {
       // @ts-ignore: electron api
-      if (!window.api?.startThresholdMergerTask) throw new Error('API not available')
-
-      // @ts-ignore: electron api
-      const id = await window.api.startThresholdMergerTask(
-        targetFolder,
-        thresholdX,
-        maxCapacityY,
-        isDryRun
-      )
+      const id = window.api?.startThresholdMergerTask
+        ? await window.api.startThresholdMergerTask(
+            targetFolder,
+            thresholdX,
+            maxCapacityY,
+            isDryRun
+          )
+        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+            'task:start-threshold-merger',
+            targetFolder,
+            thresholdX,
+            maxCapacityY,
+            isDryRun
+          )
+      if (!id) throw new Error('Failed to start task, API unavailable')
 
       updateTab(tabId, { taskId: id, title: `Merge: ${targetFolder.split(/[/\\]/).pop()}` })
     } catch (e: unknown) {
