@@ -70,9 +70,9 @@ export function useFileScraper(tabId: string): {
       // @ts-ignore: electron api
       const folderPaths = window.api?.selectFolder
         ? await window.api.selectFolder()
-        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+        : ((await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
             'select-folder'
-          )
+          )) as string | null)
       if (!folderPaths) throw new Error('Failed to select folder, API unavailable')
       if (folderPaths) {
         if (isSource) setSourcePath(folderPaths)
@@ -94,9 +94,9 @@ export function useFileScraper(tabId: string): {
       // @ts-ignore: electron api
       const folderPath = window.api?.selectFolder
         ? await window.api.selectFolder()
-        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+        : ((await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
             'select-folder'
-          )
+          )) as string | null)
       if (!folderPath) throw new Error('Failed to select folder, API unavailable')
       if (folderPath && !ignorePaths.includes(folderPath)) {
         setIgnorePaths((prev) => [...prev, folderPath])
@@ -159,14 +159,14 @@ export function useFileScraper(tabId: string): {
             isDryRun,
             ignorePaths
           )
-        : await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
+        : ((await (window.api as { invoke?: (...args: unknown[]) => Promise<unknown> })?.invoke?.(
             'task:start-file-scraper',
             sourcePath,
             destinationPath,
             extensions,
             isDryRun,
             ignorePaths
-          )
+          )) as string)
 
       if (!id) throw new Error('Failed to start task, API unavailable')
 
