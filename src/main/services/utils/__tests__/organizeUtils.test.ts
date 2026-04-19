@@ -109,9 +109,12 @@ describe('organizeUtils', () => {
       { day: 31, expected: 'st' }
     ]
 
-    test.each(ordinalFixture)('returns correct ordinal "$expected" for day $day', ({ day, expected }) => {
-      expect(getDayOrdinal(day)).toBe(expected)
-    })
+    test.each(ordinalFixture)(
+      'returns correct ordinal "$expected" for day $day',
+      ({ day, expected }) => {
+        expect(getDayOrdinal(day)).toBe(expected)
+      }
+    )
   })
 
   // -----------------------------------------------------------------------
